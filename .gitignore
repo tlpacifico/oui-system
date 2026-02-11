@@ -1,0 +1,55 @@
+# Claude Code
+.claude/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node (caso use ferramentas JS)
+node_modules/
+package-lock.json
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
+*.log
+*.vs/
+
+# Angular
+dist/
+.angular/
+tmp/
+
+# Environment
+.env
+.env.local
+.env.*.local
+appsettings.Development.json
+
+# Build
+out/
+build/
+publish/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
+*.lcov
