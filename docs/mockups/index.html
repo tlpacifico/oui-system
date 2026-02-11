@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OUI System - Mockups</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #a5b4fc;
+            --bg: #f8fafc;
+            --sidebar-bg: #1e1b4b;
+            --sidebar-text: #c7d2fe;
+            --sidebar-active: #6366f1;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+
+        /* Navigation between mockups */
+        .mockup-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: #0f0a3c; color: white; padding: 8px 20px;
+            display: flex; align-items: center; gap: 12px; font-size: 13px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .mockup-nav span { font-weight: 700; font-size: 14px; margin-right: 12px; }
+        .mockup-nav button {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
+            transition: all 0.2s;
+        }
+        .mockup-nav button:hover { background: var(--primary); }
+        .mockup-nav button.active { background: var(--primary); border-color: var(--primary); }
+
+        .mockup-page { display: none; padding-top: 44px; }
+        .mockup-page.active { display: block; }
+
+        /* Layout */
+        .app-layout { display: flex; min-height: calc(100vh - 44px); }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px; background: var(--sidebar-bg); color: var(--sidebar-text);
+            padding: 20px 0; flex-shrink: 0; position: sticky; top: 44px; height: calc(100vh - 44px);
+            overflow-y: auto;
+        }
+        .sidebar-logo { padding: 0 20px 24px; font-size: 22px; font-weight: 800; color: white; letter-spacing: -0.5px; }
+        .sidebar-logo small { font-size: 11px; font-weight: 400; color: var(--sidebar-text); display: block; }
+        .sidebar-section { padding: 8px 20px 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #6366f180; font-weight: 600; }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+            font-size: 14px; cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent;
+        }
+        .sidebar-item:hover { background: rgba(99,102,241,0.1); color: white; }
+        .sidebar-item.active { background: rgba(99,102,241,0.15); color: white; border-left-color: var(--primary); font-weight: 600; }
+        .sidebar-item .icon { width: 20px; text-align: center; }
+        .sidebar-badge { background: var(--danger); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: auto; }
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; }
+
+        /* Header */
+        .app-header {
+            background: white; border-bottom: 1px solid var(--border); padding: 12px 28px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 44px; z-index: 50;
+        }
+        .breadcrumb { font-size: 13px; color: var(--text-light); }
+        .breadcrumb b { color: var(--text); }
+        .header-actions { display: flex; align-items: center; gap: 16px; }
+        .search-bar {
+            background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 8px 14px 8px 36px; width: 320px; font-size: 13px; outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-bar:focus { border-color: var(--primary); }
+        .search-wrapper { position: relative; }
+        .search-wrapper::before { content: "🔍"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; }
+        .notif-btn {
+            position: relative; background: none; border: 1px solid var(--border); border-radius: 8px;
+            width: 38px; height: 38px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
+        }
+        .notif-btn .badge { position: absolute; top: -4px; right: -4px; background: var(--danger); color: white; font-size: 9px; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+
+        /* Page Content */
+        .page-content { padding: 28px; flex: 1; }
+        .page-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+        .page-subtitle { font-size: 14px; color: var(--text-light); margin-bottom: 24px; }
+
+        /* Cards */
+        .card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); padding: 20px; }
+        .card-title { font-size: 13px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+
+        /* KPI Cards */
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; }
+        .kpi-card { padding: 20px; }
+        .kpi-value { font-size: 28px; font-weight: 800; margin: 4px 0; }
+        .kpi-label { font-size: 13px; color: var(--text-light); }
+        .kpi-change { font-size: 12px; font-weight: 600; margin-top: 4px; }
+        .kpi-change.up { color: var(--success); }
+        .kpi-change.down { color: var(--danger); }
+
+        /* Tables */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: var(--bg); padding: 10px 14px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); border-bottom: 1px solid var(--border); }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        tr:hover td { background: #f1f5f9; }
+
+        /* Badges */
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+        .badge-gray { background: #f1f5f9; color: #475569; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+            border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+            border: 1px solid transparent; transition: all 0.15s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-outline { background: white; color: var(--text); border-color: var(--border); }
+        .btn-outline:hover { background: var(--bg); }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+        /* Filters */
+        .filters-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .filter-input, .filter-select {
+            padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 13px; background: white; outline: none;
+        }
+        .filter-input:focus, .filter-select:focus { border-color: var(--primary); }
+
+        /* Grid layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+        /* Charts placeholder */
+        .chart-placeholder {
+            height: 250px; background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            color: var(--text-light); font-size: 14px;
+        }
+        .chart-bar { display: flex; align-items: flex-end; gap: 8px; height: 200px; padding: 20px 0; }
+        .chart-bar-item { flex: 1; background: var(--primary); border-radius: 4px 4px 0 0; min-width: 30px; position: relative; transition: height 0.3s; }
+        .chart-bar-item:hover { background: var(--primary-dark); }
+        .chart-bar-label { font-size: 10px; color: var(--text-light); text-align: center; margin-top: 8px; }
+
+        /* POS Layout */
+        .pos-layout { display: grid; grid-template-columns: 1fr 380px; gap: 0; height: calc(100vh - 44px); }
+        .pos-search-area { padding: 20px; background: white; overflow-y: auto; }
+        .pos-cart { background: #f8fafc; border-left: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
+        .pos-header { background: var(--sidebar-bg); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; grid-column: 1 / -1; }
+        .pos-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px;
+            background: white; border: 1px solid var(--border); border-radius: 8px;
+            margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s;
+        }
+        .pos-item:hover { border-color: var(--primary); }
+        .pos-item-thumb { width: 50px; height: 50px; background: #f1f5f9; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .pos-item-info { flex: 1; }
+        .pos-item-name { font-weight: 600; font-size: 14px; }
+        .pos-item-meta { font-size: 12px; color: var(--text-light); }
+        .pos-item-price { font-weight: 700; color: var(--primary); font-size: 16px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .cart-total { margin-top: auto; padding-top: 16px; border-top: 2px solid var(--text); }
+        .cart-total-line { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 14px; }
+        .cart-total-final { font-size: 24px; font-weight: 800; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+        .tab {
+            padding: 10px 20px; font-size: 13px; font-weight: 600; color: var(--text-light);
+            cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s;
+        }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        /* Form */
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+        .form-input {
+            width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 14px; outline: none; transition: border-color 0.2s;
+        }
+        .form-input:focus { border-color: var(--primary); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        /* Alert cards */
+        .alert-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+        .alert-yellow { background: #fef3c7; border-left: 4px solid #f59e0b; }
+        .alert-orange { background: #ffedd5; border-left: 4px solid #f97316; }
+        .alert-red { background: #fee2e2; border-left: 4px solid #ef4444; }
+
+        /* Quick actions */
+        .quick-actions { display: flex; gap: 12px; }
+        .quick-action {
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            padding: 16px 24px; background: white; border: 1px solid var(--border);
+            border-radius: 12px; cursor: pointer; font-size: 12px; font-weight: 600;
+            color: var(--text-light); transition: all 0.15s; min-width: 100px;
+        }
+        .quick-action:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99,102,241,0.15); }
+        .quick-action .qa-icon { font-size: 24px; }
+
+        /* Pagination */
+        .pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; font-size: 13px; color: var(--text-light); }
+        .pagination-btns { display: flex; gap: 4px; }
+        .pagination-btns button {
+            width: 32px; height: 32px; border: 1px solid var(--border); background: white;
+            border-radius: 6px; cursor: pointer; font-size: 12px;
+        }
+        .pagination-btns button.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Supplier detail */
+        .supplier-header { display: flex; gap: 20px; margin-bottom: 24px; align-items: center; }
+        .supplier-avatar { width: 64px; height: 64px; background: var(--primary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: var(--primary-dark); }
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+        .stat-item { text-align: center; padding: 16px; }
+        .stat-value { font-size: 22px; font-weight: 800; }
+        .stat-label { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+
+        /* Login page */
+        .login-page { display: flex; align-items: center; justify-content: center; height: calc(100vh - 44px); background: linear-gradient(135deg, #1e1b4b, #312e81); }
+        .login-card { background: white; border-radius: 16px; padding: 40px; width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .login-logo { text-align: center; font-size: 32px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+        .login-subtitle { text-align: center; color: var(--text-light); font-size: 14px; margin-bottom: 32px; }
+    </style>
+</head>
+<body>
+
+<!-- Mockup Navigation -->
+<div class="mockup-nav">
+    <span>OUI System Mockups</span>
+    <button class="active" onclick="showPage('login')">Login</button>
+    <button onclick="showPage('dashboard')">Dashboard</button>
+    <button onclick="showPage('items')">Itens</button>
+    <button onclick="showPage('consignment-new')">Nova Consignação</button>
+    <button onclick="showPage('suppliers')">Fornecedores</button>
+    <button onclick="showPage('supplier-detail')">Detalhe Fornecedor</button>
+    <button onclick="showPage('pos')">POS/Caixa</button>
+    <button onclick="showPage('settlements')">Acertos</button>
+    <button onclick="showPage('reports')">Relatórios</button>
+    <button onclick="showPage('alerts')">Alertas</button>
+</div>
+
+<!-- ==================== PAGE: LOGIN ==================== -->
+<div id="page-login" class="mockup-page active">
+    <div class="login-page">
+        <div class="login-card">
+            <div class="login-logo">OUI System</div>
+            <div class="login-subtitle">Second Hand Shop ERP</div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input class="form-input" type="email" placeholder="seu@email.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Senha</label>
+                <input class="form-input" type="password" placeholder="••••••••">
+            </div>
+            <button class="btn btn-primary" style="width:100%; justify-content: center; padding: 12px; font-size: 15px; margin-top: 8px;" onclick="showPage('dashboard')">Entrar</button>
+            <p style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-light); cursor: pointer;">Esqueci minha senha</p>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PAGE: DASHBOARD ==================== -->
+<div id="page-dashboard" class="mockup-page">
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-logo">OUI System<small>Second Hand Shop ERP</small></div>
+            <div class="sidebar-item active"><span class="icon">📊</span> Dashboard</div>
+            <div class="sidebar-section">Inventário</div>
+            <div class="sidebar-item" onclick="showPage('items')"><span class="icon">👕</span> Itens <span class="sidebar-badge">847</span></div>
+            <div class="sidebar-item"><span class="icon">🏷️</span> Marcas</div>
+            <div class="sidebar-item"><span class="icon">🔖</span> Tags</div>
+            <div class="sidebar-item" onclick="showPage('alerts')"><span class="icon">⚠️</span> Alertas <span class="sidebar-badge">23</span></div>
+            <div class="sidebar-section">Consignações</div>
+            <div class="sidebar-item"><span class="icon">📋</span> Consignações</div>
+            <div class="sidebar-item" onclick="showPage('consignment-new')"><span class="icon">➕</span> Nova Consignação</div>
+            <div class="sidebar-item" onclick="showPage('suppliers')"><span class="icon">👥</span> Fornecedores</div>
+            <div class="sidebar-section">Vendas</div>
+            <div class="sidebar-item" onclick="showPage('pos')"><span class="icon">💰</span> Ponto de Venda</div>
+            <div class="sidebar-item"><span class="icon">🧾</span> Vendas do Dia</div>
+            <div class="sidebar-item"><span class="icon">↩️</span> Devoluções</div>
+            <div class="sidebar-section">Financeiro</div>
+            <div class="sidebar-item" onclick="showPage('settlements')"><span class="icon">💵</span> Acertos</div>
+            <div class="sidebar-item"><span class="icon">💳</span> Créditos</div>
+            <div class="sidebar-item"><span class="icon">📉</span> Fluxo de Caixa</div>
+            <div class="sidebar-section">Relatórios</div>
+            <div class="sidebar-item" onclick="showPage('reports')"><span class="icon">📈</span> Relatórios</div>
+            <div class="sidebar-section">Admin</div>
+            <div class="sidebar-item"><span class="icon">👤</span> Usuários</div>
+            <div class="sidebar-item"><span class="icon">⚙️</span> Configurações</div>
+        </nav>
+
+        <div class="main-content">
+            <div class="app-header">
+                <div class="breadcrumb">📊 <b>Dashboard</b></div>
+                <div class="header-actions">
+                    <div class="search-wrapper"><input class="search-bar" placeholder="Buscar itens, fornecedores, vendas..."></div>
+                    <button class="notif-btn">🔔<span class="badge">5</span></button>
+                    <div class="avatar">JS</div>
+                </div>
+            </div>
+
+            <div class="page-content">
+                <div class="page-title">Dashboard</div>
+                <div class="page-subtitle">Visão geral da loja - Terça, 11 de Fevereiro de 2026</div>
+
+                <!-- KPIs -->
+                <div class="kpi-grid">
+                    <div class="card kpi-card">
+                        <div class="card-title">Vendas Hoje</div>
+                        <div class="kpi-value" style="color: var(--primary);">R$ 3.247</div>
+                        <div class="kpi-label">18 vendas</div>
+                        <div class="kpi-change up">↑ 12% vs ontem</div>
+                    </div>
+                    <div class="card kpi-card">
+                        <div class="card-title">Receita do Mês</div>
+                        <div class="kpi-value" style="color: var(--success);">R$ 42.890</div>
+                        <div class="kpi-label">287 vendas</div>
+                        <div class="kpi-change up">↑ 8% vs mês anterior</div>
+                    </div>
+                    <div class="card kpi-card">
+                        <div class="card-title">Itens em Estoque</div>
+                        <div class="kpi-value">847</div>
+                        <div class="kpi-label">R$ 67.430 em valor</div>
+                        <div class="kpi-change down">↓ 3% (vendendo bem)</div>
+                    </div>
+                    <div class="card kpi-card">
+                        <div class="card-title">Acertos Pendentes</div>
+                        <div class="kpi-value" style="color: var(--warning);">R$ 12.340</div>
+                        <div class="kpi-label">14 fornecedores</div>
+                        <div class="kpi-change">Vence em 5 dias</div>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-bottom: 24px;">
+                    <!-- Sales Chart -->
+                    <div class="card">
+                        <div class="card-title">Vendas - Últimos 7 dias</div>
+                        <div class="chart-bar">
+                            <div style="flex:1; text-align: center;">
+                                <div style="height: 60%; background: var(--primary-light); border-radius: 4px 4px 0 0;"></div>
+                                <div class="chart-bar-label">Seg</div>
+                            </div>
+                            <div style="flex:1; text-align: center;">
+                                <div style="height: 75%; background: var(--primary-light); border-radius: 4px 4px 0 0;"></div>
+                                <div class="chart-bar-label">Ter</div>
+                            </div>
+                            <div style="flex:1; text-align: center;">
+                                <div style="height: 45%; background: var(--primary-light); border-radius: 4px 4px 0 0;"></div>
+                                <div class="chart-bar-label">Qua</div>
+                            </div>
+                            <div style="flex:1; text-align: center;">
+                                <div style="height: 90%; background: var(--primary-light); border-radius: 4px 4px 0 0;"></div>
+                                <div class="chart-bar-label">Qui</div>
+                            </div>
+                            <div style="flex:1; text-align: center;">
+                                <div style="height: 100%; background: var(--primary); border-radius: 4px 4px 0 0;"></div>
+                                <div class="chart-bar-label">Sex</div>
+                            </div>
+                            <div style="flex:1; text-align: center;">
+                                <div style="height: 85%; background: var(--primary); border-radius: 4px 4px 0 0;"></div>
+                                <div class="chart-bar-label">Sáb</div>
+                            </div>
+                            <div style="flex:1; text-align: center;">
+                                <div style="height: 30%; background: var(--primary-light); border-radius: 4px 4px 0 0;"></div>
+                                <div class="chart-bar-label">Dom</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerts -->
+                    <div class="card">
+                        <div class="card-title">Alertas Pendentes</div>
+                        <div style="margin-top: 12px;">
+                            <div class="alert-red">🔴 8 itens com 60+ dias em estoque</div>
+                            <div class="alert-orange">🟠 7 itens com 45+ dias em estoque</div>
+                            <div class="alert-yellow">🟡 8 consignações expirando em 7 dias</div>
+                            <div class="alert-item" style="background: #dbeafe; border-left: 4px solid #3b82f6;">🔵 Caixa #2 aberto há 10h (Ana Lima)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-title">Ações Rápidas</div>
+                    <div class="quick-actions" style="margin-top: 12px;">
+                        <div class="quick-action" onclick="showPage('pos')"><span class="qa-icon">💰</span> Nova Venda</div>
+                        <div class="quick-action" onclick="showPage('consignment-new')"><span class="qa-icon">📋</span> Nova Consignação</div>
+                        <div class="quick-action" onclick="showPage('items')"><span class="qa-icon">🔍</span> Buscar Item</div>
+                        <div class="quick-action" onclick="showPage('settlements')"><span class="qa-icon">💵</span> Fazer Acerto</div>
+                        <div class="quick-action" onclick="showPage('reports')"><span class="qa-icon">📈</span> Relatórios</div>
+                    </div>
+                </div>
+
+                <!-- Top Sales -->
+                <div class="card">
+                    <div class="card-title">Top 5 Vendas da Semana</div>
+                    <table>
+                        <thead><tr><th>Item</th><th>Marca</th><th>Categoria</th><th>Preço</th><th>Vendido em</th></tr></thead>
+                        <tbody>
+                            <tr><td><b>Vestido Midi Floral</b></td><td>Farm</td><td>Vestidos</td><td><b>R$ 189,90</b></td><td>10/02/2026</td></tr>
+                            <tr><td><b>Bolsa Couro Caramelo</b></td><td>Arezzo</td><td>Acessórios</td><td><b>R$ 279,00</b></td><td>10/02/2026</td></tr>
+                            <tr><td><b>Blazer Alfaiataria</b></td><td>Zara</td><td>Casacos</td><td><b>R$ 159,90</b></td><td>09/02/2026</td></tr>
+                            <tr><td><b>Calça Jeans Reta</b></td><td>Levi's</td><td>Calças</td><td><b>R$ 129,00</b></td><td>09/02/2026</td></tr>
+                            <tr><td><b>Tênis Branco</b></td><td>Adidas</td><td>Calçados</td><td><b>R$ 199,00</b></td><td>08/02/2026</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PAGE: ITEMS LIST ==================== -->
+<div id="page-items" class="mockup-page">
+    <div class="app-layout">
+        <nav class="sidebar">
+            <div class="sidebar-logo">OUI System<small>Second Hand Shop ERP</small></div>
+            <div class="sidebar-item"><span class="icon">📊</span> Dashboard</div>
+            <div class="sidebar-section">Inventário</div>
+            <div class="sidebar-item active"><span class="icon">👕</span> Itens</div>
+            <div class="sidebar-item"><span class="icon">🏷️</span> Marcas</div>
+            <div class="sidebar-item"><span class="icon">🔖</span> Tags</div>
+            <div class="sidebar-item"><span class="icon">⚠️</span> Alertas</div>
+        </nav>
+        <div class="main-content">
+            <div class="app-header">
+                <div class="breadcrumb">Inventário > <b>Itens</b></div>
+                <div class="header-actions">
+                    <div class="search-wrapper"><input class="search-bar" placeholder="Buscar itens..."></div>
+                    <button class="notif-btn">🔔<span class="badge">5</span></button>
+                    <div class="avatar">JS</div>
+                </div>
+            </div>
+            <div class="page-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <div class="page-title">Itens do Estoque</div>
+                        <div class="page-subtitle">847 itens encontrados</div>
+                    </div>
+                    <div style="display:flex; gap: 8px;">
+                        <button class="btn btn-outline">📄 Exportar</button>
+                        <button class="btn btn-outline">🏷️ Imprimir Etiquetas</button>
+                        <button class="btn btn-primary">+ Novo Item</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom: 20px; padding: 16px;">
+                    <div class="filters-bar">
+                        <input class="filter-input" placeholder="🔍 Buscar por nome ou ID..." style="width: 220px;">
+                        <select class="filter-select"><option>Todas as Marcas</option><option>Farm</option><option>Zara</option><option>Arezzo</option><option>Levi's</option></select>
+                        <select class="filter-select"><option>Todos os Tamanhos</option><option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option></select>
+                        <select class="filter-select"><option>Todas as Cores</option><option>Preto</option><option>Branco</option><option>Vermelho</option><option>Azul</option></select>
+                        <select class="filter-select"><option>Todos os Status</option><option>À Venda</option><option>Avaliado</option><option>Vendido</option><option>Devolvido</option></select>
+                        <select class="filter-select"><option>Todos Fornecedores</option><option>Maria Silva</option><option>Ana Lima</option><option>Pedro Santos</option></select>
+                        <input class="filter-input" placeholder="Preço min" style="width: 100px;">
+                        <input class="filter-input" placeholder="Preço max" style="width: 100px;">
+                        <button class="btn btn-outline btn-sm">Limpar Filtros</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox"></th>
+                                <th>Foto</th>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>Marca</th>
+                                <th>Tam</th>
+                                <th>Preço</th>
+                                <th>Status</th>
+                                <th>Fornecedor</th>
+                                <th>Dias</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td><div style="width:40px;height:40px;background:#f1f5f9;border-radius:6px;display:flex;align-items:center;justify-content:center;">👗</div></td>
+                                <td style="font-family: monospace; font-size: 12px;">MS202602001</td>
+                                <td><b>Vestido Midi Floral</b></td>
+                                <td>Farm</td>
+                                <td>M</td>
+                                <td><b>R$ 189,90</b></td>
+                                <td><span class="badge badge-success">À Venda</span></td>
+                                <td>Maria Silva</td>
+                                <td>5</td>
+                                <td><button class="btn btn-outline btn-sm">👁️</button> <button class="btn btn-outline btn-sm">✏️</button></td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td><div style="width:40px;height:40px;background:#f1f5f9;border-radius:6px;display:flex;align-items:center;justify-content:center;">👜</div></td>
+                                <td style="font-family: monospace; font-size: 12px;">AL202601015</td>
+                                <td><b>Bolsa Couro Caramelo</b></td>
+                                <td>Arezzo</td>
+                                <td>-</td>
+                                <td><b>R$ 279,00</b></td>
+                                <td><span class="badge badge-success">À Venda</span></td>
+                                <td>Ana Lima</td>
+                                <td>18</td>
+                                <td><button class="btn btn-outline btn-sm">👁️</button> <button class="btn btn-outline btn-sm">✏️</button></td>
+                            </tr>
+                            <tr style="background: #fef3c7;">
+                                <td><input type="checkbox"></td>
+                                <td><div style="width:40px;height:40px;background:#fef3c7;border-radius:6px;display:flex;align-items:center;justify-content:center;">👚</div></td>
+                                <td style="font-family: monospace; font-size: 12px;">PS202601008</td>
+                                <td><b>Blusa Seda Estampada</b></td>
+                                <td>Zara</td>
+                                <td>P</td>
+                                <td><b>R$ 89,90</b></td>
+                                <td><span class="badge badge-warning">30+ dias</span></td>
+                                <td>Pedro Santos</td>
+                                <td style="color: var(--warning); font-weight: 700;">34</td>
+                                <td><button class="btn btn-outline btn-sm">👁️</button> <button class="btn btn-outline btn-sm">✏️</button></td>
+                            </tr>
+                            <tr style="background: #fee2e2;">
+                                <td><input type="checkbox"></td>
+                                <td><div style="width:40px;height:40px;background:#fee2e2;border-radius:6px;display:flex;align-items:center;justify-content:center;">🧥</div></td>
+                                <td style="font-family: monospace; font-size: 12px;">MS202512042</td>
+                                <td><b>Casaco Lã Cinza</b></td>
+                                <td>C&A</td>
+                                <td>G</td>
+                                <td><b>R$ 129,00</b></td>
+                                <td><span class="badge badge-danger">60+ dias</span></td>
+                                <td>Maria Silva</td>
+                                <td style="color: var(--danger); font-weight: 700;">68</td>
+                                <td><button class="btn btn-outline btn-sm">👁️</button> <button class="btn btn-outline btn-sm">✏️</button></td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td><div style="width:40px;height:40px;background:#f1f5f9;border-radius:6px;display:flex;align-items:center;justify-content:center;">👞</div></td>
+                                <td style="font-family: monospace; font-size: 12px;">AL202602003</td>
+                                <td><b>Sapato Social Preto</b></td>
+                                <td>Democrata</td>
+                                <td>42</td>
+                                <td><b>R$ 149,00</b></td>
+                                <td><span class="badge badge-info">Avaliado</span></td>
+                                <td>Ana Lima</td>
+                                <td>2</td>
+                                <td><button class="btn btn-outline btn-sm">👁️</button> <button class="btn btn-outline btn-sm">✏️</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        <span>Mostrando 1-20 de 847 itens</span>
+                        <div class="pagination-btns">
+                            <button>‹</button>
+                            <button class="active">1</button>
+                            <button>2</button>
+                            <button>3</button>
+                            <button>...</button>
+                            <button>43</button>
+                            <button>›</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PAGE: NEW CONSIGNMENT ==================== -->
+<div id="page-consignment-new" class="mockup-page">
+    <div class="app-layout">
+        <nav class="sidebar">
+            <div class="sidebar-logo">OUI System<small>Second Hand Shop ERP</small></div>
+            <div class="sidebar-item"><span class="icon">📊</span> Dashboard</div>
+            <div class="sidebar-section">Consignações</div>
+            <div class="sidebar-item"><span class="icon">📋</span> Consignações</div>
+            <div class="sidebar-item active"><span class="icon">➕</span> Nova Consignação</div>
+            <div class="sidebar-item"><span class="icon">👥</span> Fornecedores</div>
+        </nav>
+        <div class="main-content">
+            <div class="app-header">
+                <div class="breadcrumb">Consignações > <b>Nova Consignação</b></div>
+                <div class="header-actions">
+                    <div class="search-wrapper"><input class="search-bar" placeholder="Buscar..."></div>
+                    <button class="notif-btn">🔔<span class="badge">5</span></button>
+                    <div class="avatar">JS</div>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="page-title">Nova Consignação</div>
+                <div class="page-subtitle">Registrar entrada de itens consignados</div>
+
+                <!-- Steps -->
+                <div style="display: flex; margin-bottom: 28px; gap: 0;">
+                    <div style="flex:1; text-align: center; padding: 12px; background: var(--primary); color: white; border-radius: 8px 0 0 8px; font-weight: 700; font-size: 13px;">1. Fornecedor ✓</div>
+                    <div style="flex:1; text-align: center; padding: 12px; background: var(--primary); color: white; font-weight: 700; font-size: 13px;">2. Itens</div>
+                    <div style="flex:1; text-align: center; padding: 12px; background: #e2e8f0; color: var(--text-light); border-radius: 0 8px 8px 0; font-weight: 600; font-size: 13px;">3. Revisão</div>
+                </div>
+
+                <!-- Supplier selected -->
+                <div class="card" style="margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+                    <div class="supplier-avatar" style="width:48px;height:48px;font-size:18px;">MS</div>
+                    <div>
+                        <div style="font-weight: 700;">Maria Silva</div>
+                        <div style="font-size: 12px; color: var(--text-light);">Comissão: 40% cash | 30% crédito &nbsp; | &nbsp; 📧 maria@email.com &nbsp; | &nbsp; 📱 (11) 99999-0001</div>
+                    </div>
+                    <button class="btn btn-outline btn-sm" style="margin-left: auto;">Trocar Fornecedor</button>
+                </div>
+
+                <!-- Items list -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div class="card-title" style="margin: 0;">Itens da Consignação (3 itens - R$ 458,80)</div>
+                        <button class="btn btn-primary btn-sm">+ Adicionar Item</button>
+                    </div>
+
+                    <table>
+                        <thead><tr><th>#</th><th>ID</th><th>Nome</th><th>Marca</th><th>Tam</th><th>Cor</th><th>Condição</th><th>Preço</th><th></th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td style="font-family: monospace; font-size: 11px;">MS202602004</td>
+                                <td><b>Vestido Midi Floral</b></td>
+                                <td>Farm</td>
+                                <td>M</td>
+                                <td>Estampado</td>
+                                <td><span class="badge badge-success">Excelente</span></td>
+                                <td><b>R$ 189,90</b></td>
+                                <td><button class="btn btn-outline btn-sm">✏️</button> <button class="btn btn-outline btn-sm" style="color: var(--danger);">🗑️</button></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td style="font-family: monospace; font-size: 11px;">MS202602005</td>
+                                <td><b>Blusa Seda Off-White</b></td>
+                                <td>Zara</td>
+                                <td>P</td>
+                                <td>Branco</td>
+                                <td><span class="badge badge-info">Bom</span></td>
+                                <td><b>R$ 89,90</b></td>
+                                <td><button class="btn btn-outline btn-sm">✏️</button> <button class="btn btn-outline btn-sm" style="color: var(--danger);">🗑️</button></td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td style="font-family: monospace; font-size: 11px;">MS202602006</td>
+                                <td><b>Calça Jeans Reta</b></td>
+                                <td>Levi's</td>
+                                <td>38</td>
+                                <td>Azul</td>
+                                <td><span class="badge badge-success">Excelente</span></td>
+                                <td><b>R$ 179,00</b></td>
+                                <td><button class="btn btn-outline btn-sm">✏️</button> <button class="btn btn-outline btn-sm" style="color: var(--danger);">🗑️</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                        <button class="btn btn-outline">← Voltar</button>
+                        <button class="btn btn-primary">Revisar Consignação →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PAGE: SUPPLIERS ==================== -->
+<div id="page-suppliers" class="mockup-page">
+    <div class="app-layout">
+        <nav class="sidebar">
+            <div class="sidebar-logo">OUI System<small>Second Hand Shop ERP</small></div>
+            <div class="sidebar-item"><span class="icon">📊</span> Dashboard</div>
+            <div class="sidebar-section">Consignações</div>
+            <div class="sidebar-item"><span class="icon">📋</span> Consignações</div>
+            <div class="sidebar-item"><span class="icon">➕</span> Nova Consignação</div>
+            <div class="sidebar-item active"><span class="icon">👥</span> Fornecedores</div>
+        </nav>
+        <div class="main-content">
+            <div class="app-header">
+                <div class="breadcrumb">Consignações > <b>Fornecedores</b></div>
+                <div class="header-actions">
+                    <div class="search-wrapper"><input class="search-bar" placeholder="Buscar fornecedores..."></div>
+                    <button class="notif-btn">🔔<span class="badge">5</span></button>
+                    <div class="avatar">JS</div>
+                </div>
+            </div>
+            <div class="page-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <div class="page-title">Fornecedores</div>
+                        <div class="page-subtitle">32 fornecedores cadastrados</div>
+                    </div>
+                    <button class="btn btn-primary">+ Novo Fornecedor</button>
+                </div>
+                <div class="card">
+                    <table>
+                        <thead><tr><th>Nome</th><th>Inicial</th><th>Email</th><th>Telefone</th><th>Comissão Cash</th><th>Comissão Crédito</th><th>Itens Ativos</th><th>Ações</th></tr></thead>
+                        <tbody>
+                            <tr onclick="showPage('supplier-detail')" style="cursor: pointer;">
+                                <td><b>Maria Silva</b></td>
+                                <td><span class="badge badge-info">MS</span></td>
+                                <td>maria@email.com</td>
+                                <td>(11) 99999-0001</td>
+                                <td>40%</td>
+                                <td>30%</td>
+                                <td><b>45</b></td>
+                                <td><button class="btn btn-outline btn-sm">👁️</button> <button class="btn btn-outline btn-sm">✏️</button> <button class="btn btn-primary btn-sm">+ Consignação</button></td>
+                            </tr>
+                            <tr>
+                                <td><b>Ana Lima</b></td>
+                                <td><span class="badge badge-info">AL</span></td>
+                                <td>ana@email.com</td>
+                                <td>(11) 98888-0002</td>
+                                <td>35%</td>
+                                <td>25%</td>
+                                <td><b>28</b></td>
+                                <td><button class="btn btn-outline btn-sm">👁️</button> <button class="btn btn-outline btn-sm">✏️</button> <button class="btn btn-primary btn-sm">+ Consignação</button></td>
+                            </tr>
+                            <tr>
+                                <td><b>Pedro Santos</b></td>
+                                <td><span class="badge badge-info">PS</span></td>
+                                <td>pedro@email.com</td>
+                                <td>(11) 97777-0003</td>
+                                <td>40%</td>
+                                <td>30%</td>
+                                <td><b>12</b></td>
+                                <td><button class="btn btn-outline btn-sm">👁️</button> <button class="btn btn-outline btn-sm">✏️</button> <button class="btn btn-primary btn-sm">+ Consignação</button></td>
+                            </tr>
+                            <tr>
+                                <td><b>Carla Mendes</b></td>
+                                <td><span class="badge badge-info">CM</span></td>
+                                <td>carla@email.com</td>
+                                <td>(11) 96666-0004</td>
+                                <td>45%</td>
+                                <td>35%</td>
+                                <td><b>67</b></td>
+                                <td><button class="btn btn-outline btn-sm">👁️</button> <button class="btn btn-outline btn-sm">✏️</button> <button class="btn btn-primary btn-sm">+ Consignação</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PAGE: SUPPLIER DETAIL ==================== -->
+<div id="page-supplier-detail" class="mockup-page">
+    <div class="app-layout">
+        <nav class="sidebar">
+            <div class="sidebar-logo">OUI System<small>Second Hand Shop ERP</small></div>
+            <div class="sidebar-item"><span class="icon">📊</span> Dashboard</div>
+            <div class="sidebar-section">Consignações</div>
+            <div class="sidebar-item"><span class="icon">📋</span> Consignações</div>
+            <div class="sidebar-item active"><span class="icon">👥</span> Fornecedores</div>
+        </nav>
+        <div class="main-content">
+            <div class="app-header">
+                <div class="breadcrumb">Consignações > Fornecedores > <b>Maria Silva</b></div>
+                <div class="header-actions">
+                    <div class="search-wrapper"><input class="search-bar" placeholder="Buscar..."></div>
+                    <button class="notif-btn">🔔<span class="badge">5</span></button>
+                    <div class="avatar">JS</div>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="supplier-header">
+                    <div class="supplier-avatar">MS</div>
+                    <div>
+                        <div class="page-title" style="margin-bottom: 0;">Maria Silva</div>
+                        <div style="font-size: 13px; color: var(--text-light);">📧 maria@email.com &nbsp; | &nbsp; 📱 (11) 99999-0001 &nbsp; | &nbsp; Desde Jan 2025</div>
+                    </div>
+                    <div style="margin-left: auto; display: flex; gap: 8px;">
+                        <button class="btn btn-outline">✏️ Editar</button>
+                        <button class="btn btn-primary">+ Nova Consignação</button>
+                    </div>
+                </div>
+
+                <div class="stat-grid">
+                    <div class="card stat-item">
+                        <div class="stat-value" style="color: var(--primary);">45</div>
+                        <div class="stat-label">Itens na Loja</div>
+                    </div>
+                    <div class="card stat-item">
+                        <div class="stat-value" style="color: var(--success);">128</div>
+                        <div class="stat-label">Itens Vendidos</div>
+                    </div>
+                    <div class="card stat-item">
+                        <div class="stat-value" style="color: var(--warning);">R$ 2.340</div>
+                        <div class="stat-label">Valor a Receber</div>
+                    </div>
+                    <div class="card stat-item">
+                        <div class="stat-value">R$ 18.450</div>
+                        <div class="stat-label">Total Recebido</div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom: 20px;">
+                    <div style="display: flex; gap: 24px; font-size: 13px;">
+                        <div><b>Comissão Cash:</b> 40%</div>
+                        <div><b>Comissão Crédito:</b> 30%</div>
+                        <div><b>Tempo Médio Venda:</b> 12 dias</div>
+                        <div><b>Taxa de Venda:</b> 74%</div>
+                        <div><b>Taxa Devolução:</b> 8%</div>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active">Itens (45)</div>
+                    <div class="tab">Consignações (8)</div>
+                    <div class="tab">Acertos (12)</div>
+                    <div class="tab">Estatísticas</div>
+                </div>
+
+                <div class="card">
+                    <table>
+                        <thead><tr><th>ID</th><th>Nome</th><th>Marca</th><th>Preço</th><th>Status</th><th>Dias em Loja</th></tr></thead>
+                        <tbody>
+                            <tr><td style="font-family:monospace;font-size:11px;">MS202602001</td><td><b>Vestido Midi Floral</b></td><td>Farm</td><td>R$ 189,90</td><td><span class="badge badge-success">À Venda</span></td><td>5</td></tr>
+                            <tr><td style="font-family:monospace;font-size:11px;">MS202602002</td><td><b>Saia Plissada</b></td><td>Zara</td><td>R$ 79,90</td><td><span class="badge badge-success">À Venda</span></td><td>5</td></tr>
+                            <tr><td style="font-family:monospace;font-size:11px;">MS202601018</td><td><b>Jaqueta Jeans</b></td><td>Levi's</td><td>R$ 199,00</td><td><span class="badge badge-warning">30+ dias</span></td><td>38</td></tr>
+                            <tr><td style="font-family:monospace;font-size:11px;">MS202512042</td><td><b>Casaco Lã Cinza</b></td><td>C&A</td><td>R$ 129,00</td><td><span class="badge badge-danger">60+ dias</span></td><td>68</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PAGE: POS ==================== -->
+<div id="page-pos" class="mockup-page">
+    <div class="pos-layout">
+        <div class="pos-header">
+            <div>💰 <b>Caixa #1</b> &nbsp;|&nbsp; João Silva &nbsp;|&nbsp; Aberto: 08:00</div>
+            <div style="display:flex; gap: 12px; align-items: center; font-size: 13px;">
+                <span>F2=Nova &nbsp; F4=Pagar &nbsp; F8=Busca &nbsp; ESC=Cancelar</span>
+                <button class="btn btn-outline btn-sm" style="color: white; border-color: rgba(255,255,255,0.3);" onclick="showPage('dashboard')">✕ Sair do Caixa</button>
+            </div>
+        </div>
+        <div class="pos-search-area">
+            <input class="form-input" placeholder="🔍 Escanear código de barras ou buscar por nome..." style="font-size: 16px; padding: 14px; margin-bottom: 16px;" autofocus>
+
+            <div style="font-size: 12px; color: var(--text-light); margin-bottom: 12px; font-weight: 600;">RESULTADOS DA BUSCA</div>
+
+            <div class="pos-item">
+                <div class="pos-item-thumb">👗</div>
+                <div class="pos-item-info">
+                    <div class="pos-item-name">Vestido Midi Floral</div>
+                    <div class="pos-item-meta">Farm | M | Excelente | Maria Silva</div>
+                    <div class="pos-item-meta" style="font-family: monospace;">MS202602001</div>
+                </div>
+                <div class="pos-item-price">R$ 189,90</div>
+                <button class="btn btn-primary btn-sm">+ Add</button>
+            </div>
+
+            <div class="pos-item">
+                <div class="pos-item-thumb">👚</div>
+                <div class="pos-item-info">
+                    <div class="pos-item-name">Blusa Seda Off-White</div>
+                    <div class="pos-item-meta">Zara | P | Bom | Maria Silva</div>
+                    <div class="pos-item-meta" style="font-family: monospace;">MS202602005</div>
+                </div>
+                <div class="pos-item-price">R$ 89,90</div>
+                <button class="btn btn-primary btn-sm">+ Add</button>
+            </div>
+
+            <div class="pos-item">
+                <div class="pos-item-thumb">👖</div>
+                <div class="pos-item-info">
+                    <div class="pos-item-name">Calça Jeans Reta</div>
+                    <div class="pos-item-meta">Levi's | 38 | Excelente | Ana Lima</div>
+                    <div class="pos-item-meta" style="font-family: monospace;">AL202602003</div>
+                </div>
+                <div class="pos-item-price">R$ 179,00</div>
+                <button class="btn btn-primary btn-sm">+ Add</button>
+            </div>
+
+            <div class="pos-item">
+                <div class="pos-item-thumb">👜</div>
+                <div class="pos-item-info">
+                    <div class="pos-item-name">Bolsa Couro Caramelo</div>
+                    <div class="pos-item-meta">Arezzo | - | Excelente | Ana Lima</div>
+                    <div class="pos-item-meta" style="font-family: monospace;">AL202601015</div>
+                </div>
+                <div class="pos-item-price">R$ 279,00</div>
+                <button class="btn btn-primary btn-sm">+ Add</button>
+            </div>
+
+            <div style="margin-top: 20px; padding: 12px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                <span>👤</span> Cliente: <b>Não identificado</b>
+                <button class="btn btn-outline btn-sm" style="margin-left: auto;">Buscar Cliente</button>
+            </div>
+        </div>
+
+        <div class="pos-cart">
+            <div style="font-weight: 700; font-size: 16px; margin-bottom: 16px;">🛒 Carrinho</div>
+
+            <div class="cart-item">
+                <div>
+                    <div style="font-weight: 600; font-size: 14px;">Vestido Midi Floral</div>
+                    <div style="font-size: 11px; color: var(--text-light);">Farm | M</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <b>R$ 189,90</b>
+                    <button class="btn btn-outline btn-sm" style="color: var(--danger); border: none; padding: 2px 6px;">✕</button>
+                </div>
+            </div>
+            <div class="cart-item">
+                <div>
+                    <div style="font-weight: 600; font-size: 14px;">Calça Jeans Reta</div>
+                    <div style="font-size: 11px; color: var(--text-light);">Levi's | 38</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <b>R$ 179,00</b>
+                    <button class="btn btn-outline btn-sm" style="color: var(--danger); border: none; padding: 2px 6px;">✕</button>
+                </div>
+            </div>
+            <div class="cart-item">
+                <div>
+                    <div style="font-weight: 600; font-size: 14px;">Bolsa Couro Caramelo</div>
+                    <div style="font-size: 11px; color: var(--text-light);">Arezzo</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <b>R$ 279,00</b>
+                    <button class="btn btn-outline btn-sm" style="color: var(--danger); border: none; padding: 2px 6px;">✕</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 16px; padding: 10px; background: white; border-radius: 8px; border: 1px dashed var(--border);">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                    <span>🏷️ Desconto:</span>
+                    <input class="form-input" placeholder="%" style="width: 60px; padding: 4px 8px; font-size: 12px;" value="5">
+                    <span style="color: var(--danger); font-weight: 600;">-R$ 32,40</span>
+                </div>
+            </div>
+
+            <div class="cart-total">
+                <div class="cart-total-line"><span>Subtotal (3 itens)</span><span>R$ 647,90</span></div>
+                <div class="cart-total-line" style="color: var(--danger);"><span>Desconto (5%)</span><span>-R$ 32,40</span></div>
+                <hr style="margin: 8px 0; border-color: var(--border);">
+                <div class="cart-total-line cart-total-final"><span>TOTAL</span><span>R$ 615,51</span></div>
+                <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-size: 16px; margin-top: 12px;">💳 Finalizar Venda (F4)</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PAGE: SETTLEMENTS ==================== -->
+<div id="page-settlements" class="mockup-page">
+    <div class="app-layout">
+        <nav class="sidebar">
+            <div class="sidebar-logo">OUI System<small>Second Hand Shop ERP</small></div>
+            <div class="sidebar-item"><span class="icon">📊</span> Dashboard</div>
+            <div class="sidebar-section">Financeiro</div>
+            <div class="sidebar-item active"><span class="icon">💵</span> Acertos</div>
+            <div class="sidebar-item"><span class="icon">💳</span> Créditos</div>
+            <div class="sidebar-item"><span class="icon">📉</span> Fluxo de Caixa</div>
+        </nav>
+        <div class="main-content">
+            <div class="app-header">
+                <div class="breadcrumb">Financeiro > <b>Acertos com Fornecedores</b></div>
+                <div class="header-actions">
+                    <div class="search-wrapper"><input class="search-bar" placeholder="Buscar..."></div>
+                    <button class="notif-btn">🔔<span class="badge">5</span></button>
+                    <div class="avatar">JS</div>
+                </div>
+            </div>
+            <div class="page-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <div class="page-title">Acertos com Fornecedores</div>
+                        <div class="page-subtitle">14 acertos pendentes | R$ 12.340,00 a pagar</div>
+                    </div>
+                    <button class="btn btn-primary">+ Novo Acerto</button>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active">Pendentes (14)</div>
+                    <div class="tab">Processados (48)</div>
+                    <div class="tab">Todos</div>
+                </div>
+
+                <div class="card">
+                    <table>
+                        <thead><tr><th>Fornecedor</th><th>Período</th><th>Itens Vendidos</th><th>Total Vendas</th><th>Comissão Loja</th><th>A Pagar</th><th>Ação</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><b>Maria Silva</b></td>
+                                <td>01/01 - 31/01/2026</td>
+                                <td>12</td>
+                                <td>R$ 2.890,00</td>
+                                <td>R$ 1.156,00 (40%)</td>
+                                <td><b style="color: var(--primary);">R$ 1.734,00</b></td>
+                                <td><button class="btn btn-primary btn-sm">Processar</button></td>
+                            </tr>
+                            <tr>
+                                <td><b>Ana Lima</b></td>
+                                <td>01/01 - 31/01/2026</td>
+                                <td>8</td>
+                                <td>R$ 1.650,00</td>
+                                <td>R$ 577,50 (35%)</td>
+                                <td><b style="color: var(--primary);">R$ 1.072,50</b></td>
+                                <td><button class="btn btn-primary btn-sm">Processar</button></td>
+                            </tr>
+                            <tr>
+                                <td><b>Carla Mendes</b></td>
+                                <td>01/01 - 31/01/2026</td>
+                                <td>22</td>
+                                <td>R$ 5.430,00</td>
+                                <td>R$ 2.443,50 (45%)</td>
+                                <td><b style="color: var(--primary);">R$ 2.986,50</b></td>
+                                <td><button class="btn btn-primary btn-sm">Processar</button></td>
+                            </tr>
+                            <tr>
+                                <td><b>Pedro Santos</b></td>
+                                <td>01/01 - 31/01/2026</td>
+                                <td>3</td>
+                                <td>R$ 420,00</td>
+                                <td>R$ 168,00 (40%)</td>
+                                <td><b style="color: var(--text-light);">R$ 252,00</b></td>
+                                <td><button class="btn btn-outline btn-sm" title="Abaixo do mínimo (R$50)">Processar</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PAGE: REPORTS ==================== -->
+<div id="page-reports" class="mockup-page">
+    <div class="app-layout">
+        <nav class="sidebar">
+            <div class="sidebar-logo">OUI System<small>Second Hand Shop ERP</small></div>
+            <div class="sidebar-item"><span class="icon">📊</span> Dashboard</div>
+            <div class="sidebar-section">Relatórios</div>
+            <div class="sidebar-item active"><span class="icon">📈</span> Vendas</div>
+            <div class="sidebar-item"><span class="icon">👕</span> Inventário</div>
+            <div class="sidebar-item"><span class="icon">👥</span> Fornecedores</div>
+            <div class="sidebar-item"><span class="icon">💵</span> Financeiro</div>
+        </nav>
+        <div class="main-content">
+            <div class="app-header">
+                <div class="breadcrumb">Relatórios > <b>Vendas</b></div>
+                <div class="header-actions">
+                    <div class="search-wrapper"><input class="search-bar" placeholder="Buscar..."></div>
+                    <button class="notif-btn">🔔<span class="badge">5</span></button>
+                    <div class="avatar">JS</div>
+                </div>
+            </div>
+            <div class="page-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <div class="page-title">Relatório de Vendas</div>
+                        <div class="page-subtitle">Janeiro 2026</div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-outline">📄 Exportar PDF</button>
+                        <button class="btn btn-outline">📊 Exportar Excel</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom: 20px; padding: 16px;">
+                    <div class="filters-bar">
+                        <input class="filter-input" type="date" value="2026-01-01">
+                        <span style="color: var(--text-light);">até</span>
+                        <input class="filter-input" type="date" value="2026-01-31">
+                        <select class="filter-select"><option>Todas as Categorias</option></select>
+                        <select class="filter-select"><option>Todas as Marcas</option></select>
+                        <select class="filter-select"><option>Todos os Vendedores</option></select>
+                        <button class="btn btn-primary btn-sm">Filtrar</button>
+                    </div>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="card kpi-card">
+                        <div class="card-title">Receita Total</div>
+                        <div class="kpi-value" style="color: var(--success);">R$ 42.890</div>
+                        <div class="kpi-change up">↑ 8% vs Dez/25</div>
+                    </div>
+                    <div class="card kpi-card">
+                        <div class="card-title">Total de Vendas</div>
+                        <div class="kpi-value">287</div>
+                        <div class="kpi-change up">↑ 5% vs Dez/25</div>
+                    </div>
+                    <div class="card kpi-card">
+                        <div class="card-title">Ticket Médio</div>
+                        <div class="kpi-value">R$ 149,44</div>
+                        <div class="kpi-change up">↑ 3%</div>
+                    </div>
+                    <div class="card kpi-card">
+                        <div class="card-title">Itens por Venda</div>
+                        <div class="kpi-value">1.8</div>
+                        <div class="kpi-change down">↓ 2%</div>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-bottom: 24px;">
+                    <div class="card">
+                        <div class="card-title">Vendas por Dia</div>
+                        <div class="chart-bar">
+                            <div style="flex:1; text-align:center;"><div style="height:60%;background:var(--primary-light);border-radius:4px 4px 0 0;"></div><div class="chart-bar-label">Seg</div></div>
+                            <div style="flex:1; text-align:center;"><div style="height:75%;background:var(--primary-light);border-radius:4px 4px 0 0;"></div><div class="chart-bar-label">Ter</div></div>
+                            <div style="flex:1; text-align:center;"><div style="height:50%;background:var(--primary-light);border-radius:4px 4px 0 0;"></div><div class="chart-bar-label">Qua</div></div>
+                            <div style="flex:1; text-align:center;"><div style="height:85%;background:var(--primary-light);border-radius:4px 4px 0 0;"></div><div class="chart-bar-label">Qui</div></div>
+                            <div style="flex:1; text-align:center;"><div style="height:100%;background:var(--primary);border-radius:4px 4px 0 0;"></div><div class="chart-bar-label">Sex</div></div>
+                            <div style="flex:1; text-align:center;"><div style="height:95%;background:var(--primary);border-radius:4px 4px 0 0;"></div><div class="chart-bar-label">Sáb</div></div>
+                            <div style="flex:1; text-align:center;"><div style="height:25%;background:var(--primary-light);border-radius:4px 4px 0 0;"></div><div class="chart-bar-label">Dom</div></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Formas de Pagamento</div>
+                        <div style="padding: 20px;">
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                <div style="width:12px;height:12px;border-radius:50%;background:#6366f1;"></div>
+                                <span style="font-size:13px;flex:1;">Cartão Crédito</span>
+                                <b>38%</b> <span style="color:var(--text-light);font-size:12px;">R$ 16.298</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                <div style="width:12px;height:12px;border-radius:50%;background:#22c55e;"></div>
+                                <span style="font-size:13px;flex:1;">PIX</span>
+                                <b>30%</b> <span style="color:var(--text-light);font-size:12px;">R$ 12.867</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                <div style="width:12px;height:12px;border-radius:50%;background:#f59e0b;"></div>
+                                <span style="font-size:13px;flex:1;">Dinheiro</span>
+                                <b>18%</b> <span style="color:var(--text-light);font-size:12px;">R$ 7.720</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                <div style="width:12px;height:12px;border-radius:50%;background:#3b82f6;"></div>
+                                <span style="font-size:13px;flex:1;">Cartão Débito</span>
+                                <b>12%</b> <span style="color:var(--text-light);font-size:12px;">R$ 5.147</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <div style="width:12px;height:12px;border-radius:50%;background:#8b5cf6;"></div>
+                                <span style="font-size:13px;flex:1;">Crédito Loja</span>
+                                <b>2%</b> <span style="color:var(--text-light);font-size:12px;">R$ 858</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Top 10 Marcas Vendidas</div>
+                    <table>
+                        <thead><tr><th>#</th><th>Marca</th><th>Qtd Vendida</th><th>Receita</th><th>Ticket Médio</th><th>% do Total</th></tr></thead>
+                        <tbody>
+                            <tr><td>1</td><td><b>Farm</b></td><td>42</td><td>R$ 7.340</td><td>R$ 174,76</td><td>17.1%</td></tr>
+                            <tr><td>2</td><td><b>Zara</b></td><td>38</td><td>R$ 4.890</td><td>R$ 128,68</td><td>11.4%</td></tr>
+                            <tr><td>3</td><td><b>Arezzo</b></td><td>25</td><td>R$ 5.620</td><td>R$ 224,80</td><td>13.1%</td></tr>
+                            <tr><td>4</td><td><b>Levi's</b></td><td>22</td><td>R$ 3.740</td><td>R$ 170,00</td><td>8.7%</td></tr>
+                            <tr><td>5</td><td><b>Animale</b></td><td>18</td><td>R$ 4.120</td><td>R$ 228,89</td><td>9.6%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PAGE: ALERTS ==================== -->
+<div id="page-alerts" class="mockup-page">
+    <div class="app-layout">
+        <nav class="sidebar">
+            <div class="sidebar-logo">OUI System<small>Second Hand Shop ERP</small></div>
+            <div class="sidebar-item"><span class="icon">📊</span> Dashboard</div>
+            <div class="sidebar-section">Inventário</div>
+            <div class="sidebar-item"><span class="icon">👕</span> Itens</div>
+            <div class="sidebar-item"><span class="icon">🏷️</span> Marcas</div>
+            <div class="sidebar-item"><span class="icon">🔖</span> Tags</div>
+            <div class="sidebar-item active"><span class="icon">⚠️</span> Alertas</div>
+        </nav>
+        <div class="main-content">
+            <div class="app-header">
+                <div class="breadcrumb">Inventário > <b>Alertas de Estoque</b></div>
+                <div class="header-actions">
+                    <div class="search-wrapper"><input class="search-bar" placeholder="Buscar..."></div>
+                    <button class="notif-btn">🔔<span class="badge">5</span></button>
+                    <div class="avatar">JS</div>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="page-title">Alertas de Estoque</div>
+                <div class="page-subtitle">23 itens precisam de ação</div>
+
+                <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 24px;">
+                    <div class="card kpi-card" style="border-left: 4px solid #f59e0b;">
+                        <div class="card-title">30+ Dias</div>
+                        <div class="kpi-value" style="color: #f59e0b;">8</div>
+                        <div class="kpi-label">Sugestão: reduzir 10%</div>
+                    </div>
+                    <div class="card kpi-card" style="border-left: 4px solid #f97316;">
+                        <div class="card-title">45+ Dias</div>
+                        <div class="kpi-value" style="color: #f97316;">7</div>
+                        <div class="kpi-label">Sugestão: reduzir 20%</div>
+                    </div>
+                    <div class="card kpi-card" style="border-left: 4px solid #ef4444;">
+                        <div class="card-title">60+ Dias</div>
+                        <div class="kpi-value" style="color: #ef4444;">8</div>
+                        <div class="kpi-label">Sugestão: devolver ou reduzir 30%+</div>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active">Todos (23)</div>
+                    <div class="tab">🟡 30+ dias (8)</div>
+                    <div class="tab">🟠 45+ dias (7)</div>
+                    <div class="tab">🔴 60+ dias (8)</div>
+                </div>
+
+                <div class="card">
+                    <table>
+                        <thead><tr><th>Alerta</th><th>ID</th><th>Item</th><th>Marca</th><th>Preço</th><th>Dias</th><th>Fornecedor</th><th>Ação Sugerida</th><th>Ações</th></tr></thead>
+                        <tbody>
+                            <tr style="background: #fee2e2;">
+                                <td>🔴</td>
+                                <td style="font-family:monospace;font-size:11px;">MS202512042</td>
+                                <td><b>Casaco Lã Cinza</b></td>
+                                <td>C&A</td>
+                                <td>R$ 129,00</td>
+                                <td style="color:var(--danger);font-weight:700;">68</td>
+                                <td>Maria Silva</td>
+                                <td><span class="badge badge-danger">Devolver ou -30%</span></td>
+                                <td>
+                                    <button class="btn btn-outline btn-sm">💲 Reduzir</button>
+                                    <button class="btn btn-outline btn-sm">↩️ Devolver</button>
+                                </td>
+                            </tr>
+                            <tr style="background: #fee2e2;">
+                                <td>🔴</td>
+                                <td style="font-family:monospace;font-size:11px;">AL202512028</td>
+                                <td><b>Saia Longa Preta</b></td>
+                                <td>Renner</td>
+                                <td>R$ 59,90</td>
+                                <td style="color:var(--danger);font-weight:700;">65</td>
+                                <td>Ana Lima</td>
+                                <td><span class="badge badge-danger">Devolver ou -30%</span></td>
+                                <td>
+                                    <button class="btn btn-outline btn-sm">💲 Reduzir</button>
+                                    <button class="btn btn-outline btn-sm">↩️ Devolver</button>
+                                </td>
+                            </tr>
+                            <tr style="background: #ffedd5;">
+                                <td>🟠</td>
+                                <td style="font-family:monospace;font-size:11px;">PS202601002</td>
+                                <td><b>Camisa Social Rosa</b></td>
+                                <td>Dudalina</td>
+                                <td>R$ 99,90</td>
+                                <td style="color:#f97316;font-weight:700;">48</td>
+                                <td>Pedro Santos</td>
+                                <td><span class="badge badge-warning">Reduzir 20%</span></td>
+                                <td>
+                                    <button class="btn btn-outline btn-sm">💲 Reduzir</button>
+                                    <button class="btn btn-outline btn-sm">🔄 Renovar</button>
+                                </td>
+                            </tr>
+                            <tr style="background: #fef3c7;">
+                                <td>🟡</td>
+                                <td style="font-family:monospace;font-size:11px;">MS202601018</td>
+                                <td><b>Jaqueta Jeans</b></td>
+                                <td>Levi's</td>
+                                <td>R$ 199,00</td>
+                                <td style="color:#f59e0b;font-weight:700;">38</td>
+                                <td>Maria Silva</td>
+                                <td><span class="badge" style="background:#fef3c7;color:#92400e;">Reduzir 10%</span></td>
+                                <td>
+                                    <button class="btn btn-outline btn-sm">💲 Reduzir</button>
+                                    <button class="btn btn-outline btn-sm">🔄 Renovar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showPage(pageId) {
+        document.querySelectorAll('.mockup-page').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + pageId).classList.add('active');
+
+        document.querySelectorAll('.mockup-nav button').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+</script>
+</body>
+</html>
