@@ -13,6 +13,6 @@ public class SaleItemConfiguration : IEntityTypeConfiguration<SaleItemEntity>
         b.Property(x => x.UnitPrice).HasPrecision(18, 2);
         b.Property(x => x.DiscountAmount).HasPrecision(18, 2);
         b.Property(x => x.FinalPrice).HasPrecision(18, 2);
-        b.HasOne(x => x.ConsignmentItem).WithMany().HasForeignKey(x => x.ConsignmentItemId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(x => x.Item).WithMany().HasForeignKey(x => x.ItemId).OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -7,12 +7,20 @@ public class ShsDbContext : DbContext
 {
     public ShsDbContext(DbContextOptions<ShsDbContext> options) : base(options) { }
 
-    public DbSet<ConsignmentItemEntity> ConsignmentItems => Set<ConsignmentItemEntity>();
     public DbSet<CashRegisterEntity> CashRegisters => Set<CashRegisterEntity>();
     public DbSet<SaleEntity> Sales => Set<SaleEntity>();
     public DbSet<SaleItemEntity> SaleItems => Set<SaleItemEntity>();
     public DbSet<SalePaymentEntity> SalePayments => Set<SalePaymentEntity>();
     public DbSet<UserEntity> Users => Set<UserEntity>();
+
+    // Inventory entities
+    public DbSet<BrandEntity> Brands => Set<BrandEntity>();
+    public DbSet<CategoryEntity> Categories => Set<CategoryEntity>();
+    public DbSet<TagEntity> Tags => Set<TagEntity>();
+    public DbSet<SupplierEntity> Suppliers => Set<SupplierEntity>();
+    public DbSet<ReceptionEntity> Receptions => Set<ReceptionEntity>();
+    public DbSet<ItemEntity> Items => Set<ItemEntity>();
+    public DbSet<ItemPhotoEntity> ItemPhotos => Set<ItemPhotoEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

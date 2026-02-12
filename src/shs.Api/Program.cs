@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using shs.Api.Auth;
+using shs.Api.Inventory;
 using shs.Infrastructure;
 using shs.Infrastructure.Database;
 
@@ -40,7 +41,6 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-await SeedAuthUserIfEmpty(app.Services);
 
 if (app.Environment.IsDevelopment())
 {
@@ -53,24 +53,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapAuthEndpoints();
+app.MapInventoryEndpoints();
 app.MapGet("/", () => Results.Ok("OUI System API is running."));
 
 app.Run();
 
-static async Task SeedAuthUserIfEmpty(IServiceProvider services)
-{
-    using var scope = services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<ShsDbContext>();
-    if (await db.Users.AnyAsync())
-        return;
-    var user = new shs.Domain.Entities.UserEntity
-    {
-        ExternalId = Guid.NewGuid(),
-        Email = "admin@oui.local",
-        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
-        DisplayName = "Administrator",
-        CreatedOn = DateTime.UtcNow
-    };
-    db.Users.Add(user);
-    await db.SaveChangesAsync();
-}
+

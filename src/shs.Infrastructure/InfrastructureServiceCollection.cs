@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using shs.Infrastructure.Database;
+using shs.Infrastructure.Services;
 
 namespace shs.Infrastructure;
 
@@ -14,6 +15,9 @@ public static class InfrastructureServiceCollection
 
         services.AddDbContext<ShsDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        // Register services
+        services.AddScoped<IItemIdGeneratorService, ItemIdGeneratorService>();
 
         return services;
     }
