@@ -1,5 +1,6 @@
 # Claude Code
 .claude/
+docs/dados-reais/
 
 # IDE
 .idea/

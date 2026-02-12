@@ -1,473 +1,712 @@
-# SHS - Use Cases Document
+# Oui Circular - Documento de Casos de Uso
 
-## Legend
+## Legenda
 
-| Symbol | Meaning |
-|--------|---------|
-| **[DONE]** | Already implemented in current codebase |
-| **[TODO]** | Not yet implemented |
-| **P0** | Must-have for MVP |
-| **P1** | Important, second phase |
-| **P2** | Nice-to-have, future enhancement |
-
----
-
-## MODULE 1: INVENTORY MANAGEMENT
-
-### CU-01: Register Item in Inventory [TODO] - P0
-
-**Primary Actor:** Store Employee
-**Pre-conditions:** Employee authenticated, Consignment exists
-
-**Main Flow:**
-1. Employee navigates to consignment and selects "Add Item"
-2. System displays registration form
-3. Employee fills in:
-   - Name/description
-   - Brand (select from catalog)
-   - Size
-   - Color
-   - Composition (fabric type)
-   - Item Condition (new, good, used, etc.)
-   - Tags/categories
-   - Evaluated value (price)
-4. System auto-generates identification number: `{SupplierInitial}{YYYYMM}{Sequence:0000}`
-5. System saves item linked to the consignment
-6. Item status is set to `Evaluated`
-
-**Alternative Flows:**
-- 3a. Brand doesn't exist: employee can use existing brand catalog
-- 4a. Monthly sequence resets at the beginning of each month
-
-**Post-conditions:** Item available in inventory with unique identification number
-
+| Simbolo | Significado |
+|---------|-------------|
+| **[DONE]** | Ja implementado no codigo atual |
+| **[TODO]** | Ainda nao implementado |
+| **P0** | Obrigatorio para MVP |
+| **P1** | Importante, segunda fase |
+| **P2** | Nice-to-have, melhoria futura |
 
 ---
 
-### CU-02: Search/Browse Inventory	[TODO] - P0
+## MODULO 1: GESTAO DE INVENTARIO
 
-**Primary Actor:** Employee/Manager
-**Pre-conditions:** User authenticated
+### CU-01: Registar Peca no Inventario [TODO] - P0
 
-**Main Flow:**
-1. User accesses items list
-2. System displays items with filters:
-   - Item name (text search)
-   - Price range (min/max)
-   - Size
-   - Brand
-   - Color
-   - Supplier name
-   - Consignment date range
-3. User applies desired filters
-4. System returns paginated results with: name, brand, size, price, status, supplier
-5. User can navigate pages
+**Ator Principal:** Funcionario da Loja
+**Pre-condicoes:** Funcionario autenticado, Rececao de pecas existe (CU-08)
 
----
+**Fluxo Principal:**
+1. Funcionario navega ate a rececao e seleciona "Avaliar Peca"
+2. Sistema apresenta formulario de avaliacao
+3. Funcionario preenche:
+   - Nome/descricao
+   - Marca (selecionar do catalogo)
+   - Tamanho
+   - Cor
+   - Composicao (tipo de tecido)
+   - Condicao da peca (Excelente, Muito Bom, Bom, Razoavel)
+   - Tags/categorias
+   - Valor avaliado (preco de venda)
+4. Sistema gera automaticamente numero de identificacao: `{InicialFornecedor}{YYYYMM}{Sequencia:0000}`
+5. Sistema guarda a peca associada a rececao/consignacao
+6. Estado da peca definido como `Avaliado (AV)`
 
-### CU-03: Update Item Price [TODO] - P0
+**Fluxos Alternativos:**
+- 3a. Marca nao existe: funcionario pode usar catalogo de marcas existente
+- 3b. Peca com defeito: funcionario marca como `Com Defeito (CD)` e regista motivo da recusa
+- 4a. Sequencia mensal reinicia no inicio de cada mes
 
-**Primary Actor:** Manager
-**Pre-conditions:** Item exists in system
+**Pos-condicoes:** Peca disponivel no inventario com numero de identificacao unico
 
-**Main Flow:**
-1. Manager finds item via search or consignment
-2. System displays item details
-3. Manager selects "Edit"
-4. Manager updates evaluated value and/or other attributes
-5. System saves changes with audit trail (UpdatedBy, UpdatedOn)
-
-**Business Rules:**
-- RN-01: If item is consigned, commission must be recalculated on sale
-- RN-02: Price changes above X% should require manager approval [TODO]
-- RN-03: Price history should be maintained [TODO]
-
+**Nota:** Este caso de uso e executado durante a Etapa 2 (Avaliacao), SEM o cliente presente.
 
 ---
 
-### CU-04: Transfer Item Between Stores [TODO] - P2
+### CU-02: Pesquisar/Consultar Inventario [TODO] - P0
 
-**Primary Actor:** Manager
-**Pre-conditions:** Multi-store system active
+**Ator Principal:** Funcionario/Gestor
+**Pre-condicoes:** Utilizador autenticado
 
-**Main Flow:**
-1. Manager selects item(s) for transfer
-2. System displays available stores
-3. Manager selects destination store
-4. System generates transfer note
-5. Origin store employee confirms shipment
-6. Destination store employee confirms receipt
-7. System updates inventory for both stores
-
-**Dependencies:** Multi-store support (Module 8)
-
----
-
-### CU-05: Delete/Remove Item [TODO] - P0
-
-**Primary Actor:** Manager/Employee
-**Pre-conditions:** Item exists, not yet sold
-
-**Main Flow:**
-1. User finds item
-2. User selects "Delete"
-3. System confirms deletion
-4. System performs soft-delete (sets IsDeleted flag)
-5. Item no longer appears in active inventory
+**Fluxo Principal:**
+1. Utilizador acede a lista de pecas
+2. Sistema apresenta pecas com filtros:
+   - Nome da peca (pesquisa texto)
+   - Faixa de preco (min/max)
+   - Tamanho
+   - Marca
+   - Cor
+   - Nome do fornecedor
+   - Intervalo de datas de consignacao
+   - Estado (Recebido, Avaliado, A Venda, Vendido, Com Defeito, Devolvido, Pago)
+   - Origem (Consignacao, Compra Propria)
+3. Utilizador aplica filtros desejados
+4. Sistema devolve resultados paginados com: nome, marca, tamanho, preco, estado, fornecedor, origem
+5. Utilizador pode navegar pelas paginas
 
 ---
 
-## MODULE 2: CONSIGNMENT MANAGEMENT
+### CU-03: Atualizar Preco da Peca [TODO] - P0
 
-### CU-06: Register Supplier/Consignor [TODO] - P0
+**Ator Principal:** Gestor
+**Pre-condicoes:** Peca existe no sistema
 
-**Primary Actor:** Employee
-**Pre-conditions:** Employee authenticated
+**Fluxo Principal:**
+1. Gestor encontra peca via pesquisa ou consignacao
+2. Sistema apresenta detalhes da peca
+3. Gestor seleciona "Editar"
+4. Gestor atualiza valor avaliado e/ou outros atributos
+5. Sistema guarda alteracoes com registo de auditoria (AlteradoPor, AlteradoEm)
 
-**Main Flow:**
-1. Employee selects "New Supplier"
-2. System displays registration form
-3. Employee fills in:
-   - Name
+**Regras de Negocio:**
+- RN-01: Se peca e consignada, comissao deve ser recalculada na venda
+- RN-02: Alteracoes de preco acima de X% devem exigir aprovacao do gestor [TODO]
+- RN-03: Historico de precos deve ser mantido [TODO]
+
+---
+
+### CU-05: Eliminar/Remover Peca [TODO] - P0
+
+**Ator Principal:** Gestor/Funcionario
+**Pre-condicoes:** Peca existe, ainda nao vendida
+
+**Fluxo Principal:**
+1. Utilizador encontra a peca
+2. Utilizador seleciona "Eliminar"
+3. Sistema solicita confirmacao
+4. Sistema executa soft-delete (define flag IsDeleted)
+5. Peca deixa de aparecer no inventario ativo
+
+---
+
+### CU-06: Registar Peca de Compra Propria [TODO] - P0
+
+**Ator Principal:** Funcionario/Gestor
+**Pre-condicoes:** Utilizador autenticado
+
+**Fluxo Principal:**
+1. Funcionario seleciona "Nova Peca - Compra Propria"
+2. Sistema apresenta formulario de registo
+3. Funcionario preenche:
+   - Nome/descricao
+   - Marca
+   - Tamanho
+   - Cor
+   - Composicao
+   - Condicao
+   - Preco de custo (quanto a loja pagou)
+   - Preco de venda
+   - Origem da compra (Humana, Vinted, H&M, Acervo Pessoal, Outro)
+4. Sistema gera numero de identificacao
+5. Sistema guarda peca com tipo `Compra Propria`
+6. Estado definido como `A Venda (DL)`
+
+**Pos-condicoes:** Peca disponivel no inventario para venda. Nao ha comissao a pagar - lucro total e da loja.
+
+**Nota:** A Oui Circular tem um modelo misto: vende pecas consignadas E pecas compradas diretamente (Humana, Vinted, H&M, acervo pessoal).
+
+---
+
+## MODULO 2: GESTAO DE CONSIGNACAO
+
+### CU-07: Registar Fornecedor/Consignante [TODO] - P0
+
+**Ator Principal:** Funcionario
+**Pre-condicoes:** Funcionario autenticado
+
+**Fluxo Principal:**
+1. Funcionario seleciona "Novo Fornecedor"
+2. Sistema apresenta formulario de registo
+3. Funcionario preenche:
+   - Nome
    - Email
-   - Phone Number
-   - Initial (letter for item ID generation)
-   - Commission percentage in cash
-   - Commission percentage in products/store credit
-4. System generates supplier code
-5. System saves supplier
+   - Telefone (+351 XXX XXX XXX)
+   - NIF (opcional)
+   - Inicial (letra para geracao de ID das pecas)
+4. Sistema gera codigo do fornecedor
+5. Sistema guarda fornecedor
+
+**Regras de Negocio:**
+- Comissoes sao fixas para todos os fornecedores da Oui Circular:
+  - 40% do valor de venda em dinheiro para o fornecedor (loja fica 60%)
+  - 50% do valor de venda em credito em loja para o fornecedor (loja fica 50%)
 
 ---
 
-### CU-07: Create Consignment (Receive Items) [TODO] - P0
+### CU-08: Rececao de Pecas (Etapa 1 - Contagem) [TODO] - P0
 
-**Primary Actor:** Employee
-**Pre-conditions:** Supplier registered
+**Ator Principal:** Funcionario
+**Pre-condicoes:** Funcionario autenticado
 
-**Main Flow:**
-1. Employee selects "New Consignment"
-2. Employee selects or creates supplier
-3. System displays consignment form
-4. Employee sets consignment date
-5. Employee adds items one by one (uses CU-01)
-6. For each item: name, brand, size, color, condition, price
-7. System auto-generates identification numbers
-8. Employee finalizes consignment
+**Fluxo Principal:**
+1. Cliente chega a loja com saco/bolsa de roupas
+2. Funcionario seleciona "Nova Rececao"
+3. Funcionario pesquisa ou seleciona fornecedor existente
+4. Se cliente novo: funcionario regista fornecedor (CU-07)
+5. Funcionario CONTA as pecas recebidas (sem avaliar)
+6. Funcionario introduz a quantidade de pecas no sistema
+7. Sistema regista a rececao com:
+   - Nome do cliente/fornecedor
+   - Data de rececao
+   - Quantidade de pecas recebidas
+   - Estado: `Recebido`
+8. Sistema gera RECIBO DE RECECAO (PDF) contendo:
+   - Nome do cliente
+   - Data de rececao
+   - Numero do recibo (ex: REC-2026-0045)
+   - Quantidade de pecas recebidas
+   - **SEM valores** (pecas ainda nao foram avaliadas)
+   - Termos de comissao (40% dinheiro / 50% credito)
+   - Campo para assinatura do cliente
+   - Campo para assinatura da loja
+9. Funcionario imprime o recibo
+10. Cliente assina o recibo
+11. Cliente vai embora
 
-**Alternative Flows:**
-- 7a. Generate consignment contract/receipt PDF [TODO]
-- 7b. Set consignment expiry date [TODO]
+**Fluxos Alternativos:**
+- 4a. Cliente ja registado: funcionario seleciona do catalogo
+- 8a. Falha na impressao: sistema permite reimprimir recibo
 
-**Business Rules:**
-- RN-03: Default consignment period: 60 days [TODO]
-- RN-04: After expiry, system alerts for renewal or return [TODO]
+**Pos-condicoes:** Pecas registadas como "Recebido", aguardando avaliacao. Cliente ja saiu da loja.
 
-
-
----
-
-### CU-08: Search Consignments [TODO] - P0
-
-**Primary Actor:** Employee/Manager
-
-**Main Flow:**
-1. User accesses consignment list
-2. System displays paginated list with search
-3. User can view consignment details including all items
-4. User can navigate to edit consignment
-
----
-
-### CU-09: Process Consignment Settlement [TODO] - P1
-
-**Primary Actor:** Finance Staff
-**Pre-conditions:** Consigned items have been sold
-
-**Main Flow:**
-1. System lists sold items pending payment, grouped by supplier
-2. Finance staff selects supplier and period
-3. System calculates:
-   - Total sales value
-   - Store commission amount
-   - Net amount payable to supplier
-4. System generates detailed report per item
-5. Finance staff selects payment method:
-   - Cash payment (uses cash commission percentage)
-   - Store credit (uses product commission percentage)
-6. Finance staff confirms payment
-7. System records payment and sends receipt to supplier (email/SMS)
-8. System updates items status to "consignment settled"
-
-**Business Rules:**
-- RN-05: Different commission rates for cash vs. store credit payments
-- RN-06: Settlement minimum threshold (optional)
-- RN-07: Settlement report must list each item with sale date, price, and commission
+**IMPORTANTE:** A avaliacao NAO acontece neste momento. O cliente NAO fica a esperar. A contagem e rapida e o cliente assina apenas a confirmacao de entrega.
 
 ---
 
-### CU-10: Return Unsold Items to Supplier [TODO] - P1
+### CU-09: Avaliar Pecas (Etapa 2 - Avaliacao) [TODO] - P0
 
-**Primary Actor:** Employee
-**Pre-conditions:** Consignment period expired
+**Ator Principal:** Funcionario
+**Pre-condicoes:** Rececao existe com pecas no estado "Recebido"
 
-**Main Flow:**
-1. System alerts about items with expired consignment period
-2. Employee selects items for return
-3. System generates return receipt
-4. Employee contacts supplier for pickup
-5. Upon pickup confirmation, system removes items from inventory
-6. System updates status to "Returned"
+**Fluxo Principal:**
+1. Funcionario acede a lista de rececoes pendentes de avaliacao
+2. Funcionario seleciona uma rececao
+3. Sistema apresenta os dados da rececao (fornecedor, data, quantidade)
+4. Para cada peca do lote, funcionario:
+   a. Inspeciona a condicao (Excelente, Muito Bom, Bom, Razoavel)
+   b. Identifica marca, tamanho, cor, composicao
+   c. Define o valor de venda (preco avaliado)
+   d. Regista no sistema (usa CU-01)
+   e. Sistema gera numero de identificacao automaticamente
+5. Pecas aprovadas recebem estado `Avaliado (AV)`
+6. Pecas com defeito ou sem condicao de venda:
+   a. Funcionario marca como `Com Defeito (CD)`
+   b. Funcionario regista o motivo (mancha, fecho partido, desgaste, etc.)
+   c. Pecas separadas para devolucao
+7. Funcionario finaliza avaliacao do lote
 
-**Business Rules:**
-- RN-08: Items past X days trigger automatic return notification
-- RN-09: Return receipt must list all returned items with original values
+**Pos-condicoes:** Todas as pecas do lote avaliadas. Pecas aprovadas com estado "Avaliado". Pecas com defeito com estado "Com Defeito". Sistema pronto para enviar email ao cliente (CU-10).
 
----
-
-## MODULE 3: POINT OF SALE (POS/CASH REGISTER)
-
-### CU-11: Open Cash Register [TODO] - P0
-
-**Primary Actor:** Cashier
-**Pre-conditions:** Cashier authenticated
-
-**Main Flow:**
-1. Cashier logs into POS
-2. System requests opening cash amount (float)
-3. Cashier enters cash amount in register
-4. System records opening with date/time and cashier identity
-5. System enables POS for sales transactions
-
-**Business Rules:**
-- RN-10: Only one open register per cashier at a time
-- RN-11: Opening amount must be recorded for reconciliation
+**Nota:** Esta etapa acontece POSTERIORMENTE, sem o cliente presente. Pode ser horas ou dias apos a rececao.
 
 ---
 
-### CU-12: Process Sale [TODO] - P0
+### CU-10: Enviar Email de Avaliacao (Etapa 3 - Comunicacao) [TODO] - P0
 
-**Primary Actor:** Cashier
-**Pre-conditions:** Cash register open
+**Ator Principal:** Funcionario / Sistema
+**Pre-condicoes:** Avaliacao de todas as pecas de uma rececao concluida (CU-09)
 
-**Main Flow:**
-1. Cashier scans item barcode or searches manually
-2. System displays item details and price
-3. Cashier adds item to cart
-4. Repeat steps 1-3 for additional items
-5. Cashier finalizes sale
-6. System displays total
-7. Customer selects payment method:
-   - Cash
-   - Credit/Debit card
-   - PIX (instant payment)
-   - Mixed (split between methods)
-8. Cashier processes payment
-9. System removes items from inventory
-10. System generates receipt
-11. System prints receipt
+**Fluxo Principal:**
+1. Apos conclusao da avaliacao, sistema gera resumo:
+   - Lista de pecas aceites com respetivos valores de venda
+   - Lista de pecas recusadas com motivos
+   - Totais (quantidade aceite, quantidade recusada, valor total potencial)
+   - Comissoes aplicaveis (40% dinheiro / 50% credito)
+2. Funcionario revisa o resumo
+3. Funcionario seleciona "Enviar Email ao Cliente"
+4. Sistema envia email ao fornecedor/cliente com:
+   - Saudacao personalizada
+   - Lista de pecas aceites (codigo, descricao, condicao, valor)
+   - Lista de pecas recusadas (descricao, motivo da recusa)
+   - Informacao sobre levantamento de pecas recusadas
+   - Comissoes (ex: "Se todas vendidas, recebe EUR X em dinheiro ou EUR Y em credito")
+5. Sistema regista que email foi enviado (data/hora)
 
-**Alternative Flows:**
-- 4a. Apply discount: cashier enters percentage/value (subject to RN-12)
-- 4b. Apply promotional coupon: system validates and applies
-- 7a. Split payment: customer divides across two payment methods
-- 9a. Consigned items: system records sale for commission calculation
+**Fluxos Alternativos:**
+- 3a. Funcionario ajusta valores antes de enviar
+- 4a. Email falha: sistema notifica funcionario para reenviar ou contactar por telefone
+- 5a. Cliente responde com objecoes: funcionario ajusta valores e reenvia
 
-**Business Rules:**
-- RN-12: Discounts above X% require manager authorization
-- RN-13: Sales above R$10,000 require customer CPF registration
-- RN-14: Each sold consigned item must be tracked for supplier settlement
+**Pos-condicoes:** Cliente informado sobre avaliacao. Apos confirmacao do cliente, pecas passam a estado "A Venda (DL)".
 
----
+**Modelo de Email:**
+```
+Assunto: Oui Circular - Avaliacao das suas pecas
 
-### CU-13: Process Exchange/Return [TODO] - P1
+Ola [Nome],
 
-**Primary Actor:** Cashier
-**Pre-conditions:** Original sale in system, within return period
+Concluimos a avaliacao das [X] pecas que nos entregou em [DD/MM/YYYY].
 
-**Main Flow:**
-1. Customer presents receipt/proof of purchase
-2. Cashier finds sale in system
-3. System displays sale items
-4. Cashier selects item for exchange/return
-5. Customer chooses:
-   - Exchange for another item
-   - Store credit
-6. If exchange: cashier creates new sale with original value as discount
-7. If store credit: system generates credit voucher
-8. System returns item to inventory (if in sellable condition)
+PECAS ACEITES ([N]):
+| Cod  | Descricao              | Condicao  | Valor  |
+|------|------------------------|-----------|--------|
+| AC150| Vestido midi estampado | Excelente | 18,00 EUR |
+| ...  | ...                    | ...       | ...    |
+| TOTAL|                        |           | XX,XX EUR |
 
-**Business Rules:**
-- RN-15: Exchange period: 7 days for defective items, 30 days for store credit
-- RN-16: Returned consigned items revert to "Available" status
-- RN-17: Exchange value cannot exceed original sale price without additional payment
+PECAS RECUSADAS ([M]):
+- [Descricao]: [motivo]
+- [Descricao]: [motivo]
 
----
+As pecas recusadas ficam disponiveis para levantamento na loja.
 
-### CU-14: Close Cash Register [TODO] - P0
+Caso as pecas sejam vendidas, recebera:
+- 40% em dinheiro (XX,XX EUR se todas vendidas)
+- OU 50% em credito em loja (XX,XX EUR se todas vendidas)
 
-**Primary Actor:** Cashier
-**Pre-conditions:** Cash register open
+Alguma questao, nao hesite em contactar-nos.
 
-**Main Flow:**
-1. Cashier selects "Close Register"
-2. System displays summary:
-   - Sales count
-   - Total by payment method (cash, card, PIX)
-   - Expected cash amount
-3. Cashier counts physical cash and enters amount
-4. System compares counted vs. expected
-5. If discrepancy exists, cashier provides justification
-6. System generates closing report
-7. Manager approves closing
-8. System locks register for new sales
+Com os melhores cumprimentos,
+Oui Circular
+```
 
 ---
 
-## MODULE 4: REPORTS & BUSINESS INTELLIGENCE
+### CU-11: Criar Consignacao (Fluxo Completo) [TODO] - P0
 
-### CU-15: Sales Report [TODO] - P1
+**Ator Principal:** Funcionario
+**Pre-condicoes:** Fornecedor registado
 
-**Primary Actor:** Manager/Owner
+**Fluxo Principal:**
+Este caso de uso descreve o fluxo completo de consignacao, que e composto por 3 etapas sequenciais:
 
-**Main Flow:**
-1. User accesses reports module
-2. User selects filters: period, store, category, salesperson
-3. System generates report:
-   - Total revenue
-   - Average ticket value
-   - Top selling items/categories/brands
-   - Payment method breakdown
-   - Comparison with previous period
-4. User can export as PDF/Excel or view as dashboard
+1. **Etapa 1 - Rececao (CU-08):**
+   - Cliente chega com pecas
+   - Funcionario conta as pecas (sem avaliar)
+   - Se cliente novo, regista fornecedor (CU-07)
+   - Imprime recibo de rececao (sem valores)
+   - Cliente assina e vai embora
 
----
+2. **Etapa 2 - Avaliacao (CU-09):**
+   - Posteriormente, sem o cliente presente
+   - Funcionario avalia cada peca: condicao, marca, tamanho, cor, preco
+   - Pecas com defeito separadas para devolucao
+   - Pecas aprovadas recebem estado "Avaliado"
 
-### CU-16: Inventory Rotation Analysis [TODO] - P1
+3. **Etapa 3 - Comunicacao (CU-10):**
+   - Sistema/funcionario envia email ao cliente
+   - Email contem: pecas aceites + valores, pecas recusadas + motivos, comissoes
+   - Apos confirmacao do cliente, pecas passam a "A Venda"
 
-**Primary Actor:** Manager
+**Lifecycle de Estado:**
+```
+Recebido --> Avaliado --> A Venda (DL) --> Vendido (VD) --> Pago (PG)
+                |                            |
+           Com Defeito (CD)              Devolvido (DV)
+                |
+           Devolvido (DV)
+```
 
-**Main Flow:**
-1. Manager accesses inventory analytics
-2. System displays:
-   - Average time in stock by category
-   - Items stagnant for more than X days
-   - Inventory turnover rate
-   - Aging distribution chart
-3. System suggests actions:
-   - Promotional pricing for stagnant items
-   - Return to supplier for expired consignments
-4. Manager can generate action lists
-
----
-
-### CU-17: Executive Dashboard [TODO] - P1
-
-**Primary Actor:** Owner/Director
-
-**Main Flow:**
-1. User accesses dashboard
-2. System displays real-time KPIs:
-   - Daily/monthly revenue
-   - Current inventory value
-   - Pending supplier commissions
-   - Sales by channel (physical vs. online)
-   - Period-over-period comparison
-   - Top 5 categories and brands
-   - Consignment intake rate
-   - Customer acquisition metrics
+**Regras de Negocio:**
+- RN-03: Periodo de consignacao padrao: 60 dias [TODO]
+- RN-04: Apos expiracao, sistema alerta para renovacao ou devolucao [TODO]
+- RN-05: Comissoes fixas: 40% dinheiro / 50% credito para o fornecedor
 
 ---
 
-## MODULE 5: OMNICHANNEL INTEGRATION
+### CU-12: Pesquisar Consignacoes [TODO] - P0
 
-### CU-18: Sync Inventory with E-commerce [TODO] - P2
+**Ator Principal:** Funcionario/Gestor
 
-**Primary Actor:** System (automated)
-
-**Main Flow:**
-1. System monitors inventory changes (new item, sale, price change)
-2. System automatically syncs with e-commerce platform
-3. If item sold online, system removes from physical inventory
-4. System notifies staff for packaging and shipping
-
----
-
-### CU-19: Publish Item to Marketplace [TODO] - P2
-
-**Primary Actor:** E-commerce Operator
-
-**Main Flow:**
-1. Operator selects items for marketplace listing
-2. System validates photos and descriptions (per marketplace standards)
-3. Operator adjusts description/photos if needed
-4. System publishes to integrated marketplaces (OLX, Enjoei, etc.)
-5. System monitors inquiries and messages
-6. When sold, system updates local inventory
+**Fluxo Principal:**
+1. Utilizador acede a lista de consignacoes/rececoes
+2. Sistema apresenta lista paginada com pesquisa
+3. Filtros disponiveis:
+   - Nome do fornecedor
+   - Data de rececao
+   - Estado (Pendente avaliacao, Avaliado, Em venda, etc.)
+4. Utilizador pode ver detalhes da consignacao incluindo todas as pecas
+5. Utilizador pode navegar para editar consignacao
 
 ---
 
-## MODULE 6: CUSTOMER & LOYALTY
+### CU-13: Processar Acerto de Consignacao [TODO] - P1
 
-### CU-20: Register Customer [TODO] - P2
+**Ator Principal:** Gestor/Proprietario
+**Pre-condicoes:** Pecas consignadas foram vendidas
 
-**Primary Actor:** Cashier
+**Fluxo Principal:**
+1. Sistema lista pecas vendidas pendentes de pagamento, agrupadas por fornecedor
+2. Gestor seleciona fornecedor e periodo
+3. Sistema calcula:
+   - Valor total de vendas
+   - Montante da comissao da loja
+   - Montante liquido a pagar ao fornecedor
+4. Sistema gera relatorio detalhado por peca
+5. Gestor seleciona metodo de pagamento:
+   - **Pagamento em dinheiro:** Fornecedor recebe 40% do valor de venda (loja fica 60%)
+   - **Credito em loja:** Fornecedor recebe 50% do valor de venda como credito (loja fica 50%)
+6. Gestor confirma pagamento
+7. Sistema regista pagamento e envia comprovativo ao fornecedor (via WhatsApp)
+8. Sistema atualiza estado das pecas para `Pago (PG)`
 
-**Main Flow:**
-1. Customer agrees to join loyalty program
-2. Cashier registers: name, CPF, phone, email, birth date
-3. System generates loyalty card (physical or digital)
-4. System records preferences (sizes, favorite brands)
+**Exemplo de Calculo:**
+```
+Peca vendida a 20,00 EUR:
+- Opcao Dinheiro:  Fornecedor recebe 8,00 EUR  | Loja fica 12,00 EUR
+- Opcao Credito:   Fornecedor recebe 10,00 EUR (credito) | Loja fica 10,00 EUR
+```
 
----
-
-### CU-21: Accumulate Loyalty Points [TODO] - P2
-
-**Primary Actor:** System (automated)
-
-**Main Flow:**
-1. At sale completion, system identifies customer
-2. System calculates points (e.g., 1 point per R$10 spent)
-3. System credits points to customer account
-4. System notifies customer via SMS/email about accumulated points
-5. Points can be redeemed for discounts on future purchases
-
----
-
-## MODULE 7: ADMINISTRATION & CONFIGURATION
-
-### CU-22: Manage Users and Permissions [TODO] - P0
-
-**Primary Actor:** Administrator
-
-**Main Flow:**
-1. Admin creates user (employee)
-2. Admin defines role: Cashier, Manager, Finance, Admin
-3. System assigns permissions per role:
-   - **Cashier:** POS operations, basic inventory view
-   - **Manager:** Full inventory, pricing, reports, POS
-   - **Finance:** Settlement, payments, financial reports
-   - **Admin:** Full system access, user management
-4. Admin can customize specific permissions per user
-
-**Current Implementation:**
-- Firebase Authentication exists
-- Role-based permissions: NOT yet implemented (all users have same access)
+**Regras de Negocio:**
+- RN-05: Comissoes fixas: 40% dinheiro / 50% credito em loja para o fornecedor
+- RN-06: Limite minimo de acerto (opcional): 10,00 EUR
+- RN-07: Relatorio de acerto deve listar cada peca com data de venda, preco e comissao
+- RN-08: Comunicacao de acertos feita via WhatsApp
 
 ---
 
-### CU-23: Configure System Parameters [TODO] - P1
+### CU-14: Devolver Pecas ao Fornecedor [TODO] - P1
 
-**Primary Actor:** Administrator
+**Ator Principal:** Funcionario
+**Pre-condicoes:** Pecas com estado "Com Defeito" ou periodo de consignacao expirado
 
-**Main Flow:**
-1. Admin accesses system configuration
-2. Admin can set:
-   - Default consignment period (days)
-   - Default commission percentages
-   - Maximum discount without authorization
-   - Loyalty points conversion rate
-   - Store information (name, address, CNPJ)
-   - Receipt/invoice templates
-   - Fiscal integration settings
-3. System saves configuration
-4. Changes take effect immediately
+**Fluxo Principal:**
+1. Sistema alerta sobre pecas com defeito pendentes de devolucao ou consignacoes expiradas
+2. Funcionario seleciona pecas para devolucao
+3. Sistema gera guia de devolucao
+4. Funcionario contacta fornecedor para levantamento (email ou WhatsApp)
+5. Apos confirmacao de levantamento, sistema remove pecas do inventario
+6. Sistema atualiza estado para `Devolvido (DV)`
+
+**Regras de Negocio:**
+- RN-09: Pecas com defeito identificadas na avaliacao sao imediatamente separadas
+- RN-10: Pecas nao vendidas apos 60 dias geram notificacao automatica de devolucao
+- RN-11: Guia de devolucao deve listar todas as pecas devolvidas com valores originais
+
+---
+
+## MODULO 3: PONTO DE VENDA (POS/CAIXA)
+
+### CU-15: Abrir Caixa [TODO] - P0
+
+**Ator Principal:** Operador de Caixa
+**Pre-condicoes:** Operador autenticado
+
+**Fluxo Principal:**
+1. Operador inicia sessao no POS
+2. Sistema solicita montante de abertura (fundo de caixa)
+3. Operador introduz montante em caixa
+4. Sistema regista abertura com data/hora e identidade do operador
+5. Sistema habilita POS para transacoes de venda
+
+**Regras de Negocio:**
+- RN-12: Apenas uma caixa aberta por operador de cada vez
+- RN-13: Montante de abertura deve ser registado para reconciliacao
+
+---
+
+### CU-16: Processar Venda [TODO] - P0
+
+**Ator Principal:** Operador de Caixa
+**Pre-condicoes:** Caixa aberta
+
+**Fluxo Principal:**
+1. Operador pesquisa peca por codigo de barras ou pesquisa manual
+2. Sistema apresenta detalhes e preco da peca
+3. Operador adiciona peca ao carrinho
+4. Repetir passos 1-3 para pecas adicionais
+5. Operador finaliza venda
+6. Sistema apresenta total
+7. Cliente seleciona metodo de pagamento:
+   - Dinheiro
+   - Cartao de Credito
+   - Cartao de Debito
+   - MBWAY
+   - Credito em Loja
+   - Misto (dividir entre metodos)
+8. Operador processa pagamento
+9. Sistema remove pecas do inventario disponivel
+10. Sistema gera recibo
+11. Sistema imprime recibo
+
+**Fluxos Alternativos:**
+- 4a. Aplicar desconto: operador introduz percentagem/valor (sujeito a RN-14)
+- 4b. Aplicar cupao promocional: sistema valida e aplica
+- 7a. Pagamento dividido: cliente divide entre dois metodos de pagamento
+- 9a. Pecas consignadas: sistema regista venda para calculo de comissao
+- 9b. Pecas de compra propria: lucro total e da loja (sem comissao)
+
+**Regras de Negocio:**
+- RN-14: Descontos acima de X% exigem autorizacao do gestor
+- RN-15: Cada peca consignada vendida deve ser rastreada para acerto com fornecedor
+- RN-16: Pecas de compra propria nao geram comissao
+
+---
+
+### CU-17: Processar Troca/Devolucao [TODO] - P1
+
+**Ator Principal:** Operador de Caixa
+**Pre-condicoes:** Venda original no sistema, dentro do periodo de devolucao
+
+**Fluxo Principal:**
+1. Cliente apresenta recibo/comprovativo de compra
+2. Operador encontra venda no sistema
+3. Sistema apresenta pecas da venda
+4. Operador seleciona peca para troca/devolucao
+5. Cliente escolhe:
+   - Trocar por outra peca
+   - Credito em loja
+6. Se troca: operador cria nova venda com valor original como desconto
+7. Se credito em loja: sistema gera vale de credito
+8. Sistema devolve peca ao inventario (se em condicao vendavel)
+
+**Regras de Negocio:**
+- RN-17: Periodo de troca: 7 dias para pecas com defeito, 30 dias para credito em loja
+- RN-18: Pecas consignadas devolvidas regressam ao estado "A Venda"
+- RN-19: Valor de troca nao pode exceder preco de venda original sem pagamento adicional
+- RN-20: Nao ha reembolsos em dinheiro - apenas troca ou credito em loja
+
+---
+
+### CU-18: Fechar Caixa [TODO] - P0
+
+**Ator Principal:** Operador de Caixa
+**Pre-condicoes:** Caixa aberta
+
+**Fluxo Principal:**
+1. Operador seleciona "Fechar Caixa"
+2. Sistema apresenta resumo:
+   - Numero de vendas
+   - Total por metodo de pagamento (dinheiro, cartao, MBWAY, credito)
+   - Montante esperado em dinheiro
+3. Operador conta dinheiro fisico e introduz montante
+4. Sistema compara montante contado vs. esperado
+5. Se existir discrepancia, operador fornece justificacao
+6. Sistema gera relatorio de fecho
+7. Gestor aprova fecho
+8. Sistema bloqueia caixa para novas vendas
+
+---
+
+## MODULO 4: RELATORIOS E BUSINESS INTELLIGENCE
+
+### CU-19: Relatorio de Vendas [TODO] - P1
+
+**Ator Principal:** Gestor/Proprietario
+
+**Fluxo Principal:**
+1. Utilizador acede ao modulo de relatorios
+2. Utilizador seleciona filtros: periodo, loja, categoria, vendedor
+3. Sistema gera relatorio:
+   - Receita total
+   - Valor medio de ticket
+   - Pecas mais vendidas por categoria/marca
+   - Desagregacao por metodo de pagamento (dinheiro, cartao, MBWAY, credito)
+   - Comparacao com periodo anterior
+   - Receita de pecas consignadas vs. pecas de compra propria
+4. Utilizador pode exportar como PDF/Excel ou ver em dashboard
+
+---
+
+### CU-20: Analise de Rotacao de Inventario [TODO] - P1
+
+**Ator Principal:** Gestor
+
+**Fluxo Principal:**
+1. Gestor acede a analitica de inventario
+2. Sistema apresenta:
+   - Tempo medio em stock por categoria
+   - Pecas estagnadas ha mais de X dias
+   - Taxa de rotacao de inventario
+   - Grafico de envelhecimento do stock
+   - Desagregacao por origem (consignacao vs. compra propria)
+3. Sistema sugere acoes:
+   - Precos promocionais para pecas estagnadas
+   - Devolucao ao fornecedor para consignacoes expiradas
+4. Gestor pode gerar listas de acao
+
+---
+
+### CU-21: Dashboard Executivo [TODO] - P1
+
+**Ator Principal:** Proprietario
+
+**Fluxo Principal:**
+1. Utilizador acede ao dashboard
+2. Sistema apresenta KPIs em tempo real:
+   - Receita diaria/mensal
+   - Valor atual do inventario
+   - Comissoes pendentes a fornecedores
+   - Vendas por canal (loja fisica, online)
+   - Comparacao periodo-a-periodo
+   - Top 5 categorias e marcas
+   - Taxa de entrada de consignacoes
+   - Metricas de aquisicao de clientes
+   - Margem de lucro (consignacao vs. compra propria)
+   - Pecas pendentes de avaliacao (recebidas mas nao avaliadas)
+
+---
+
+## MODULO 5: INTEGRACAO OMNICANAL
+
+### CU-22: Sincronizar Inventario com E-commerce [TODO] - P2
+
+**Ator Principal:** Sistema (automatizado)
+
+**Fluxo Principal:**
+1. Sistema monitoriza alteracoes no inventario (nova peca, venda, alteracao de preco)
+2. Sistema sincroniza automaticamente com plataforma de e-commerce
+3. Se peca vendida online, sistema remove do inventario fisico
+4. Sistema notifica funcionarios para embalagem e envio
+
+---
+
+### CU-23: Publicar Peca em Marketplace [TODO] - P2
+
+**Ator Principal:** Operador de E-commerce
+
+**Fluxo Principal:**
+1. Operador seleciona pecas para publicacao no marketplace
+2. Sistema valida fotos e descricoes (conforme padroes do marketplace)
+3. Operador ajusta descricao/fotos se necessario
+4. Sistema publica nos marketplaces integrados (Vinted, Instagram)
+5. Sistema monitoriza consultas e mensagens
+6. Quando vendida, sistema atualiza inventario local
+
+**Nota:** A publicacao online e desejada logo apos a avaliacao (Etapa 2), potencialmente antes da confirmacao formal do cliente.
+
+---
+
+## MODULO 6: CLIENTE E FIDELIZACAO
+
+### CU-24: Registar Cliente Comprador [TODO] - P2
+
+**Ator Principal:** Operador de Caixa
+
+**Fluxo Principal:**
+1. Cliente aceita aderir ao programa de fidelizacao
+2. Operador regista: nome, NIF (opcional), telefone, email, data de nascimento
+3. Sistema gera cartao de fidelizacao (fisico ou digital)
+4. Sistema regista preferencias (tamanhos, marcas favoritas)
+
+---
+
+### CU-25: Acumular Pontos de Fidelizacao [TODO] - P2
+
+**Ator Principal:** Sistema (automatizado)
+
+**Fluxo Principal:**
+1. Ao concluir venda, sistema identifica cliente
+2. Sistema calcula pontos (ex: 1 ponto por cada 10,00 EUR gastos)
+3. Sistema credita pontos na conta do cliente
+4. Sistema notifica cliente via email/SMS sobre pontos acumulados
+5. Pontos podem ser trocados por descontos em compras futuras
+
+---
+
+## MODULO 7: ADMINISTRACAO E CONFIGURACAO
+
+### CU-26: Gerir Utilizadores e Permissoes [TODO] - P0
+
+**Ator Principal:** Administrador
+
+**Fluxo Principal:**
+1. Admin cria utilizador (funcionario)
+2. Admin define perfil: Operador de Caixa, Gestor, Financeiro, Admin
+3. Sistema atribui permissoes por perfil:
+   - **Operador de Caixa:** Operacoes POS, visualizacao basica de inventario
+   - **Gestor:** Inventario completo, precos, relatorios, POS, avaliacoes, rececoes
+   - **Financeiro:** Acertos, pagamentos, relatorios financeiros
+   - **Admin:** Acesso total, gestao de utilizadores
+4. Admin pode personalizar permissoes especificas por utilizador
+
+**Implementacao Atual:**
+- Firebase Authentication existe
+- Permissoes baseadas em perfis: AINDA NAO implementado (todos os utilizadores tem o mesmo acesso)
+
+---
+
+### CU-27: Configurar Parametros do Sistema [TODO] - P1
+
+**Ator Principal:** Administrador
+
+**Fluxo Principal:**
+1. Admin acede a configuracao do sistema
+2. Admin pode definir:
+   - Periodo de consignacao padrao (dias)
+   - Comissoes padrao (atualmente fixas: 40% dinheiro / 50% credito)
+   - Desconto maximo sem autorizacao
+   - Taxa de conversao de pontos de fidelizacao
+   - Informacao da loja (nome, morada, NIF)
+   - Modelos de recibos e faturas
+   - Configuracoes de email (SMTP para envio de avaliacoes)
+   - Integracao WhatsApp (para comunicacao de acertos)
+3. Sistema guarda configuracao
+4. Alteracoes entram em vigor imediatamente
+
+---
+
+## RESUMO DE STATUS DO LIFECYCLE
+
+```
+Recebido --> Avaliado (AV) --> A Venda (DL) --> Vendido (VD) --> Pago (PG)
+                  |                                |
+             Com Defeito (CD)                 Devolvido (DV)
+                  |
+             Devolvido (DV)
+```
+
+| Codigo | Estado | Descricao | Quando |
+|--------|--------|-----------|--------|
+| -- | Recebido | Peca recebida, contada, aguardando avaliacao | Etapa 1 (com cliente) |
+| **AV** | Avaliado | Peca avaliada com preco definido | Etapa 2 (sem cliente) |
+| **CD** | Com Defeito | Peca recusada por defeito, aguarda devolucao | Etapa 2 |
+| **DL** | A Venda | Peca exposta para venda na loja/online | Etapa 4 |
+| **VD** | Vendido | Peca vendida a um comprador | Etapa 5 |
+| **PG** | Pago | Acerto feito com o fornecedor | Etapa 6 |
+| **DV** | Devolvido | Peca devolvida ao fornecedor | Qualquer etapa |
+
+---
+
+## RESUMO DE COMISSOES (Oui Circular - Portugal)
+
+| Tipo de Pagamento | Fornecedor Recebe | Loja Fica |
+|-------------------|-------------------|-----------|
+| **Dinheiro** | **40%** do valor de venda | **60%** do valor de venda |
+| **Credito em Loja** | **50%** do valor de venda (como credito) | **50%** do valor de venda |
+
+---
+
+## METODOS DE PAGAMENTO ACEITES
+
+| Metodo | Descricao |
+|--------|-----------|
+| Dinheiro | Pagamento em numerario (EUR) |
+| Cartao de Credito | Via terminal POS |
+| Cartao de Debito | Via terminal POS |
+| MBWAY | Pagamento instantaneo via telemovel |
+| Credito em Loja | Saldo de credito do cliente (de acertos ou devolucoes) |
+
+---
+
+## MODELO MISTO DE AQUISICAO
+
+A Oui Circular opera com dois tipos de entrada de pecas:
+
+| Tipo | Descricao | Comissao | Exemplos |
+|------|-----------|----------|----------|
+| **Consignacao** | Pecas de fornecedores/clientes | 40% dinheiro / 50% credito para fornecedor | Clientes que trazem roupas |
+| **Compra Propria** | Pecas compradas pela loja | Sem comissao (lucro total da loja) | Humana, Vinted, H&M, acervo pessoal |

@@ -1,56 +1,109 @@
-# SHS - Business Rules Document
+# Oui Circular - Business Rules Document
 
 ## 1. Consignment Rules
 
 ### RN-CON-01: Item Identification Number Format
 - **Format:** `{SupplierInitial}{YYYYMM}{SequenceNumber:0000}`
-- **Example:** `MS202509001` (Supplier "Maria Silva", Sep 2025, item #001)
+- **Example:** `AF20260200001` (Supplier "Ana Ferreira", Feb 2026, item #001)
 - **Sequence resets** at the beginning of each calendar month
 - Sequence is per-supplier, per-month
-- **Already implemented** in `ConsignmentService.BuildIdentificationNumber()`
 
 ### RN-CON-02: Default Consignment Period
 - Standard consignment period: **60 days** from intake date
 - After expiry, system should:
   1. Generate alert for store manager
-  2. Notify supplier via email/SMS
+  2. Notify supplier via WhatsApp/email
   3. Allow options: renew (extend 30 days), return, or renegotiate
 
 ### RN-CON-03: Commission Rates
 - Each supplier has two commission rates:
-  - **Cash commission** (`CommissionPercentageInCash`): percentage the store keeps when paying supplier in cash
-  - **Product/Credit commission** (`CommissionPercentageInProducts`): percentage the store keeps when supplier takes store credit
-- Credit commission is typically lower (supplier gets more), incentivizing store credit
-- **Example:** 40% cash commission / 30% credit commission means:
-  - Item sold for R$100, cash payment: store keeps R$40, supplier gets R$60
-  - Item sold for R$100, credit payment: store keeps R$30, supplier gets R$70 in store credit
+  - **Cash commission** (`CommissionPercentageInCash`): the **client receives 40%** of the sale price; the store keeps **60%**
+  - **Credit commission** (`CommissionPercentageInCredit`): the **client receives 50%** of the sale price as store credit; the store keeps **50%**
+- Credit commission is higher for the client, incentivizing store credit over cash
+- **Example:** Item sold for **€20**:
+  - Cash payment: client receives **€8**, store keeps **€12**
+  - Credit payment: client receives **€10** in store credit, store keeps **€10**
 
 ### RN-CON-04: Consignment Status Lifecycle
 ```
-Evaluated ──► AwaitingAcceptance ──► ToSell ──► Sold
-                    │                   │
-                    ▼                   ▼
-                 Returned            Returned
+Recebido --> Avaliado --> A Venda --> Vendido --> Pago
+                |                       |
+           Com Defeito              Devolvido
+                |
+           Devolvido
 ```
-- **Evaluated (1):** Item received and priced by store
-- **AwaitingAcceptance (2):** Waiting for supplier to agree on price
-- **ToSell (3):** Approved and available in store for sale
-- **Sold (4):** Item was sold - triggers commission calculation
-- **Returned (5):** Item returned to supplier (unsold or rejected)
+- **Recebido (1):** Items received and counted; reception receipt signed by client; awaiting evaluation
+- **Avaliado (2):** Items evaluated and priced by the store
+- **ComDefeito (3):** Item rejected due to defect; awaiting return to supplier
+- **AVenda (4):** Item approved and available in store for sale
+- **Vendido (5):** Item was sold; triggers commission calculation
+- **Pago (6):** Settlement completed; supplier has been paid
+- **Devolvido (7):** Item returned to supplier (unsold, rejected, or end of consignment period)
 
-### RN-CON-05: Consignment Contract
-- A consignment contract must list all items with:
+### RN-CON-05: Reception Receipt
+- Generated automatically at item intake (**Etapa 1 - Recebido**)
+- **Format:** `REC-{YYYY}-{Seq:0000}` (e.g., `REC-2026-0042`)
+- Sequence is global and resets annually
+- Receipt contains:
+  - Client name
+  - Date of reception (dd/mm/yyyy)
+  - Quantity of items received
+  - **No values or prices** are listed on the reception receipt
+- Client must sign the receipt at the moment of drop-off
+- A copy is kept digitally; the original is given to the client
+
+### RN-CON-06: Evaluation Email
+- Sent to the client after the evaluation of all items is complete (**Etapa 2 - Avaliado**)
+- Email contains:
+  - List of **accepted items** with their evaluated values
+  - List of **rejected items** with the reason for rejection (e.g., defect, stain, wear)
+  - Statement of commission terms: **40% cash / 50% store credit**
+  - Instructions for how and when to collect rejected items
+- If no email is on file, the client is contacted via WhatsApp
+
+### RN-CON-07: Consignment Contract
+- A consignment contract must list all accepted items with:
   - Identification number
   - Description
   - Evaluated value
-  - Commission rate agreed
+  - Commission rate agreed (40% cash / 50% credit)
   - Consignment period
 - Both parties (store + supplier) must sign the contract
 - Contract serves as legal proof of consignment terms
 
 ---
 
-## 2. Pricing Rules
+## 2. Acquisition Model
+
+### RN-ACQ-01: Mixed Acquisition Model
+The store operates with three acquisition channels:
+
+1. **Consignment** - Items received from clients under consignment agreement
+   - Subject to commission rules (RN-CON-03)
+   - Tracked through the full status lifecycle (Recebido --> Pago)
+   - Supplier receives payment upon settlement
+
+2. **Own Purchase** - Items bought directly by the store from external sources (e.g., Humana, Vinted, feiras, other suppliers)
+   - **No commission** applies; the store owns the items outright
+   - Purchase cost is recorded for margin calculation
+   - Items enter inventory directly in status **AVenda**
+   - Tracked as store-owned in the system
+
+3. **Personal Collection** - Items from the store owner's personal wardrobe or collection
+   - **No commission** applies
+   - No purchase cost recorded
+   - Items enter inventory directly in status **AVenda**
+   - Flagged as owner items in the system
+
+### RN-ACQ-02: Acquisition Source Tracking
+- Every item in inventory must have an **acquisition type** recorded: `Consignment`, `OwnPurchase`, or `PersonalCollection`
+- For consignment items: linked to a supplier record
+- For own purchase items: source name and purchase cost recorded
+- For personal collection items: no additional data required
+
+---
+
+## 3. Pricing Rules
 
 ### RN-PRC-01: Price Change Authorization
 - Price reductions up to **20%** of original value: any manager can approve
@@ -58,7 +111,7 @@ Evaluated ──► AwaitingAcceptance ──► ToSell ──► Sold
 - All price changes must record: old price, new price, reason, who approved, when
 
 ### RN-PRC-02: Automatic Price Reduction (Suggested)
-Based on market practices (Peca Rara model):
+Based on market practices:
 - Items unsold for **30+ days:** suggest 10% price reduction
 - Items unsold for **45+ days:** suggest 20% price reduction
 - Items unsold for **60+ days:** suggest return to supplier or 30%+ reduction
@@ -71,7 +124,7 @@ Based on market practices (Peca Rara model):
 
 ---
 
-## 3. POS / Sales Rules
+## 4. POS / Sales Rules
 
 ### RN-POS-01: Cash Register Session
 - Each cashier can have only **one open register** at a time
@@ -86,32 +139,32 @@ Based on market practices (Peca Rara model):
 - Discount reason must be recorded
 
 ### RN-POS-03: Payment Methods
-- Accepted methods: Cash, Credit Card, Debit Card, PIX, Store Credit
+- Accepted methods: **Cash, Credit Card, Debit Card, MBWAY, Store Credit**
 - Split payment allowed: customer can combine up to 2 payment methods
 - Total of all payments must equal or exceed sale total
 - Change is only given for cash payments
 
 ### RN-POS-04: Sale Completion Effects
 When a sale is finalized:
-1. Each sold item's status changes to `Sold`
+1. Each sold item's status changes to `Vendido`
 2. Items are removed from available inventory
 3. For consigned items: sale is recorded for future commission settlement
-4. Receipt/cupom fiscal is generated
+4. Receipt is generated
 5. Cash register totals are updated
 6. If customer is registered: loyalty points are credited
 
 ### RN-POS-05: Sale Number Format
 - Format: `V{YYYYMMDD}-{DailySequence:000}`
-- Example: `V20250901-015` (15th sale on September 1, 2025)
+- Example: `V20260215-015` (15th sale on 15 February 2026)
 - Sequence resets daily
 
 ### RN-POS-06: Large Sale Requirements
-- Sales above **R$10,000:** customer CPF required for fiscal compliance
-- Sales above **R$5,000 in cash:** additional documentation may be required
+- Sales above **€1,000:** customer NIF required for invoicing compliance
+- Sales above **€500 in cash:** additional documentation may be required
 
 ---
 
-## 4. Return / Exchange Rules
+## 5. Return / Exchange Rules
 
 ### RN-RET-01: Return Policy
 - **Defective items:** exchange within 7 days of purchase
@@ -121,11 +174,11 @@ When a sale is finalized:
 
 ### RN-RET-02: Return Effects on Consignment
 - If a consigned item is returned:
-  - Item status reverts to `ToSell`
+  - Item status reverts to `AVenda`
   - Pending commission for that item is cancelled
   - If commission was already settled, adjustment is made in next settlement
 - If item is returned in non-sellable condition:
-  - Item status changes to `Returned`
+  - Item status changes to `Devolvido`
   - Loss is absorbed by the store (supplier not penalized)
 
 ### RN-RET-03: Store Credit
@@ -136,14 +189,14 @@ When a sale is finalized:
 
 ---
 
-## 5. Cash Register Closing Rules
+## 6. Cash Register Closing Rules
 
 ### RN-REG-01: Closing Reconciliation
 - System calculates expected cash: Opening float + Cash sales - Cash returns
 - Cashier counts and enters actual cash amount
-- Discrepancy threshold: up to **R$5.00** is acceptable (rounding)
-- Discrepancy above **R$5.00** requires written justification
-- Discrepancy above **R$50.00** triggers manager review
+- Discrepancy threshold: up to **€5.00** is acceptable (rounding)
+- Discrepancy above **€5.00** requires written justification
+- Discrepancy above **€50.00** triggers manager review
 
 ### RN-REG-02: Closing Report
 Closing report must include:
@@ -157,7 +210,7 @@ Closing report must include:
 
 ---
 
-## 6. Settlement Rules
+## 7. Settlement Rules
 
 ### RN-SET-01: Settlement Period
 - Default settlement cycle: **monthly** (1st to last day of month)
@@ -168,32 +221,37 @@ Closing report must include:
 For each sold consigned item:
 ```
 If PaymentType = Cash:
-    StoreCommission = SalePrice * CommissionPercentageInCash / 100
-    SupplierPayment = SalePrice - StoreCommission
+    ClientPayment = SalePrice * 40 / 100
+    StoreKeeps = SalePrice - ClientPayment
 
 If PaymentType = CreditInStore:
-    StoreCommission = SalePrice * CommissionPercentageInProducts / 100
-    SupplierCredit = SalePrice - StoreCommission
+    ClientCredit = SalePrice * 50 / 100
+    StoreKeeps = SalePrice - ClientCredit
 ```
 
 ### RN-SET-03: Settlement Minimum
-- Optional minimum settlement amount: **R$50.00**
+- Minimum settlement amount: **€20.00**
 - If supplier's pending amount is below minimum, rolls over to next period
 - Supplier can request immediate settlement regardless of minimum
 
-### RN-SET-04: Settlement Report
+### RN-SET-04: Settlement Communication
+- Suppliers are notified of pending settlements via **WhatsApp**
+- Settlement summary includes: items sold, amounts, commission breakdown
+- Supplier confirms preferred payment method (cash or store credit)
+
+### RN-SET-05: Settlement Report
 Settlement receipt must include:
-- Supplier name and ID
+- Supplier name and NIF
 - Period covered
 - List of sold items (ID, name, sale date, sale price)
 - Commission rate and amount per item
-- Total sales, total commission, net payable
-- Payment method (cash or store credit)
+- Total sales, total commission, net payable to supplier
+- Payment method (cash, MBWAY, or store credit)
 - Signature fields for both parties
 
 ---
 
-## 7. Inventory Rules
+## 8. Inventory Rules
 
 ### RN-INV-01: Item Uniqueness
 - Each item is unique (no SKU-based quantity tracking)
@@ -201,13 +259,13 @@ Settlement receipt must include:
 - Item cannot be in two places at once (inventory integrity)
 
 ### RN-INV-02: Mandatory Item Attributes
-- **Required:** Name, Evaluated Value, Brand
+- **Required:** Name, Evaluated Value, Brand, Acquisition Type
 - **Recommended:** Size, Color, Condition, Composition
 - **Optional:** Tags, Photos, Notes
 
 ### RN-INV-03: Item Archival
-- Sold items are not deleted - they remain in the database with `Sold` status
-- Returned items are kept with `Returned` status
+- Sold items are not deleted - they remain in the database with `Vendido` status
+- Returned items are kept with `Devolvido` status
 - Soft-deleted items are kept for audit purposes
 - Data is retained for minimum **5 years** for fiscal compliance
 
@@ -219,7 +277,7 @@ Settlement receipt must include:
 
 ---
 
-## 8. User Roles & Permissions
+## 9. User Roles & Permissions
 
 ### RN-USR-01: Role Definitions
 
@@ -250,15 +308,15 @@ Settlement receipt must include:
 
 ---
 
-## 9. Loyalty Program Rules (Future)
+## 10. Loyalty Program Rules (Future)
 
 ### RN-LOY-01: Points Accumulation
-- **1 point per R$10 spent** (configurable)
+- **1 point per €5 spent** (configurable)
 - Points are credited after sale completion
 - Voided/returned sales: points are deducted
 
 ### RN-LOY-02: Points Redemption
-- **100 points = R$10 discount** (configurable)
+- **100 points = €5 discount** (configurable)
 - Points can be partially redeemed
 - Minimum redemption: 50 points
 - Points expire after **12 months** of inactivity
@@ -270,19 +328,49 @@ Settlement receipt must include:
 
 ---
 
-## 10. Fiscal Rules (Brazil-specific)
+## 11. Fiscal Rules (Portugal)
 
-### RN-FIS-01: Document Emission
-- Every sale must generate a fiscal document (NF-e or NFC-e)
-- Store must have CNPJ registered
-- Integration with SEFAZ required for production environment
+### RN-FIS-01: Invoicing Requirements
+- Every sale must generate a fiscal document compliant with Portuguese invoicing law (faturacao certificada)
+- Store must have NIF (Numero de Identificacao Fiscal) registered
+- Invoicing software must be certified by AT (Autoridade Tributaria e Aduaneira)
 
 ### RN-FIS-02: Tax Compliance
-- ICMS calculation based on state regulations
-- SIMPLES Nacional tax regime for small businesses
-- Records must be retained for minimum 5 years
+- IVA (Imposto sobre o Valor Acrescentado) calculation based on applicable rates:
+  - Standard rate: **23%**
+  - Intermediate rate: **13%**
+  - Reduced rate: **6%**
+- Second-hand goods may be subject to the **margin scheme** (Regime da Margem de Lucro) for IVA purposes
+- Records must be retained for minimum **5 years** for fiscal compliance
 
 ### RN-FIS-03: Consignment Tax Treatment
-- Consigned goods have specific tax treatment
+- Consigned goods have specific tax treatment under Portuguese law
 - Commission income is the taxable base for the store
 - Supplier payments are not revenue for the store
+- NIF of the supplier must be recorded for all consignment agreements
+
+### RN-FIS-04: Customer NIF
+- Customer NIF is requested for all sales but only **mandatory for sales above €1,000** or when the customer requests an invoice with NIF
+- NIF format: 9 digits (e.g., 123456789)
+- NIF validation: check digit must be verified
+
+---
+
+## 12. Data & Communication Formats (Portugal)
+
+### RN-FMT-01: Currency
+- All monetary values are in **Euro (€)**
+- Format: `€XX.XX` or `XX,XX €` depending on context
+- Decimal separator: comma (,)
+- Thousands separator: period (.)
+
+### RN-FMT-02: Contact Information
+- Phone format: **+351 XXX XXX XXX**
+- NIF format: 9 digits, no separators
+- Date format: **dd/mm/yyyy**
+
+### RN-FMT-03: Communication Channels
+- Primary client communication: **WhatsApp**
+- Secondary: email
+- Settlement notifications: WhatsApp
+- Evaluation notifications: email (with WhatsApp fallback)
