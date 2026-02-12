@@ -1,14 +1,20 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { from, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
-  const token = auth.getStoredToken();
-  if (token) {
-    req = req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` }
-    });
-  }
-  return next(req);
+
+  // Get Firebase ID token asynchronously
+  return from(auth.getIdToken()).pipe(
+    switchMap((token) => {
+      if (token) {
+        req = req.clone({
+          setHeaders: { Authorization: `Bearer ${token}` },
+        });
+      }
+      return next(req);
+    })
+  );
 };
