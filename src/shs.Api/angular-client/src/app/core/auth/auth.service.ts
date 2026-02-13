@@ -151,6 +151,8 @@ export class AuthService {
   }
 
   async getIdToken(): Promise<string | null> {
+    // Wait for Firebase Auth to finish restoring the session on page refresh
+    await this.auth.authStateReady();
     const user = this.auth.currentUser;
     if (!user) return null;
     try {

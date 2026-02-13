@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using shs.Api.Auth;
+using shs.Api.Consignment;
 using shs.Api.Inventory;
 using shs.Infrastructure;
 using shs.Infrastructure.Database;
@@ -49,6 +50,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors();
+app.UseStaticFiles(); // Serve wwwroot/uploads (item photos)
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -57,6 +59,8 @@ app.MapInventoryEndpoints();
 app.MapBrandEndpoints();
 app.MapCategoryEndpoints();
 app.MapTagEndpoints();
+app.MapSupplierEndpoints();
+app.MapConsignmentEndpoints();
 app.MapGet("/", () => Results.Ok("OUI System API is running."));
 
 app.Run();

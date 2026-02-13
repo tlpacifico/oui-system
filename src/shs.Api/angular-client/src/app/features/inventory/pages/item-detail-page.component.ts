@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ItemService } from '../services/item.service';
 import { Item, ItemPhoto, ItemStatus, ItemCondition } from '../../../core/models/item.model';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'oui-item-detail-page',
@@ -58,23 +59,68 @@ import { Item, ItemPhoto, ItemStatus, ItemCondition } from '../../../core/models
       <div class="detail-grid">
         <!-- Photos Card -->
         <div class="card">
-          <div class="card-title">Fotos</div>
+          <div class="card-title-row">
+            <span class="card-title">Fotos</span>
+            <span class="photo-count">{{ item()!.photos.length }}/10</span>
+          </div>
           @if (item()!.photos.length > 0) {
             <div class="main-photo">
-              <img [src]="selectedPhoto()?.filePath" [alt]="item()!.name" />
+              <img [src]="getPhotoUrl(selectedPhoto()?.filePath)" [alt]="item()!.name" />
+              <button
+                class="photo-delete-btn"
+                (click)="deletePhoto(selectedPhoto()!)"
+                [disabled]="deletingPhoto()"
+                title="Eliminar foto"
+              >{{ deletingPhoto() ? '...' : '✕' }}</button>
             </div>
             <div class="photo-thumbs">
               @for (photo of item()!.photos; track photo.externalId) {
-                <img
-                  [src]="photo.thumbnailPath || photo.filePath"
-                  [alt]="'Foto ' + photo.displayOrder"
-                  (click)="selectPhoto(photo)"
-                  [class.active]="selectedPhoto()?.externalId === photo.externalId"
-                />
+                <div class="thumb-wrapper" [class.active]="selectedPhoto()?.externalId === photo.externalId">
+                  <img
+                    [src]="getPhotoUrl(photo.thumbnailPath || photo.filePath)"
+                    [alt]="'Foto ' + photo.displayOrder"
+                    (click)="selectPhoto(photo)"
+                  />
+                  @if (photo.isPrimary) {
+                    <span class="primary-badge">★</span>
+                  }
+                </div>
               }
             </div>
           } @else {
             <div class="no-photos">Sem fotos disponíveis</div>
+          }
+
+          <!-- Upload zone -->
+          @if (item()!.photos.length < 10) {
+            <div
+              class="upload-zone"
+              [class.dragging]="isDragging()"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onDrop($event)"
+              (click)="fileInput.click()"
+            >
+              <input
+                #fileInput
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                style="display:none"
+                (change)="onFilesSelected($event)"
+              />
+              @if (uploading()) {
+                <span class="upload-text">A carregar...</span>
+              } @else {
+                <span class="upload-icon">📷</span>
+                <span class="upload-text">Arrastar fotos ou clicar para selecionar</span>
+                <span class="upload-hint">JPEG, PNG ou WebP · Máx. 10 MB</span>
+              }
+            </div>
+          }
+
+          @if (uploadError()) {
+            <div class="photo-error">{{ uploadError() }}</div>
           }
         </div>
 
@@ -287,24 +333,7 @@ import { Item, ItemPhoto, ItemStatus, ItemCondition } from '../../../core/models
       padding: 4px 0;
     }
 
-    .photo-thumbs img {
-      width: 64px;
-      height: 64px;
-      object-fit: cover;
-      border-radius: 8px;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.15s;
-      flex-shrink: 0;
-    }
-
-    .photo-thumbs img:hover {
-      border-color: #a5b4fc;
-    }
-
-    .photo-thumbs img.active {
-      border-color: #6366f1;
-    }
+    /* thumbnails handled by .thumb-wrapper */
 
     .no-photos {
       display: flex;
@@ -315,6 +344,137 @@ import { Item, ItemPhoto, ItemStatus, ItemCondition } from '../../../core/models
       font-size: 14px;
       background: #f1f5f9;
       border-radius: 8px;
+    }
+
+    .card-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .photo-count {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .main-photo {
+      position: relative;
+    }
+
+    .photo-delete-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .main-photo:hover .photo-delete-btn {
+      opacity: 1;
+    }
+
+    .photo-delete-btn:hover {
+      background: #ef4444;
+    }
+
+    .photo-delete-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .thumb-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .thumb-wrapper img {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .thumb-wrapper:hover img {
+      border-color: #a5b4fc;
+    }
+
+    .thumb-wrapper.active img {
+      border-color: #6366f1;
+    }
+
+    .primary-badge {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      font-size: 10px;
+      background: #6366f1;
+      color: white;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Upload zone ── */
+    .upload-zone {
+      margin-top: 16px;
+      padding: 24px;
+      border: 2px dashed #d1d5db;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+      background: #fafafa;
+    }
+
+    .upload-zone:hover, .upload-zone.dragging {
+      border-color: #6366f1;
+      background: #eef2ff;
+    }
+
+    .upload-icon { font-size: 24px; }
+
+    .upload-text {
+      font-size: 13px;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    .upload-hint {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .photo-error {
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
     }
 
     /* ── Info Section ── */
@@ -474,9 +634,15 @@ export class ItemDetailPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly itemService = inject(ItemService);
 
+  private readonly baseUrl = environment.apiUrl.replace('/api', '');
+
   item = signal<Item | null>(null);
   loading = signal(false);
   selectedPhoto = signal<ItemPhoto | null>(null);
+  uploading = signal(false);
+  deletingPhoto = signal(false);
+  uploadError = signal<string | null>(null);
+  isDragging = signal(false);
 
   ngOnInit(): void {
     const externalId = this.route.snapshot.paramMap.get('id');
@@ -561,5 +727,100 @@ export class ItemDetailPageComponent implements OnInit {
     if (days >= 60) return 'stat-days-danger';
     if (days >= 30) return 'stat-days-warning';
     return '';
+  }
+
+  getPhotoUrl(path?: string): string {
+    if (!path) return '';
+    return `${this.baseUrl}${path}`;
+  }
+
+  // ── Photo upload ──
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(true);
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      this.uploadFiles(Array.from(files));
+    }
+  }
+
+  onFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.uploadFiles(Array.from(input.files));
+      input.value = ''; // Reset so same file can be re-selected
+    }
+  }
+
+  private uploadFiles(files: File[]): void {
+    this.uploadError.set(null);
+
+    // Client-side validation
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024;
+
+    for (const file of files) {
+      if (!allowed.includes(file.type)) {
+        this.uploadError.set(`Tipo não suportado: ${file.name}. Use JPEG, PNG ou WebP.`);
+        return;
+      }
+      if (file.size > maxSize) {
+        this.uploadError.set(`Ficheiro demasiado grande: ${file.name}. Máximo 10 MB.`);
+        return;
+      }
+    }
+
+    const currentCount = this.item()?.photos.length ?? 0;
+    if (currentCount + files.length > 10) {
+      this.uploadError.set(`Máximo 10 fotos. Tem ${currentCount}, está a enviar ${files.length}.`);
+      return;
+    }
+
+    this.uploading.set(true);
+
+    this.itemService.uploadPhotos(this.item()!.externalId, files).subscribe({
+      next: (newPhotos) => {
+        this.uploading.set(false);
+        // Reload item to get updated photos
+        this.loadItem(this.item()!.externalId);
+      },
+      error: (err) => {
+        this.uploading.set(false);
+        this.uploadError.set(err.error?.error || 'Erro ao carregar fotos.');
+      }
+    });
+  }
+
+  deletePhoto(photo: ItemPhoto): void {
+    if (!confirm('Eliminar esta foto?')) return;
+
+    this.deletingPhoto.set(true);
+
+    this.itemService.deletePhoto(this.item()!.externalId, photo.externalId).subscribe({
+      next: () => {
+        this.deletingPhoto.set(false);
+        // Reload item to get updated photos
+        this.loadItem(this.item()!.externalId);
+      },
+      error: () => {
+        this.deletingPhoto.set(false);
+        this.uploadError.set('Erro ao eliminar foto.');
+      }
+    });
   }
 }

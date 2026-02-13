@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Item, ItemListItem, PagedResult } from '../../../core/models/item.model';
+import { Item, ItemListItem, PagedResult, CreateItemRequest, UpdateItemRequest } from '../../../core/models/item.model';
 import { environment } from '../../../../environments/environment';
 
 export interface ItemFilters {
@@ -33,7 +33,37 @@ export class ItemService {
     return this.http.get<Item>(`${this.apiUrl}/${externalId}`);
   }
 
+  createItem(data: CreateItemRequest): Observable<any> {
+    return this.http.post(this.apiUrl, data);
+  }
+
   createConsignmentItem(data: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/consignment`, data);
+  }
+
+  updateItem(externalId: string, data: UpdateItemRequest): Observable<Item> {
+    return this.http.put<Item>(`${this.apiUrl}/${externalId}`, data);
+  }
+
+  deleteItem(externalId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${externalId}`);
+  }
+
+  // ── Photo methods ──
+
+  uploadPhotos(itemExternalId: string, files: File[]): Observable<any[]> {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+    return this.http.post<any[]>(`${this.apiUrl}/${itemExternalId}/photos`, formData);
+  }
+
+  deletePhoto(itemExternalId: string, photoExternalId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${itemExternalId}/photos/${photoExternalId}`);
+  }
+
+  reorderPhotos(itemExternalId: string, photoExternalIds: string[]): Observable<any[]> {
+    return this.http.put<any[]>(`${this.apiUrl}/${itemExternalId}/photos/reorder`, {
+      photoExternalIds
+    });
   }
 }

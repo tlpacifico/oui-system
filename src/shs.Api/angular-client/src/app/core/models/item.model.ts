@@ -94,3 +94,36 @@ export interface PagedResult<T> {
   pageSize: number;
   totalPages: number;
 }
+
+export interface CreateItemRequest {
+  name: string;
+  description?: string;
+  brandExternalId: string;
+  categoryExternalId?: string;
+  size: string;
+  color: string;
+  composition?: string;
+  condition: string;
+  evaluatedPrice: number;
+  costPrice?: number;
+  acquisitionType: string;
+  origin: string;
+  supplierExternalId?: string;
+  commissionPercentage?: number;
+  tagExternalIds?: string[];
+}
+
+export interface UpdateItemRequest {
+  name: string;
+  description?: string;
+  brandExternalId: string;
+  categoryExternalId?: string;
+  size: string;
+  color: string;
+  composition?: string;
+  condition: string;
+  evaluatedPrice: number;
+  costPrice?: number;
+  commissionPercentage?: number;
+  tagExternalIds?: string[];
+}

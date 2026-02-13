@@ -1,6 +1,6 @@
 # Plano de Desenvolvimento - OUI System
 
-**Última atualização:** 2026-02-13 00:05
+**Última atualização:** 2026-02-13
 
 Referência: [10-AUTOMAKER-GUIDE.md](10-AUTOMAKER-GUIDE.md) (Kanban Cards e ordem de execução).
 
@@ -24,7 +24,7 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 | Fase | Descrição | Status |
 |------|-----------|--------|
 | **Fase 0** | Autenticação | ✅ Concluída |
-| **Fase 1** | Inventário & Consignações (M1 + M2) | 🔄 Próxima prioridade |
+| **Fase 1** | Inventário & Consignações (M1 + M2) | 🔄 Em progresso (M1 ✅, M2 pendente) |
 | **Fase 2** | POS (M3) | Pendente |
 | **Fase 3** | Financeiro (M4) | Pendente |
 | **Fase 4** | Reports & Dashboard (M5) | Pendente |
@@ -47,32 +47,33 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 | Card | Título | Status | Use Case | Notas |
 |------|--------|--------|----------|--------|
 | 1.1.1 | Inventário - Entidades & Banco de Dados | ✅ Concluído | Base | Entidades: Item, Brand, Category, Tag, ItemPhoto; enums (ItemStatus, ItemCondition, ItemOrigin); migração |
-| 1.1.2 | CU-01: Registar Peça no Inventário | Pendente | CU-01 | Backend: comando CreateConsignmentItem, validações, geração de ID automático |
-| 1.1.3 | CU-06: Registar Peça de Compra Própria | Pendente | CU-06 | Backend: comando CreateOwnPurchaseItem, sem comissão, origem (Humana, Vinted, etc.) |
-| 1.1.4 | CU-02: Pesquisar/Consultar Inventário | Pendente | CU-02 | Backend: Query com filtros (nome, marca, preço, tamanho, fornecedor, estado, origem) |
-| 1.1.5 | CU-03: Atualizar Preço da Peça | Pendente | CU-03 | Backend: comando UpdateItemPrice, auditoria de mudanças |
-| 1.1.6 | CU-05: Eliminar Peça | Pendente | CU-05 | Backend: soft-delete, validação (não pode estar vendida) |
-| 1.1.7 | Frontend - Lista de Peças | Pendente | CU-02 | Angular: página `/inventory/items` com filtros, tabela, paginação (PG-03) |
-| 1.1.8 | Frontend - Detalhe da Peça | Pendente | - | Angular: página `/inventory/items/:id` com todas as info (PG-04) |
-| 1.1.9 | Frontend - Cadastro/Edição de Peça | Pendente | CU-01, CU-06 | Angular: formulário `/inventory/items/:id/edit` (PG-05) |
+| 1.1.2 | CU-01: Registar Peça no Inventário | ✅ Concluído | CU-01 | Backend: `POST /api/inventory/items` e `POST /api/inventory/items/consignment`, validações, geração de ID automático |
+| 1.1.3 | CU-06: Registar Peça de Compra Própria | ✅ Concluído | CU-06 | Integrado no endpoint `POST /api/inventory/items` com AcquisitionType=OwnPurchase, sem comissão, origem (Humana, Vinted, etc.) |
+| 1.1.4 | CU-02: Pesquisar/Consultar Inventário | ✅ Concluído | CU-02 | Backend: `GET /api/inventory/items` com filtros (nome, marca, estado), paginação |
+| 1.1.5 | CU-03: Atualizar Preço da Peça | ✅ Concluído | CU-03 | Integrado no endpoint `PUT /api/inventory/items/{id}` |
+| 1.1.6 | CU-05: Eliminar Peça | ✅ Concluído | CU-05 | Backend: `DELETE /api/inventory/items/{id}` soft-delete, validação (não pode estar vendida) |
+| 1.1.7 | Frontend - Lista de Peças | ✅ Concluído | CU-02 | Angular: `/inventory/items` com filtros, tabela, paginação, badges de estado, alertas de dias em stock (PG-03) |
+| 1.1.8 | Frontend - Detalhe da Peça | ✅ Concluído | - | Angular: `/inventory/items/:id` com KPIs, galeria de fotos, info completa, tags, rejeição (PG-04) |
+| 1.1.9 | Frontend - Cadastro/Edição de Peça | ✅ Concluído | CU-01, CU-06 | Angular: `/inventory/items/new` e `/inventory/items/:id/edit` com formulário completo, dropdowns de marca/categoria/fornecedor/tags, validações client-side (PG-05) |
 | 1.1.10 | Gestão de Marcas | ✅ Concluído | - | Backend: CRUD `/api/brands`; Frontend: `/inventory/brands` com modal criar/editar/eliminar (PG-06) |
 | 1.1.11 | Gestão de Tags/Categorias | ✅ Concluído | - | Backend: CRUD `/api/categories` e `/api/tags`; Frontend: `/inventory/categories` (hierarquia) e `/inventory/tags` (grid com color picker) (PG-07) |
-| 1.1.12 | CU-07: Registar Fornecedor | 🔄 Próximo | CU-07 | Backend + Frontend: CRUD de fornecedores (PG-14) |
+| 1.1.12 | CU-07: Registar Fornecedor | ✅ Concluído | CU-07 | Backend: CRUD `/api/suppliers` com validações (NIF, telefone +351, inicial única); Frontend: `/inventory/suppliers` com modal criar/editar/eliminar (PG-14) |
+| 1.1.13 | Fotos de Itens (Upload/Gestão) | ✅ Concluído | - | Backend: `POST /api/inventory/items/{id}/photos` (upload multifile), `DELETE /photos/{photoId}`, `PUT /photos/reorder`; Ficheiros em `wwwroot/uploads/items/{id}/`; Frontend: drag & drop upload, eliminar, galeria no detalhe; Máx 10 fotos, 10 MB, JPEG/PNG/WebP |
 
 ### 1.2 - Gestão de Consignações (M2)
 
 | Card | Título | Status | Use Case | Notas |
 |------|--------|--------|----------|--------|
-| 1.2.1 | Consignação - Entidades & Banco de Dados | Pendente | Base | Entidades: Supplier, Reception, ConsignmentItem (já existe), Settlement; estados do fluxo |
-| 1.2.3 | CU-08: Recepção de Peças (Etapa 1) | Pendente | CU-08 | Backend: comando CreateReception, gerar recibo PDF, apenas contagem |
-| 1.2.4 | CU-09: Avaliar Peças (Etapa 2) | Pendente | CU-09 | Backend: avaliação individual de cada peça, marcar defeitos |
-| 1.2.5 | CU-10: Enviar Email de Avaliação (Etapa 3) | Pendente | CU-10 | Backend: template de email, lista aceites/recusadas, envio SMTP |
-| 1.2.6 | Frontend - Lista de Fornecedores | Pendente | - | Angular: `/suppliers` (PG-12) |
-| 1.2.7 | Frontend - Detalhe do Fornecedor | Pendente | - | Angular: `/suppliers/:id` com tabs (PG-13) |
-| 1.2.8 | Frontend - Recepção de Peças | Pendente | CU-08 | Angular: `/consignments/receive` (PG-10) |
-| 1.2.9 | Frontend - Avaliações Pendentes | Pendente | - | Angular: `/consignments/pending-evaluations` (PG-NEW-1) |
-| 1.2.10 | Frontend - Avaliar Recepção | Pendente | CU-09, CU-10 | Angular: `/consignments/:id/evaluate` (PG-NEW-2) |
-| 1.2.11 | Frontend - Detalhe da Consignação | Pendente | - | Angular: `/consignments/:id` (PG-11) |
+| 1.2.1 | Consignação - Entidades & Banco de Dados | ✅ Concluído | Base | Entidades Supplier, Reception, Item já existem; enums ReceptionStatus; migração AddInventoryEntities |
+| 1.2.3 | CU-08: Recepção de Peças (Etapa 1) | ✅ Concluído | CU-08 | Backend: `POST /api/consignments/receptions` (criar), `GET` (listar/detalhe), recibo HTML imprimível; Frontend: `/consignments/receptions` (lista) e `/consignments/receive` (formulário) |
+| 1.2.4 | CU-09: Avaliar Peças (Etapa 2) | ✅ Concluído | CU-09 | Backend: `POST /receptions/{id}/items` (adicionar item), `GET /receptions/{id}/items` (listar), `DELETE /receptions/{id}/items/{itemId}` (remover), `PUT /receptions/{id}/complete-evaluation` (concluir); Frontend: `/consignments/receptions/:id/evaluate` (formulário de avaliação individual) |
+| 1.2.5 | CU-10: Enviar Email de Avaliação (Etapa 3) | ✅ Concluído | CU-10 | Backend: `IEmailService` + `EmailService` (MailKit/SMTP), template HTML profissional com peças aceites/recusadas, envio automático ao concluir avaliação, `POST /receptions/{id}/send-evaluation-email` para reenvio; Frontend: botão enviar/reenviar email na página de avaliação; Config `Smtp` em `appsettings.json` |
+| 1.2.6 | Frontend - Lista de Fornecedores | ✅ Concluído | - | Angular: `/inventory/suppliers` com CRUD, pesquisa, modal criar/editar/eliminar, link para detalhe (PG-12) |
+| 1.2.7 | Frontend - Detalhe do Fornecedor | ✅ Concluído | - | Angular: `/inventory/suppliers/:id` com tabs Info/Itens/Recepções, KPIs, paginação de itens (PG-13); Backend: `GET /api/suppliers/{id}/items` e `/receptions` |
+| 1.2.8 | Frontend - Recepção de Peças | ✅ Concluído | CU-08 | Angular: `/consignments/receive` (PG-10), `/consignments/receptions` (lista), sidebar atualizado |
+| 1.2.9 | Frontend - Avaliações Pendentes | ✅ Concluído | - | Angular: `/consignments/pending-evaluations` com cards de progresso, sidebar atualizado (PG-NEW-1) |
+| 1.2.10 | Frontend - Avaliar Recepção | ✅ Concluído | CU-09, CU-10 | Angular: `/consignments/receptions/:id/evaluate` com formulário por peça, barra de progresso, aceitar/rejeitar, concluir avaliação (PG-NEW-2) |
+| 1.2.11 | Frontend - Detalhe da Consignação | 🔄 Próximo | - | Angular: `/consignments/:id` (PG-11) |
 | 1.2.12 | CU-14: Devolver Peças ao Fornecedor | Pendente | CU-14 | Backend + Frontend: `/consignments/returns` (PG-15) |
 
 **Ordem recomendada de implementação:**
@@ -170,35 +171,27 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 3. **Card 1.1.11 - Gestão de Tags/Categorias**
    - Backend + Frontend: CRUD de categorias e tags (PG-07)
 
-4. **Card 1.1.12 - CU-07: Registar Fornecedor**
-   - Backend: CRUD de fornecedores
-   - Validações: NIF português, telefone +351, inicial única
-   - Endpoints: `/api/suppliers`
-   - Pré-requisito para registar peças de consignação
+4. **Card 1.1.12 - CU-07: Registar Fornecedor** ✅
+   - Backend: CRUD `/api/suppliers` com validações (NIF português mod 11, telefone +351XXXXXXXXX, inicial única)
+   - Frontend: `/inventory/suppliers` com modal criar/editar/eliminar
+   - Sidebar atualizado com link ativo para Fornecedores
 
-5. **Card 1.1.2 - CU-01: Registar Peça (Consignação)**
-   - Backend: comando `CreateConsignmentItemCommand`
+5. **Card 1.1.2 - CU-01: Registar Peça (Consignação)** ✅
+   - Backend: `POST /api/inventory/items` (geral) e `POST /api/inventory/items/consignment` (via recepção)
    - Validações: nome, marca obrigatória, preço > 0
-   - Geração automática de ID: `{Inicial}{YYYYMM}{Sequência:0000}`
-   - Endpoint: `POST /api/inventory/items/consignment`
+   - Geração automática de ID: `{Inicial}{YYYYMM}-{Sequência:0000}`
 
-6. **Card 1.1.7 - Frontend: Lista de Peças**
-   - Angular: página `/inventory/items` (PG-03)
-   - Tabela com foto, ID, nome, marca, tamanho, preço, estado
-   - Filtros básicos (pesquisa por texto, marca, estado)
-   - Paginação (20 itens por página)
+6. **Card 1.1.7 - Frontend: Lista de Peças** ✅
+   - Angular: `/inventory/items` com filtros, tabela, paginação, badges, alertas de dias
 
-7. **Card 1.1.8 - Frontend: Detalhe da Peça**
-   - Angular: página `/inventory/items/:id` (PG-04)
-   - Mostrar todas as informações da peça
-   - Galeria de fotos
-   - Histórico de alterações
+7. **Card 1.1.8 - Frontend: Detalhe da Peça** ✅
+   - Angular: `/inventory/items/:id` com KPIs, fotos, info completa, tags
 
-8. **Card 1.1.9 - Frontend: Cadastro/Edição de Peça**
-   - Angular: formulário `/inventory/items/:id/edit` (PG-05)
-   - Formulário completo com todos os campos
-   - Upload de fotos
-   - Validações client-side
+8. **Card 1.1.9 - Frontend: Cadastro/Edição de Peça** ✅
+   - Angular: `/inventory/items/new` (criar) e `/inventory/items/:id/edit` (editar)
+   - Formulário com dropdowns de marca, categoria, fornecedor, tags
+   - Suporte para Consignação e Compra Própria
+   - Backend: `PUT /api/inventory/items/{id}` e `DELETE /api/inventory/items/{id}` adicionados
 
 #### Sprint 2: Consignações & Recepção
 
@@ -214,27 +207,29 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 11. **Card 1.2.7 - Frontend: Detalhe do Fornecedor**
     - Angular: `/suppliers/:id` com tabs (PG-13)
 
-12. **Card 1.2.8 - CU-08: Recepção de Peças (Etapa 1)**
-   - Backend: comando `CreateReceptionCommand`
-   - Gerar recibo PDF (sem valores)
-   - Endpoint: `POST /api/consignments/receive`
-   - Frontend: `/consignments/receive` (PG-10)
+12. **Card 1.2.3 + 1.2.8 - CU-08: Recepção de Peças (Etapa 1)** ✅
+   - Backend: `POST /api/consignments/receptions` (criar recepção), `GET` (listar com filtros e paginação, detalhe, recibo HTML)
+   - Frontend: `/consignments/receive` (formulário com seleção de fornecedor, contagem, notas) e `/consignments/receptions` (lista com filtros)
+   - Recibo imprimível em HTML (sem valores, apenas contagem, assinaturas)
+   - Sidebar atualizado com links para Recepções e Nova Recepção
 
 #### Sprint 3: Fluxo de Avaliação
 
-13. **Card 1.2.9 - Frontend: Avaliações Pendentes**
+13. **Card 1.2.9 - Frontend: Avaliações Pendentes** ✅
     - Angular: `/consignments/pending-evaluations` (PG-NEW-1)
-    - Lista de recepções aguardando avaliação
+    - Cards com info do fornecedor, contagem, barra de progresso, link para avaliar
 
-14. **Card 1.2.4 - CU-09: Avaliar Peças (Etapa 2)**
-    - Backend: avaliação individual de peças
-    - Marcar defeitos
-    - Endpoint: `PUT /api/consignments/{id}/evaluate`
+14. **Card 1.2.4 - CU-09: Avaliar Peças (Etapa 2)** ✅
+    - Backend: `POST /api/consignments/receptions/{id}/items` (adicionar item avaliado)
+    - `GET /api/consignments/receptions/{id}/items` (listar itens avaliados)
+    - `DELETE /api/consignments/receptions/{id}/items/{itemId}` (remover item)
+    - `PUT /api/consignments/receptions/{id}/complete-evaluation` (concluir, muda status para Evaluated, itens aceites → ToSell)
 
-15. **Card 1.2.10 - Frontend: Avaliar Recepção**
-    - Angular: `/consignments/:id/evaluate` (PG-NEW-2)
-    - Formulário para avaliar cada peça
-    - Opção "Com Defeito"
+15. **Card 1.2.10 - Frontend: Avaliar Recepção** ✅
+    - Angular: `/consignments/receptions/:id/evaluate` (PG-NEW-2)
+    - Barra de progresso, tabela de itens avaliados, formulário inline para cada peça
+    - Aceitar ou rejeitar (com motivo), remover item, concluir avaliação
+    - Sidebar atualizado com link "Avaliações Pendentes"
 
 16. **Card 1.2.5 - CU-10: Enviar Email de Avaliação**
     - Backend: template de email

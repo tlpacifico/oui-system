@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ItemService } from '../services/item.service';
 import { ItemListItem, ItemStatus } from '../../../core/models/item.model';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'oui-item-list-page',
@@ -78,7 +79,7 @@ import { ItemListItem, ItemStatus } from '../../../core/models/item.model';
                   <td>
                     <div class="item-thumb">
                       @if (item.primaryPhotoUrl) {
-                        <img [src]="item.primaryPhotoUrl" [alt]="item.name" />
+                        <img [src]="getPhotoUrl(item.primaryPhotoUrl)" [alt]="item.name" />
                       } @else {
                         <span class="thumb-empty">📷</span>
                       }
@@ -434,6 +435,7 @@ import { ItemListItem, ItemStatus } from '../../../core/models/item.model';
 })
 export class ItemListPageComponent implements OnInit {
   private readonly itemService = inject(ItemService);
+  private readonly baseUrl = environment.apiUrl.replace('/api', '');
 
   items = signal<ItemListItem[]>([]);
   loading = signal(false);
@@ -558,5 +560,10 @@ export class ItemListPageComponent implements OnInit {
     if (item.daysInStock >= 60) return 'danger';
     if (item.daysInStock >= 30) return 'warning';
     return '';
+  }
+
+  getPhotoUrl(path?: string): string {
+    if (!path) return '';
+    return `${this.baseUrl}${path}`;
   }
 }

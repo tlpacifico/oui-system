@@ -19,6 +19,10 @@ public static class InfrastructureServiceCollection
         // Register services
         services.AddScoped<IItemIdGeneratorService, ItemIdGeneratorService>();
 
+        // Email service
+        services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
+        services.AddScoped<IEmailService, EmailService>();
+
         return services;
     }
 }
