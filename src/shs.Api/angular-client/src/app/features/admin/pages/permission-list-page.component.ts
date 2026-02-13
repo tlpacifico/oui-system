@@ -22,21 +22,21 @@ import { Permission } from '../../../core/models/permission.model';
         <input
           type="text"
           placeholder="Pesquisar permissões..."
-          [(ngModel)]="searchText"
-          (ngModelChange)="onSearchChange()"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event); onSearchChange()"
           class="filter-input filter-search"
         />
         <select
           class="filter-select"
-          [(ngModel)]="selectedCategory"
-          (ngModelChange)="onCategoryChange()"
+          [ngModel]="selectedCategory()"
+          (ngModelChange)="selectedCategory.set($event); onCategoryChange()"
         >
           <option value="">Todas as categorias</option>
           @for (category of categories(); track category) {
             <option [value]="category">{{ category }}</option>
           }
         </select>
-        @if (searchText || selectedCategory) {
+        @if (searchText() || selectedCategory()) {
           <button class="btn btn-outline btn-sm" (click)="clearFilters()">Limpar</button>
         }
       </div>

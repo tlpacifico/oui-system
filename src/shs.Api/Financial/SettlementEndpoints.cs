@@ -1,0 +1,564 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using shs.Api.Authorization;
+using shs.Domain.Entities;
+using shs.Domain.Enums;
+using shs.Infrastructure.Database;
+
+namespace shs.Api.Financial;
+
+public static class SettlementEndpoints
+{
+    public static void MapSettlementEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/settlements").WithTags("Settlements");
+
+        group.MapGet("/pending-items", GetPendingSettlementItems)
+            .RequirePermission("reports.view");
+
+        group.MapPost("/calculate", CalculateSettlement)
+            .RequirePermission("reports.view");
+
+        group.MapPost("/", CreateSettlement)
+            .RequirePermission("reports.view");
+
+        group.MapGet("/", GetSettlements)
+            .RequirePermission("reports.view");
+
+        group.MapGet("/{externalId:guid}", GetSettlementById)
+            .RequirePermission("reports.view");
+
+        group.MapPost("/{externalId:guid}/process-payment", ProcessPayment)
+            .RequirePermission("reports.view");
+
+        group.MapDelete("/{externalId:guid}", CancelSettlement)
+            .RequirePermission("reports.view");
+    }
+
+    // Get items pending settlement grouped by supplier
+    private static async Task<IResult> GetPendingSettlementItems(
+        ShsDbContext db,
+        [FromQuery] long? supplierId,
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate,
+        CancellationToken ct)
+    {
+        var query = db.Items
+            .Include(i => i.Supplier)
+            .Include(i => i.Brand)
+            .Where(i => !i.IsDeleted &&
+                       i.Status == ItemStatus.Sold &&
+                       i.AcquisitionType == AcquisitionType.Consignment &&
+                       i.SupplierId != null);
+
+        // Filter by supplier if provided
+        if (supplierId.HasValue)
+        {
+            query = query.Where(i => i.SupplierId == supplierId.Value);
+        }
+
+        // Filter by date range if provided
+        if (startDate.HasValue)
+        {
+            query = query.Where(i => i.UpdatedOn >= startDate.Value);
+        }
+
+        if (endDate.HasValue)
+        {
+            query = query.Where(i => i.UpdatedOn < endDate.Value.AddDays(1));
+        }
+
+        // Get items with their sale information
+        var items = await query
+            .Select(i => new
+            {
+                ItemId = i.Id,
+                i.ExternalId,
+                i.IdentificationNumber,
+                i.Name,
+                BrandName = i.Brand!.Name,
+                i.EvaluatedPrice,
+                i.FinalSalePrice,
+                i.CommissionPercentage,
+                i.CommissionAmount,
+                i.SupplierId,
+                SupplierName = i.Supplier!.Name,
+                SupplierInitial = i.Supplier.Initial,
+                i.UpdatedOn, // Sale date (when item was updated to Sold)
+                IsSettled = db.SaleItems.Any(si => si.ItemId == i.Id && si.SettlementId != null)
+            })
+            .Where(i => !i.IsSettled) // Only unsettled items
+            .ToListAsync(ct);
+
+        // Group by supplier
+        var groupedBySupplier = items
+            .GroupBy(i => new { i.SupplierId, i.SupplierName, i.SupplierInitial })
+            .Select(g => new
+            {
+                g.Key.SupplierId,
+                g.Key.SupplierName,
+                g.Key.SupplierInitial,
+                ItemCount = g.Count(),
+                TotalSalesAmount = g.Sum(i => i.FinalSalePrice ?? 0),
+                Items = g.OrderByDescending(i => i.UpdatedOn).ToList()
+            })
+            .OrderBy(g => g.SupplierName)
+            .ToList();
+
+        return Results.Ok(groupedBySupplier);
+    }
+
+    // Calculate settlement amounts before creating
+    private static async Task<IResult> CalculateSettlement(
+        ShsDbContext db,
+        [FromBody] CalculateSettlementRequest req,
+        CancellationToken ct)
+    {
+        // Get items to settle
+        var items = await db.Items
+            .Where(i => !i.IsDeleted &&
+                       i.Status == ItemStatus.Sold &&
+                       i.AcquisitionType == AcquisitionType.Consignment &&
+                       i.SupplierId == req.SupplierId &&
+                       i.UpdatedOn >= req.PeriodStart &&
+                       i.UpdatedOn < req.PeriodEnd.AddDays(1))
+            .Select(i => new
+            {
+                i.Id,
+                i.FinalSalePrice,
+                IsSettled = db.SaleItems.Any(si => si.ItemId == i.Id && si.SettlementId != null)
+            })
+            .Where(i => !i.IsSettled)
+            .ToListAsync(ct);
+
+        if (items.Count == 0)
+        {
+            return Results.BadRequest(new { error = "No items found for settlement in this period." });
+        }
+
+        var totalSalesAmount = items.Sum(i => i.FinalSalePrice ?? 0);
+
+        // Calculate for both payment methods
+        var cashCommission = 0.40m; // 40% to supplier, 60% to store
+        var creditCommission = 0.50m; // 50% to supplier, 50% to store
+
+        var cashCalculation = new
+        {
+            PaymentMethod = "Cash",
+            CommissionPercentage = cashCommission * 100,
+            NetAmountToSupplier = totalSalesAmount * cashCommission,
+            StoreCommissionAmount = totalSalesAmount * (1 - cashCommission)
+        };
+
+        var creditCalculation = new
+        {
+            PaymentMethod = "StoreCredit",
+            CommissionPercentage = creditCommission * 100,
+            NetAmountToSupplier = totalSalesAmount * creditCommission,
+            StoreCommissionAmount = totalSalesAmount * (1 - creditCommission)
+        };
+
+        return Results.Ok(new
+        {
+            SupplierId = req.SupplierId,
+            PeriodStart = req.PeriodStart,
+            PeriodEnd = req.PeriodEnd,
+            ItemCount = items.Count,
+            TotalSalesAmount = totalSalesAmount,
+            CashOption = cashCalculation,
+            StoreCreditOption = creditCalculation
+        });
+    }
+
+    // Create a settlement
+    private static async Task<IResult> CreateSettlement(
+        ShsDbContext db,
+        HttpContext httpContext,
+        [FromBody] CreateSettlementRequest req,
+        CancellationToken ct)
+    {
+        var userEmail = httpContext.User.GetUserEmail();
+
+        // Validate supplier exists
+        var supplier = await db.Suppliers.FindAsync([req.SupplierId], ct);
+        if (supplier == null)
+        {
+            return Results.BadRequest(new { error = "Supplier not found." });
+        }
+
+        // Get items to settle (sold, consignment, not yet settled)
+        var items = await db.Items
+            .Where(i => !i.IsDeleted &&
+                       i.Status == ItemStatus.Sold &&
+                       i.AcquisitionType == AcquisitionType.Consignment &&
+                       i.SupplierId == req.SupplierId &&
+                       i.UpdatedOn >= req.PeriodStart &&
+                       i.UpdatedOn < req.PeriodEnd.AddDays(1))
+            .Select(i => new { i.Id, i.FinalSalePrice })
+            .ToListAsync(ct);
+
+        // Filter out already settled items
+        var itemIds = items.Select(i => i.Id).ToList();
+        var alreadySettledIds = await db.SaleItems
+            .Where(si => itemIds.Contains(si.ItemId) && si.SettlementId != null)
+            .Select(si => si.ItemId)
+            .ToListAsync(ct);
+
+        items = items.Where(i => !alreadySettledIds.Contains(i.Id)).ToList();
+
+        if (items.Count == 0)
+        {
+            return Results.BadRequest(new { error = "No unsettled items found for this supplier in the specified period." });
+        }
+
+        var totalSalesAmount = items.Sum(i => i.FinalSalePrice ?? 0);
+        var commissionPercentage = req.PaymentMethod == SettlementPaymentMethod.Cash ? 0.40m : 0.50m;
+        var netAmountToSupplier = totalSalesAmount * commissionPercentage;
+        var storeCommissionAmount = totalSalesAmount * (1 - commissionPercentage);
+
+        var now = DateTime.UtcNow;
+        var settlement = new SettlementEntity
+        {
+            ExternalId = Guid.NewGuid(),
+            SupplierId = req.SupplierId,
+            PeriodStart = req.PeriodStart,
+            PeriodEnd = req.PeriodEnd,
+            TotalSalesAmount = totalSalesAmount,
+            CommissionPercentage = commissionPercentage * 100, // Store as percentage (40 or 50)
+            StoreCommissionAmount = storeCommissionAmount,
+            NetAmountToSupplier = netAmountToSupplier,
+            PaymentMethod = req.PaymentMethod,
+            Status = SettlementStatus.Pending,
+            Notes = req.Notes,
+            CreatedOn = now,
+            CreatedBy = userEmail
+        };
+
+        db.Settlements.Add(settlement);
+        await db.SaveChangesAsync(ct);
+
+        // Link sale items to this settlement
+        var saleItems = await db.SaleItems
+            .Where(si => itemIds.Contains(si.ItemId))
+            .ToListAsync(ct);
+
+        foreach (var saleItem in saleItems)
+        {
+            saleItem.SettlementId = settlement.Id;
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        return Results.Created($"/api/settlements/{settlement.ExternalId}", new
+        {
+            settlement.ExternalId,
+            settlement.SupplierId,
+            SupplierName = supplier.Name,
+            settlement.PeriodStart,
+            settlement.PeriodEnd,
+            settlement.TotalSalesAmount,
+            settlement.CommissionPercentage,
+            settlement.StoreCommissionAmount,
+            settlement.NetAmountToSupplier,
+            settlement.PaymentMethod,
+            settlement.Status,
+            ItemCount = items.Count,
+            settlement.Notes,
+            settlement.CreatedOn,
+            settlement.CreatedBy
+        });
+    }
+
+    // Get all settlements with filters
+    private static async Task<IResult> GetSettlements(
+        ShsDbContext db,
+        [FromQuery] long? supplierId,
+        [FromQuery] SettlementStatus? status,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var query = db.Settlements
+            .Include(s => s.Supplier)
+            .Where(s => !s.IsDeleted);
+
+        if (supplierId.HasValue)
+        {
+            query = query.Where(s => s.SupplierId == supplierId.Value);
+        }
+
+        if (status.HasValue)
+        {
+            query = query.Where(s => s.Status == status.Value);
+        }
+
+        var total = await query.CountAsync(ct);
+
+        var settlements = await query
+            .OrderByDescending(s => s.CreatedOn)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(s => new
+            {
+                s.ExternalId,
+                s.SupplierId,
+                SupplierName = s.Supplier.Name,
+                SupplierInitial = s.Supplier.Initial,
+                s.PeriodStart,
+                s.PeriodEnd,
+                s.TotalSalesAmount,
+                s.CommissionPercentage,
+                s.StoreCommissionAmount,
+                s.NetAmountToSupplier,
+                s.PaymentMethod,
+                s.Status,
+                ItemCount = s.SaleItems.Count,
+                s.PaidOn,
+                s.PaidBy,
+                s.CreatedOn,
+                s.CreatedBy
+            })
+            .ToListAsync(ct);
+
+        return Results.Ok(new
+        {
+            Total = total,
+            Page = page,
+            PageSize = pageSize,
+            Data = settlements
+        });
+    }
+
+    // Get settlement by ID with details
+    private static async Task<IResult> GetSettlementById(
+        ShsDbContext db,
+        Guid externalId,
+        CancellationToken ct)
+    {
+        var settlement = await db.Settlements
+            .Include(s => s.Supplier)
+            .Include(s => s.SaleItems)
+                .ThenInclude(si => si.Item)
+                    .ThenInclude(i => i.Brand)
+            .Include(s => s.StoreCredit)
+            .Where(s => !s.IsDeleted && s.ExternalId == externalId)
+            .Select(s => new
+            {
+                s.ExternalId,
+                s.SupplierId,
+                SupplierName = s.Supplier.Name,
+                SupplierEmail = s.Supplier.Email,
+                SupplierPhone = s.Supplier.PhoneNumber,
+                s.PeriodStart,
+                s.PeriodEnd,
+                s.TotalSalesAmount,
+                s.CommissionPercentage,
+                s.StoreCommissionAmount,
+                s.NetAmountToSupplier,
+                s.PaymentMethod,
+                s.Status,
+                s.PaidOn,
+                s.PaidBy,
+                s.Notes,
+                s.CreatedOn,
+                s.CreatedBy,
+                StoreCredit = s.StoreCredit != null ? new
+                {
+                    s.StoreCredit.ExternalId,
+                    s.StoreCredit.OriginalAmount,
+                    s.StoreCredit.CurrentBalance,
+                    s.StoreCredit.Status,
+                    s.StoreCredit.IssuedOn
+                } : null,
+                Items = s.SaleItems.Select(si => new
+                {
+                    si.Item.ExternalId,
+                    si.Item.IdentificationNumber,
+                    si.Item.Name,
+                    BrandName = si.Item.Brand!.Name,
+                    si.Item.EvaluatedPrice,
+                    si.FinalPrice,
+                    SaleDate = si.Item.UpdatedOn
+                }).ToList()
+            })
+            .FirstOrDefaultAsync(ct);
+
+        if (settlement == null)
+        {
+            return Results.NotFound(new { error = "Settlement not found." });
+        }
+
+        return Results.Ok(settlement);
+    }
+
+    // Process payment for a settlement
+    private static async Task<IResult> ProcessPayment(
+        ShsDbContext db,
+        HttpContext httpContext,
+        Guid externalId,
+        CancellationToken ct)
+    {
+        var userEmail = httpContext.User.GetUserEmail();
+
+        var settlement = await db.Settlements
+            .Include(s => s.Supplier)
+            .FirstOrDefaultAsync(s => !s.IsDeleted && s.ExternalId == externalId, ct);
+
+        if (settlement == null)
+        {
+            return Results.NotFound(new { error = "Settlement not found." });
+        }
+
+        if (settlement.Status == SettlementStatus.Paid)
+        {
+            return Results.BadRequest(new { error = "Settlement is already paid." });
+        }
+
+        if (settlement.Status == SettlementStatus.Cancelled)
+        {
+            return Results.BadRequest(new { error = "Settlement is cancelled." });
+        }
+
+        var now = DateTime.UtcNow;
+
+        // If payment method is StoreCredit, create store credit record
+        if (settlement.PaymentMethod == SettlementPaymentMethod.StoreCredit)
+        {
+            var storeCredit = new StoreCreditEntity
+            {
+                ExternalId = Guid.NewGuid(),
+                SupplierId = settlement.SupplierId,
+                SourceSettlementId = settlement.Id,
+                OriginalAmount = settlement.NetAmountToSupplier,
+                CurrentBalance = settlement.NetAmountToSupplier,
+                IssuedOn = now,
+                IssuedBy = userEmail,
+                Status = StoreCreditStatus.Active,
+                CreatedOn = now,
+                CreatedBy = userEmail
+            };
+
+            db.StoreCredits.Add(storeCredit);
+            await db.SaveChangesAsync(ct);
+
+            // Create initial transaction
+            var transaction = new StoreCreditTransactionEntity
+            {
+                ExternalId = Guid.NewGuid(),
+                StoreCreditId = storeCredit.Id,
+                Amount = storeCredit.OriginalAmount,
+                BalanceAfter = storeCredit.CurrentBalance,
+                TransactionType = StoreCreditTransactionType.Issue,
+                TransactionDate = now,
+                ProcessedBy = userEmail,
+                Notes = $"Issued from settlement {settlement.ExternalId}",
+                CreatedOn = now,
+                CreatedBy = userEmail
+            };
+
+            db.StoreCreditTransactions.Add(transaction);
+            settlement.StoreCreditId = storeCredit.Id;
+        }
+
+        // Update settlement status
+        settlement.Status = SettlementStatus.Paid;
+        settlement.PaidOn = now;
+        settlement.PaidBy = userEmail;
+        settlement.UpdatedOn = now;
+        settlement.UpdatedBy = userEmail;
+
+        // Update all items in settlement to Paid status
+        var itemIds = await db.SaleItems
+            .Where(si => si.SettlementId == settlement.Id)
+            .Select(si => si.ItemId)
+            .ToListAsync(ct);
+
+        var items = await db.Items
+            .Where(i => itemIds.Contains(i.Id))
+            .ToListAsync(ct);
+
+        foreach (var item in items)
+        {
+            item.Status = ItemStatus.Paid;
+            item.UpdatedOn = now;
+            item.UpdatedBy = userEmail;
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        return Results.Ok(new
+        {
+            settlement.ExternalId,
+            settlement.Status,
+            settlement.PaidOn,
+            settlement.PaidBy,
+            Message = settlement.PaymentMethod == SettlementPaymentMethod.Cash
+                ? $"Settlement paid in cash: {settlement.NetAmountToSupplier:C}"
+                : $"Store credit issued: {settlement.NetAmountToSupplier:C}"
+        });
+    }
+
+    // Cancel a settlement
+    private static async Task<IResult> CancelSettlement(
+        ShsDbContext db,
+        HttpContext httpContext,
+        Guid externalId,
+        CancellationToken ct)
+    {
+        var userEmail = httpContext.User.GetUserEmail();
+
+        var settlement = await db.Settlements
+            .FirstOrDefaultAsync(s => !s.IsDeleted && s.ExternalId == externalId, ct);
+
+        if (settlement == null)
+        {
+            return Results.NotFound(new { error = "Settlement not found." });
+        }
+
+        if (settlement.Status == SettlementStatus.Paid)
+        {
+            return Results.BadRequest(new { error = "Cannot cancel a paid settlement." });
+        }
+
+        var now = DateTime.UtcNow;
+
+        // Unlink sale items from this settlement
+        var saleItems = await db.SaleItems
+            .Where(si => si.SettlementId == settlement.Id)
+            .ToListAsync(ct);
+
+        foreach (var saleItem in saleItems)
+        {
+            saleItem.SettlementId = null;
+        }
+
+        // Mark settlement as cancelled
+        settlement.Status = SettlementStatus.Cancelled;
+        settlement.UpdatedOn = now;
+        settlement.UpdatedBy = userEmail;
+
+        await db.SaveChangesAsync(ct);
+
+        return Results.Ok(new
+        {
+            settlement.ExternalId,
+            settlement.Status,
+            Message = "Settlement cancelled successfully."
+        });
+    }
+}
+
+// DTOs
+public record CalculateSettlementRequest(
+    long SupplierId,
+    DateTime PeriodStart,
+    DateTime PeriodEnd
+);
+
+public record CreateSettlementRequest(
+    long SupplierId,
+    DateTime PeriodStart,
+    DateTime PeriodEnd,
+    SettlementPaymentMethod PaymentMethod,
+    string? Notes
+);

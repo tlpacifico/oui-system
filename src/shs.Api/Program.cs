@@ -8,6 +8,7 @@ using shs.Api.Admin;
 using shs.Api.Auth;
 using shs.Api.Authorization;
 using shs.Api.Consignment;
+using shs.Api.Financial;
 using shs.Api.Inventory;
 using shs.Api.Pos;
 using shs.Infrastructure;
@@ -92,6 +93,8 @@ app.MapPermissionEndpoints();
 app.MapRolePermissionEndpoints();
 app.MapUserRoleEndpoints();
 app.MapMeEndpoints();
+app.MapSettlementEndpoints();
+app.MapStoreCreditEndpoints();
 app.MapGet("/", () => Results.Ok("OUI System API is running."));
 
 app.Run();

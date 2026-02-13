@@ -18,4 +18,6 @@ public class SupplierEntity : EntityWithIdAuditable<long>, IHaveSoftDelete
     // Navigation
     public ICollection<ReceptionEntity> Receptions { get; set; } = new List<ReceptionEntity>();
     public ICollection<ItemEntity> Items { get; set; } = new List<ItemEntity>();
+    public ICollection<SettlementEntity> Settlements { get; set; } = new List<SettlementEntity>();
+    public ICollection<StoreCreditEntity> StoreCredits { get; set; } = new List<StoreCreditEntity>();
 }

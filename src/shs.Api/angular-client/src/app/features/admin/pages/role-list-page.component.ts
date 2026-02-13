@@ -29,11 +29,11 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
         <input
           type="text"
           placeholder="Pesquisar roles..."
-          [(ngModel)]="searchText"
-          (ngModelChange)="onSearchChange()"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event); onSearchChange()"
           class="filter-input filter-search"
         />
-        @if (searchText) {
+        @if (searchText()) {
           <button class="btn btn-outline btn-sm" (click)="clearSearch()">Limpar</button>
         }
       </div>
@@ -43,8 +43,8 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
       <div class="state-message">A carregar...</div>
     } @else if (roles().length === 0) {
       <div class="state-message">
-        @if (searchText) {
-          Nenhuma role encontrada para "{{ searchText }}".
+        @if (searchText()) {
+          Nenhuma role encontrada para "{{ searchText() }}".
         } @else {
           Nenhuma role registada.
         }
@@ -117,25 +117,27 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
             <input
               type="text"
               class="form-input"
-              [(ngModel)]="formData.name"
+              [ngModel]="formData().name"
+              (ngModelChange)="setFormName($event)"
               placeholder="Admin, Manager, Cashier..."
-              [class.error]="formErrors.name"
+              [class.error]="formErrors().name"
             />
-            @if (formErrors.name) {
-              <span class="form-error">{{ formErrors.name }}</span>
+            @if (formErrors().name) {
+              <span class="form-error">{{ formErrors().name }}</span>
             }
           </div>
           <div class="form-group">
             <label class="form-label">Descrição</label>
             <textarea
               class="form-input"
-              [(ngModel)]="formData.description"
+              [ngModel]="formData().description"
+              (ngModelChange)="setFormDescription($event)"
               placeholder="Descrição da role..."
               rows="3"
             ></textarea>
           </div>
-          @if (formErrors.general) {
-            <div class="alert alert-danger">{{ formErrors.general }}</div>
+          @if (formErrors().general) {
+            <div class="alert alert-danger">{{ formErrors().general }}</div>
           }
         </div>
         <div class="modal-footer">
@@ -250,6 +252,14 @@ export class RoleListPageComponent implements OnInit {
     this.showModal.set(false);
   }
 
+  setFormName(value: string) {
+    this.formData.update(d => ({ ...d, name: value }));
+  }
+
+  setFormDescription(value: string | null) {
+    this.formData.update(d => ({ ...d, description: value }));
+  }
+
   saveRole() {
     // Validate
     const errors: any = {};
@@ -265,21 +275,31 @@ export class RoleListPageComponent implements OnInit {
     this.saving.set(true);
     const data = this.formData();
 
-    const request$ = this.isEditing()
-      ? this.roleService.update(this.editingRoleId()!, data)
-      : this.roleService.create(data);
-
-    request$.subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.closeModal();
-        this.loadRoles();
-      },
-      error: (error) => {
-        this.saving.set(false);
-        this.formErrors.set({ general: error.error?.message || 'Erro ao guardar role' });
-      }
-    });
+    if (this.isEditing()) {
+      this.roleService.update(this.editingRoleId()!, data).subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.closeModal();
+          this.loadRoles();
+        },
+        error: (error: { error?: { message?: string } }) => {
+          this.saving.set(false);
+          this.formErrors.set({ general: error.error?.message || 'Erro ao guardar role' });
+        }
+      });
+    } else {
+      this.roleService.create(data).subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.closeModal();
+          this.loadRoles();
+        },
+        error: (error: { error?: { message?: string } }) => {
+          this.saving.set(false);
+          this.formErrors.set({ general: error.error?.message || 'Erro ao guardar role' });
+        }
+      });
+    }
   }
 
   confirmDelete(role: Role) {
@@ -303,7 +323,7 @@ export class RoleListPageComponent implements OnInit {
         this.cancelDelete();
         this.loadRoles();
       },
-      error: (error) => {
+      error: (error: { error?: { message?: string } }) => {
         this.deleting.set(false);
         alert(error.error?.message || 'Erro ao eliminar role');
       }

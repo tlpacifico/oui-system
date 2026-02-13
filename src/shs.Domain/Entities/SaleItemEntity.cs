@@ -9,6 +9,12 @@ public class SaleItemEntity
     public decimal DiscountAmount { get; set; }
     public decimal FinalPrice { get; set; }
 
+    /// <summary>
+    /// Settlement that includes this sale item (for consignment items)
+    /// </summary>
+    public long? SettlementId { get; set; }
+    public SettlementEntity? Settlement { get; set; }
+
     public SaleEntity Sale { get; set; } = null!;
     public ItemEntity Item { get; set; } = null!;
 }

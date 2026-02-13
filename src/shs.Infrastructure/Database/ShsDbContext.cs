@@ -29,6 +29,11 @@ public class ShsDbContext : DbContext
     public DbSet<ItemPhotoEntity> ItemPhotos => Set<ItemPhotoEntity>();
     public DbSet<SupplierReturnEntity> SupplierReturns => Set<SupplierReturnEntity>();
 
+    // Financial entities
+    public DbSet<SettlementEntity> Settlements => Set<SettlementEntity>();
+    public DbSet<StoreCreditEntity> StoreCredits => Set<StoreCreditEntity>();
+    public DbSet<StoreCreditTransactionEntity> StoreCreditTransactions => Set<StoreCreditTransactionEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ShsDbContext).Assembly);
