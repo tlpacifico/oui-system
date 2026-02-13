@@ -21,6 +21,7 @@ package-lock.json
 # .NET
 bin/
 obj/
+src/shs.Api/wwwroot/uploads/
 *.user
 *.suo
 *.cache

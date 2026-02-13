@@ -252,18 +252,18 @@ export class LoginPageComponent {
           this.errorMessage = res.error;
           return;
         }
-
+      this.router.navigateByUrl('/dashboard');
         // Load user roles and permissions
-        this.auth.loadUserAuthContext().subscribe({
-          next: () => {
+        //this.auth.loadUserAuthContext().subscribe({
+          //next: () => {
             this.router.navigateByUrl('/dashboard');
-          },
-          error: (err) => {
-            console.error('Failed to load user permissions:', err);
+          //},
+          //error: (err) => {
+            //console.error('Failed to load user permissions:', err);
             // Still navigate, but user might have limited access
-            this.router.navigateByUrl('/dashboard');
-          }
-        });
+
+          //}
+        //});
       },
       error: () => {
         this.loading = false;

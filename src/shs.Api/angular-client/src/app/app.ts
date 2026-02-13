@@ -18,9 +18,9 @@ export class App implements OnInit {
     // Load permissions when authentication state changes
     effect(() => {
       if (this.auth.isAuthenticated() && this.auth.permissions().length === 0) {
-        this.auth.loadUserAuthContext().subscribe({
-          error: (err) => console.error('Failed to load user context:', err)
-        });
+        //this.auth.loadUserAuthContext().subscribe({
+          //error: (err) => console.error('Failed to load user context:', err)
+        //});
       }
     });
   }
@@ -28,9 +28,9 @@ export class App implements OnInit {
   ngOnInit() {
     // Load permissions on app initialization if user is already authenticated
     if (this.auth.isAuthenticated()) {
-      this.auth.loadUserAuthContext().subscribe({
-        error: (err) => console.error('Failed to load user context:', err)
-      });
+     // this.auth.loadUserAuthContext().subscribe({
+        //error: (err) => console.error('Failed to load user context:', err)
+      //});
     }
   }
 
