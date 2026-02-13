@@ -55,6 +55,8 @@ app.UseAuthorization();
 app.MapAuthEndpoints();
 app.MapInventoryEndpoints();
 app.MapBrandEndpoints();
+app.MapCategoryEndpoints();
+app.MapTagEndpoints();
 app.MapGet("/", () => Results.Ok("OUI System API is running."));
 
 app.Run();

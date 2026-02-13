@@ -56,8 +56,8 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 | 1.1.8 | Frontend - Detalhe da Peça | Pendente | - | Angular: página `/inventory/items/:id` com todas as info (PG-04) |
 | 1.1.9 | Frontend - Cadastro/Edição de Peça | Pendente | CU-01, CU-06 | Angular: formulário `/inventory/items/:id/edit` (PG-05) |
 | 1.1.10 | Gestão de Marcas | ✅ Concluído | - | Backend: CRUD `/api/brands`; Frontend: `/inventory/brands` com modal criar/editar/eliminar (PG-06) |
-| 1.1.11 | Gestão de Tags/Categorias | 🔄 Próximo | - | Backend + Frontend: CRUD de categorias e tags (PG-07) |
-| 1.1.12 | CU-07: Registar Fornecedor | Pendente | CU-07 | Backend + Frontend: CRUD de fornecedores (PG-14) |
+| 1.1.11 | Gestão de Tags/Categorias | ✅ Concluído | - | Backend: CRUD `/api/categories` e `/api/tags`; Frontend: `/inventory/categories` (hierarquia) e `/inventory/tags` (grid com color picker) (PG-07) |
+| 1.1.12 | CU-07: Registar Fornecedor | 🔄 Próximo | CU-07 | Backend + Frontend: CRUD de fornecedores (PG-14) |
 
 ### 1.2 - Gestão de Consignações (M2)
 

@@ -4,6 +4,8 @@ import { DashboardPageComponent } from './features/dashboard/dashboard-page.comp
 import { ItemListPageComponent } from './features/inventory/pages/item-list-page.component';
 import { ItemDetailPageComponent } from './features/inventory/pages/item-detail-page.component';
 import { BrandListPageComponent } from './features/inventory/pages/brand-list-page.component';
+import { CategoryListPageComponent } from './features/inventory/pages/category-list-page.component';
+import { TagListPageComponent } from './features/inventory/pages/tag-list-page.component';
 import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
@@ -29,6 +31,16 @@ export const routes: Routes = [
   {
     path: 'inventory/brands',
     component: BrandListPageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'inventory/categories',
+    component: CategoryListPageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'inventory/tags',
+    component: TagListPageComponent,
     canMatch: [authGuard],
   },
   {
