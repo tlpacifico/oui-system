@@ -1,0 +1,726 @@
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { BrandService } from '../services/brand.service';
+import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../core/models/brand.model';
+
+@Component({
+  selector: 'oui-brand-list-page',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Marcas</h1>
+        <p class="page-subtitle">{{ brands().length }} marcas registadas</p>
+      </div>
+      <div class="page-header-actions">
+        <button class="btn btn-primary" (click)="openCreate()">+ Nova Marca</button>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="card filters-card">
+      <div class="filters-bar">
+        <input
+          type="text"
+          placeholder="Pesquisar marcas..."
+          [(ngModel)]="searchText"
+          (ngModelChange)="onSearchChange()"
+          class="filter-input filter-search"
+        />
+        @if (searchText) {
+          <button class="btn btn-outline btn-sm" (click)="clearSearch()">Limpar</button>
+        }
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="state-message">A carregar...</div>
+    } @else if (brands().length === 0) {
+      <div class="state-message">
+        @if (searchText) {
+          Nenhuma marca encontrada para "{{ searchText }}".
+        } @else {
+          Nenhuma marca registada. Clique em "+ Nova Marca" para começar.
+        }
+      </div>
+    } @else {
+      <div class="card table-card">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>Itens</th>
+                <th>Criada em</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (brand of brands(); track brand.externalId) {
+                <tr>
+                  <td>
+                    <div class="brand-name-cell">
+                      @if (brand.logoUrl) {
+                        <img class="brand-logo" [src]="brand.logoUrl" [alt]="brand.name" />
+                      } @else {
+                        <span class="brand-logo-placeholder">{{ brand.name.charAt(0).toUpperCase() }}</span>
+                      }
+                      <b>{{ brand.name }}</b>
+                    </div>
+                  </td>
+                  <td class="cell-description">{{ brand.description || '—' }}</td>
+                  <td>
+                    <span class="badge badge-gray">{{ brand.itemCount }}</span>
+                  </td>
+                  <td>{{ brand.createdOn | date: 'dd/MM/yyyy' }}</td>
+                  <td class="cell-actions">
+                    <button class="btn btn-outline btn-sm" (click)="openEdit(brand)">Editar</button>
+                    <button
+                      class="btn btn-outline btn-sm btn-danger-outline"
+                      (click)="confirmDelete(brand)"
+                      [disabled]="brand.itemCount > 0"
+                      [title]="brand.itemCount > 0 ? 'Não é possível eliminar uma marca com itens associados' : 'Eliminar marca'"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- Modal -->
+    @if (showModal()) {
+      <div class="modal-overlay" (click)="closeModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2 class="modal-title">{{ isEditing() ? 'Editar Marca' : 'Nova Marca' }}</h2>
+            <button class="modal-close" (click)="closeModal()">&times;</button>
+          </div>
+
+          <div class="modal-body">
+            @if (modalError()) {
+              <div class="alert alert-error">{{ modalError() }}</div>
+            }
+
+            <div class="form-group">
+              <label for="brandName">Nome *</label>
+              <input
+                id="brandName"
+                type="text"
+                [(ngModel)]="formName"
+                class="form-input"
+                placeholder="Ex: Zara, H&M, Nike..."
+                maxlength="200"
+                [class.input-error]="formSubmitted && !formName.trim()"
+              />
+              @if (formSubmitted && !formName.trim()) {
+                <span class="field-error">O nome é obrigatório.</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="brandDescription">Descrição</label>
+              <textarea
+                id="brandDescription"
+                [(ngModel)]="formDescription"
+                class="form-input form-textarea"
+                placeholder="Descrição opcional da marca..."
+                rows="3"
+                maxlength="1000"
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="brandLogo">URL do Logo</label>
+              <input
+                id="brandLogo"
+                type="url"
+                [(ngModel)]="formLogoUrl"
+                class="form-input"
+                placeholder="https://example.com/logo.png"
+                maxlength="500"
+              />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-outline" (click)="closeModal()" [disabled]="saving()">Cancelar</button>
+            <button class="btn btn-primary" (click)="saveModal()" [disabled]="saving()">
+              {{ saving() ? 'A guardar...' : (isEditing() ? 'Guardar Alterações' : 'Criar Marca') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Delete Confirmation -->
+    @if (showDeleteConfirm()) {
+      <div class="modal-overlay" (click)="cancelDelete()">
+        <div class="modal modal-sm" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2 class="modal-title">Eliminar Marca</h2>
+            <button class="modal-close" (click)="cancelDelete()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>Tem certeza que deseja eliminar a marca <b>{{ deletingBrand()?.name }}</b>?</p>
+            <p class="text-muted">Esta ação não pode ser revertida.</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" (click)="cancelDelete()" [disabled]="deleting()">Cancelar</button>
+            <button class="btn btn-danger" (click)="executeDelete()" [disabled]="deleting()">
+              {{ deleting() ? 'A eliminar...' : 'Eliminar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  `,
+  styles: [`
+    :host { display: block; }
+
+    /* ── Page header ── */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 4px;
+      color: #1e293b;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: #64748b;
+      margin: 0;
+    }
+
+    .page-header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 20px;
+    }
+
+    .filters-card {
+      margin-bottom: 20px;
+      padding: 16px;
+    }
+
+    .table-card {
+      padding: 0;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: #6366f1;
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #4f46e5;
+    }
+
+    .btn-outline {
+      background: white;
+      color: #1e293b;
+      border-color: #e2e8f0;
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background: #f8fafc;
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: #dc2626;
+    }
+
+    .btn-danger-outline {
+      color: #ef4444;
+      border-color: #fecaca;
+    }
+
+    .btn-danger-outline:hover:not(:disabled) {
+      background: #fef2f2;
+    }
+
+    /* ── Filters ── */
+    .filters-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-input {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+      background: white;
+      outline: none;
+      color: #1e293b;
+    }
+
+    .filter-input:focus {
+      border-color: #6366f1;
+    }
+
+    .filter-search {
+      width: 300px;
+    }
+
+    /* ── Table ── */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8fafc;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+
+    tr:hover td {
+      background: #f1f5f9;
+    }
+
+    .brand-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      object-fit: contain;
+      background: #f1f5f9;
+    }
+
+    .brand-logo-placeholder {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: #6366f1;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .cell-description {
+      color: #64748b;
+      max-width: 300px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cell-actions {
+      display: flex;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-gray { background: #f1f5f9; color: #475569; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      animation: modalIn 0.2s ease-out;
+    }
+
+    .modal-sm {
+      max-width: 420px;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: #1e293b;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* ── Form ── */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      color: #1e293b;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+
+    .form-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-input.input-error {
+      border-color: #ef4444;
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .field-error {
+      display: block;
+      font-size: 12px;
+      color: #ef4444;
+      margin-top: 4px;
+    }
+
+    /* ── Alert ── */
+    .alert {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .alert-error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .text-muted {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 8px;
+    }
+
+    /* ── States ── */
+    .state-message {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #64748b;
+      font-size: 15px;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .filter-search {
+        width: 100%;
+      }
+    }
+  `]
+})
+export class BrandListPageComponent implements OnInit {
+  private readonly brandService = inject(BrandService);
+
+  brands = signal<BrandListItem[]>([]);
+  loading = signal(false);
+  searchText = '';
+
+  // Modal state
+  showModal = signal(false);
+  isEditing = signal(false);
+  editingExternalId = signal<string | null>(null);
+  saving = signal(false);
+  modalError = signal<string | null>(null);
+  formSubmitted = false;
+
+  // Form fields
+  formName = '';
+  formDescription = '';
+  formLogoUrl = '';
+
+  // Delete state
+  showDeleteConfirm = signal(false);
+  deletingBrand = signal<BrandListItem | null>(null);
+  deleting = signal(false);
+
+  ngOnInit(): void {
+    this.loadBrands();
+  }
+
+  loadBrands(): void {
+    this.loading.set(true);
+    this.brandService.getAll(this.searchText || undefined).subscribe({
+      next: (brands) => {
+        this.brands.set(brands);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      }
+    });
+  }
+
+  onSearchChange(): void {
+    this.loadBrands();
+  }
+
+  clearSearch(): void {
+    this.searchText = '';
+    this.loadBrands();
+  }
+
+  // ── Create / Edit Modal ──
+
+  openCreate(): void {
+    this.formName = '';
+    this.formDescription = '';
+    this.formLogoUrl = '';
+    this.formSubmitted = false;
+    this.isEditing.set(false);
+    this.editingExternalId.set(null);
+    this.modalError.set(null);
+    this.showModal.set(true);
+  }
+
+  openEdit(brand: BrandListItem): void {
+    this.formName = brand.name;
+    this.formDescription = brand.description || '';
+    this.formLogoUrl = brand.logoUrl || '';
+    this.formSubmitted = false;
+    this.isEditing.set(true);
+    this.editingExternalId.set(brand.externalId);
+    this.modalError.set(null);
+    this.showModal.set(true);
+  }
+
+  closeModal(): void {
+    this.showModal.set(false);
+  }
+
+  saveModal(): void {
+    this.formSubmitted = true;
+    this.modalError.set(null);
+
+    if (!this.formName.trim()) return;
+
+    this.saving.set(true);
+
+    const data = {
+      name: this.formName.trim(),
+      description: this.formDescription.trim() || undefined,
+      logoUrl: this.formLogoUrl.trim() || undefined,
+    };
+
+    if (this.isEditing() && this.editingExternalId()) {
+      this.brandService.update(this.editingExternalId()!, data).subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.showModal.set(false);
+          this.loadBrands();
+        },
+        error: (err) => {
+          this.saving.set(false);
+          this.modalError.set(err.error?.error || 'Erro ao atualizar marca.');
+        }
+      });
+    } else {
+      this.brandService.create(data).subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.showModal.set(false);
+          this.loadBrands();
+        },
+        error: (err) => {
+          this.saving.set(false);
+          this.modalError.set(err.error?.error || 'Erro ao criar marca.');
+        }
+      });
+    }
+  }
+
+  // ── Delete ──
+
+  confirmDelete(brand: BrandListItem): void {
+    this.deletingBrand.set(brand);
+    this.showDeleteConfirm.set(true);
+  }
+
+  cancelDelete(): void {
+    this.showDeleteConfirm.set(false);
+    this.deletingBrand.set(null);
+  }
+
+  executeDelete(): void {
+    const brand = this.deletingBrand();
+    if (!brand) return;
+
+    this.deleting.set(true);
+    this.brandService.delete(brand.externalId).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.showDeleteConfirm.set(false);
+        this.deletingBrand.set(null);
+        this.loadBrands();
+      },
+      error: () => {
+        this.deleting.set(false);
+      }
+    });
+  }
+}

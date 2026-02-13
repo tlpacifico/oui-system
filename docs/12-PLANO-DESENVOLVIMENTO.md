@@ -1,6 +1,6 @@
 # Plano de Desenvolvimento - OUI System
 
-**Última atualização:** 2026-02-12 18:45
+**Última atualização:** 2026-02-13 00:05
 
 Referência: [10-AUTOMAKER-GUIDE.md](10-AUTOMAKER-GUIDE.md) (Kanban Cards e ordem de execução).
 
@@ -46,7 +46,7 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 
 | Card | Título | Status | Use Case | Notas |
 |------|--------|--------|----------|--------|
-| 1.1.1 | Inventário - Entidades & Banco de Dados | 🔄 Próximo | Base | Entidades: Item, Brand, Category, Tag, ItemPhoto; enums (ItemStatus, ItemCondition, ItemOrigin); migração |
+| 1.1.1 | Inventário - Entidades & Banco de Dados | ✅ Concluído | Base | Entidades: Item, Brand, Category, Tag, ItemPhoto; enums (ItemStatus, ItemCondition, ItemOrigin); migração |
 | 1.1.2 | CU-01: Registar Peça no Inventário | Pendente | CU-01 | Backend: comando CreateConsignmentItem, validações, geração de ID automático |
 | 1.1.3 | CU-06: Registar Peça de Compra Própria | Pendente | CU-06 | Backend: comando CreateOwnPurchaseItem, sem comissão, origem (Humana, Vinted, etc.) |
 | 1.1.4 | CU-02: Pesquisar/Consultar Inventário | Pendente | CU-02 | Backend: Query com filtros (nome, marca, preço, tamanho, fornecedor, estado, origem) |
@@ -55,15 +55,15 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 | 1.1.7 | Frontend - Lista de Peças | Pendente | CU-02 | Angular: página `/inventory/items` com filtros, tabela, paginação (PG-03) |
 | 1.1.8 | Frontend - Detalhe da Peça | Pendente | - | Angular: página `/inventory/items/:id` com todas as info (PG-04) |
 | 1.1.9 | Frontend - Cadastro/Edição de Peça | Pendente | CU-01, CU-06 | Angular: formulário `/inventory/items/:id/edit` (PG-05) |
-| 1.1.10 | Gestão de Marcas | Pendente | - | Backend + Frontend: CRUD de marcas (PG-06) |
-| 1.1.11 | Gestão de Tags/Categorias | Pendente | - | Backend + Frontend: CRUD de categorias (PG-07) |
+| 1.1.10 | Gestão de Marcas | ✅ Concluído | - | Backend: CRUD `/api/brands`; Frontend: `/inventory/brands` com modal criar/editar/eliminar (PG-06) |
+| 1.1.11 | Gestão de Tags/Categorias | 🔄 Próximo | - | Backend + Frontend: CRUD de categorias e tags (PG-07) |
+| 1.1.12 | CU-07: Registar Fornecedor | Pendente | CU-07 | Backend + Frontend: CRUD de fornecedores (PG-14) |
 
 ### 1.2 - Gestão de Consignações (M2)
 
 | Card | Título | Status | Use Case | Notas |
 |------|--------|--------|----------|--------|
 | 1.2.1 | Consignação - Entidades & Banco de Dados | Pendente | Base | Entidades: Supplier, Reception, ConsignmentItem (já existe), Settlement; estados do fluxo |
-| 1.2.2 | CU-07: Registar Fornecedor | Pendente | CU-07 | Backend + Frontend: CRUD de fornecedores (PG-14) |
 | 1.2.3 | CU-08: Recepção de Peças (Etapa 1) | Pendente | CU-08 | Backend: comando CreateReception, gerar recibo PDF, apenas contagem |
 | 1.2.4 | CU-09: Avaliar Peças (Etapa 2) | Pendente | CU-09 | Backend: avaliação individual de cada peça, marcar defeitos |
 | 1.2.5 | CU-10: Enviar Email de Avaliação (Etapa 3) | Pendente | CU-10 | Backend: template de email, lista aceites/recusadas, envio SMTP |
@@ -76,10 +76,11 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 | 1.2.12 | CU-14: Devolver Peças ao Fornecedor | Pendente | CU-14 | Backend + Frontend: `/consignments/returns` (PG-15) |
 
 **Ordem recomendada de implementação:**
-1. **Inventário básico:** 1.1.1 → 1.1.2 → 1.1.7 → 1.1.8 → 1.1.9
-2. **Fornecedores:** 1.2.1 → 1.2.2 → 1.2.6 → 1.2.7
-3. **Fluxo de Consignação:** 1.2.3 → 1.2.4 → 1.2.5 → 1.2.8 → 1.2.9 → 1.2.10
-4. **Funcionalidades complementares:** 1.1.3, 1.1.4, 1.1.5, 1.1.6, 1.1.10, 1.1.11, 1.2.11, 1.2.12
+1. **Dados base (pré-requisitos):** 1.1.1 → 1.1.10 → 1.1.11 → 1.1.12
+2. **Inventário básico:** 1.1.2 → 1.1.7 → 1.1.8 → 1.1.9
+3. **Fornecedores:** 1.2.1 → 1.2.6 → 1.2.7
+4. **Fluxo de Consignação:** 1.2.3 → 1.2.4 → 1.2.5 → 1.2.8 → 1.2.9 → 1.2.10
+5. **Funcionalidades complementares:** 1.1.3, 1.1.4, 1.1.5, 1.1.6, 1.2.11, 1.2.12
 
 ---
 
@@ -152,8 +153,8 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 
 ### 🔄 Fase 1: Inventário & Consignações (PRÓXIMA PRIORIDADE)
 
-#### Sprint 1: Inventário Básico
-**Objetivo:** Permitir cadastro e listagem de peças
+#### Sprint 1: Dados Base & Inventário Básico
+**Objetivo:** Criar pré-requisitos (marcas, categorias, fornecedores) e permitir cadastro e listagem de peças
 
 1. **Card 1.1.1 - Inventário: Entidades & Banco de Dados**
    - Criar entidades: `Item`, `Brand`, `Category`, `Tag`, `ItemPhoto`
@@ -162,47 +163,58 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
    - Migração `AddInventoryEntities`
    - Seed data: marcas e categorias iniciais
 
-2. **Card 1.1.2 - CU-01: Registar Peça (Consignação)**
+2. **Card 1.1.10 - Gestão de Marcas**
+   - Backend + Frontend: CRUD de marcas (PG-06)
+   - Pré-requisito para registar peças (marca obrigatória)
+
+3. **Card 1.1.11 - Gestão de Tags/Categorias**
+   - Backend + Frontend: CRUD de categorias e tags (PG-07)
+
+4. **Card 1.1.12 - CU-07: Registar Fornecedor**
+   - Backend: CRUD de fornecedores
+   - Validações: NIF português, telefone +351, inicial única
+   - Endpoints: `/api/suppliers`
+   - Pré-requisito para registar peças de consignação
+
+5. **Card 1.1.2 - CU-01: Registar Peça (Consignação)**
    - Backend: comando `CreateConsignmentItemCommand`
    - Validações: nome, marca obrigatória, preço > 0
    - Geração automática de ID: `{Inicial}{YYYYMM}{Sequência:0000}`
    - Endpoint: `POST /api/inventory/items/consignment`
 
-3. **Card 1.1.7 - Frontend: Lista de Peças**
+6. **Card 1.1.7 - Frontend: Lista de Peças**
    - Angular: página `/inventory/items` (PG-03)
    - Tabela com foto, ID, nome, marca, tamanho, preço, estado
    - Filtros básicos (pesquisa por texto, marca, estado)
    - Paginação (20 itens por página)
 
-4. **Card 1.1.8 - Frontend: Detalhe da Peça**
+7. **Card 1.1.8 - Frontend: Detalhe da Peça**
    - Angular: página `/inventory/items/:id` (PG-04)
    - Mostrar todas as informações da peça
    - Galeria de fotos
    - Histórico de alterações
 
-5. **Card 1.1.9 - Frontend: Cadastro/Edição de Peça**
+8. **Card 1.1.9 - Frontend: Cadastro/Edição de Peça**
    - Angular: formulário `/inventory/items/:id/edit` (PG-05)
    - Formulário completo com todos os campos
    - Upload de fotos
    - Validações client-side
 
-#### Sprint 2: Fornecedores & Recepção
+#### Sprint 2: Consignações & Recepção
 
-6. **Card 1.2.1 - Consignação: Entidades & Banco de Dados**
+9. **Card 1.2.1 - Consignação: Entidades & Banco de Dados**
    - Criar entidades: `Supplier`, `Reception`
    - Atualizar `ConsignmentItem` (já existe)
    - Migração `AddConsignmentEntities`
 
-7. **Card 1.2.2 - CU-07: Registar Fornecedor**
-   - Backend: CRUD de fornecedores
-   - Validações: NIF português, telefone +351, inicial única
-   - Endpoints: `/api/suppliers`
+10. **Card 1.2.6 - Frontend: Lista de Fornecedores**
+    - Angular: `/suppliers` (PG-12)
+    - Tabela com pesquisa
 
-8. **Card 1.2.6 - Frontend: Lista de Fornecedores**
-   - Angular: `/suppliers` (PG-12)
-   - Tabela com pesquisa
+11. **Card 1.2.7 - Frontend: Detalhe do Fornecedor**
+    - Angular: `/suppliers/:id` com tabs (PG-13)
 
-9. **Card 1.2.8 - CU-08: Recepção de Peças (Etapa 1)**
+12. **Card 1.2.8 - CU-08: Recepção de Peças (Etapa 1)**
    - Backend: comando `CreateReceptionCommand`
    - Gerar recibo PDF (sem valores)
    - Endpoint: `POST /api/consignments/receive`
@@ -210,21 +222,21 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 
 #### Sprint 3: Fluxo de Avaliação
 
-10. **Card 1.2.9 - Frontend: Avaliações Pendentes**
+13. **Card 1.2.9 - Frontend: Avaliações Pendentes**
     - Angular: `/consignments/pending-evaluations` (PG-NEW-1)
     - Lista de recepções aguardando avaliação
 
-11. **Card 1.2.4 - CU-09: Avaliar Peças (Etapa 2)**
+14. **Card 1.2.4 - CU-09: Avaliar Peças (Etapa 2)**
     - Backend: avaliação individual de peças
     - Marcar defeitos
     - Endpoint: `PUT /api/consignments/{id}/evaluate`
 
-12. **Card 1.2.10 - Frontend: Avaliar Recepção**
+15. **Card 1.2.10 - Frontend: Avaliar Recepção**
     - Angular: `/consignments/:id/evaluate` (PG-NEW-2)
     - Formulário para avaliar cada peça
     - Opção "Com Defeito"
 
-13. **Card 1.2.5 - CU-10: Enviar Email de Avaliação**
+16. **Card 1.2.5 - CU-10: Enviar Email de Avaliação**
     - Backend: template de email
     - Integração SMTP
     - Envio automático após conclusão
