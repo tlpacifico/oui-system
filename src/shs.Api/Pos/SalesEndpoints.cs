@@ -209,6 +209,9 @@ public static class SalesEndpoints
 
         db.Sales.Add(sale);
 
+        // Persist Sale first so it gets a database-generated Id (required for Items.SaleId FK)
+        await db.SaveChangesAsync(ct);
+
         // ── Update item statuses to Sold ──
         foreach (var item in items)
         {
@@ -228,7 +231,6 @@ public static class SalesEndpoints
             }
         }
 
-        // EF will fix up the SaleId FK on SaleItems via navigation
         await db.SaveChangesAsync(ct);
 
         // Calculate change (for cash payments)
