@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, from, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, from, of, forkJoin } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 import {
   Auth,
@@ -10,6 +11,7 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
 } from '@angular/fire/auth';
+import { environment } from '../../../environments/environment';
 
 const USER_KEY = 'oui_user';
 const FAILED_ATTEMPTS_KEY = 'oui_failed_attempts';
@@ -31,13 +33,18 @@ export interface LoginResponse {
 export class AuthService {
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
 
   private readonly userSignal = signal<UserInfo | null>(this.getStoredUser());
   private readonly authLoadedSignal = signal<boolean>(false);
+  private readonly rolesSignal = signal<string[]>([]);
+  private readonly permissionsSignal = signal<string[]>([]);
 
   readonly currentUser = this.userSignal.asReadonly();
   readonly isAuthenticated = computed(() => !!this.userSignal());
   readonly authLoaded = this.authLoadedSignal.asReadonly();
+  readonly roles = this.rolesSignal.asReadonly();
+  readonly permissions = this.permissionsSignal.asReadonly();
 
   constructor() {
     // Listen to Firebase auth state changes
@@ -110,9 +117,52 @@ export class AuthService {
     return from(signOut(this.auth)).pipe(
       tap(() => {
         this.userSignal.set(null);
+        this.rolesSignal.set([]);
+        this.permissionsSignal.set([]);
         localStorage.removeItem(USER_KEY);
         this.router.navigateByUrl('/login');
       })
+    );
+  }
+
+  hasRole(role: string): boolean {
+    return this.rolesSignal().includes(role);
+  }
+
+  hasPermission(permission: string): boolean {
+    return this.permissionsSignal().includes(permission);
+  }
+
+  hasAnyPermission(permissions: string[]): boolean {
+    const userPermissions = this.permissionsSignal();
+    return permissions.some(p => userPermissions.includes(p));
+  }
+
+  loadUserRoles(): Observable<void> {
+    return this.http.get<Array<{ name: string }>>(`${environment.apiUrl}/me/roles`).pipe(
+      tap(roles => this.rolesSignal.set(roles.map(r => r.name))),
+      map(() => void 0),
+      catchError(() => {
+        this.rolesSignal.set([]);
+        return of(void 0);
+      })
+    );
+  }
+
+  loadUserPermissions(): Observable<void> {
+    return this.http.get<Array<{ name: string }>>(`${environment.apiUrl}/me/permissions`).pipe(
+      tap(permissions => this.permissionsSignal.set(permissions.map(p => p.name))),
+      map(() => void 0),
+      catchError(() => {
+        this.permissionsSignal.set([]);
+        return of(void 0);
+      })
+    );
+  }
+
+  loadUserAuthContext(): Observable<void> {
+    return forkJoin([this.loadUserRoles(), this.loadUserPermissions()]).pipe(
+      map(() => void 0)
     );
   }
 

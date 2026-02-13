@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
 using shs.Infrastructure.Database;
@@ -11,17 +12,15 @@ public static class SupplierEndpoints
 {
     public static void MapSupplierEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/suppliers")
-            .WithTags("Suppliers")
-            .RequireAuthorization();
+        var group = app.MapGroup("/api/suppliers").WithTags("Suppliers");
 
-        group.MapGet("/", GetAll);
-        group.MapGet("/{externalId:guid}", GetById);
-        group.MapGet("/{externalId:guid}/items", GetSupplierItems);
-        group.MapGet("/{externalId:guid}/receptions", GetSupplierReceptions);
-        group.MapPost("/", Create);
-        group.MapPut("/{externalId:guid}", Update);
-        group.MapDelete("/{externalId:guid}", Delete);
+        group.MapGet("/", GetAll).RequirePermission("inventory.suppliers.manage");
+        group.MapGet("/{externalId:guid}", GetById).RequirePermission("inventory.suppliers.manage");
+        group.MapGet("/{externalId:guid}/items", GetSupplierItems).RequirePermission("inventory.suppliers.manage");
+        group.MapGet("/{externalId:guid}/receptions", GetSupplierReceptions).RequirePermission("inventory.suppliers.manage");
+        group.MapPost("/", Create).RequirePermission("inventory.suppliers.manage");
+        group.MapPut("/{externalId:guid}", Update).RequirePermission("inventory.suppliers.manage");
+        group.MapDelete("/{externalId:guid}", Delete).RequirePermission("inventory.suppliers.manage");
     }
 
     private static async Task<IResult> GetAll(

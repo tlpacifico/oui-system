@@ -108,6 +108,9 @@ import { ReceptionListItem, ReceptionStatus } from '../../../core/models/recepti
                     </span>
                   </td>
                   <td class="cell-actions">
+                    <a class="btn btn-outline btn-sm" [routerLink]="['/consignments/receptions', reception.externalId]">
+                      Ver
+                    </a>
                     <button class="btn btn-outline btn-sm" (click)="openReceipt(reception)">
                       Recibo
                     </button>

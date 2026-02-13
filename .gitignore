@@ -54,3 +54,5 @@ npm-debug.log*
 # Coverage
 coverage/
 *.lcov
+nul
+src/shs.Api/nul

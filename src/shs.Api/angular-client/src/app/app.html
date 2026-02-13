@@ -39,13 +39,32 @@
       <a class="sidebar-item" routerLink="/consignments/pending-evaluations" routerLinkActive="active">
         <span class="icon">🔍</span> Avaliações Pendentes
       </a>
+      <a class="sidebar-item" routerLink="/consignments/returns" routerLinkActive="active">
+        <span class="icon">↩️</span> Devoluções
+      </a>
       <a class="sidebar-item" routerLink="/inventory/suppliers" routerLinkActive="active">
         <span class="icon">👥</span> Fornecedores
       </a>
 
       <div class="sidebar-section">Vendas</div>
-      <a class="sidebar-item disabled">
-        <span class="icon">💰</span> Ponto de Venda
+      <a class="sidebar-item" routerLink="/pos" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="icon">💰</span> Caixa
+      </a>
+      <a class="sidebar-item" routerLink="/pos/sale" routerLinkActive="active">
+        <span class="icon">🛒</span> Nova Venda
+      </a>
+      <a class="sidebar-item" routerLink="/pos/sales" routerLinkActive="active">
+        <span class="icon">📋</span> Vendas de Hoje
+      </a>
+
+      <div class="sidebar-section" *hasPermission="['admin.roles.view', 'admin.permissions.view']">
+        Administração
+      </div>
+      <a class="sidebar-item" routerLink="/admin/roles" routerLinkActive="active" *hasPermission="'admin.roles.view'">
+        <span class="icon">👥</span> Roles
+      </a>
+      <a class="sidebar-item" routerLink="/admin/permissions" routerLinkActive="active" *hasPermission="'admin.permissions.view'">
+        <span class="icon">🔐</span> Permissões
       </a>
     </aside>
 

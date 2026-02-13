@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
 using shs.Infrastructure.Database;
@@ -11,21 +12,19 @@ public static class InventoryEndpoints
 {
     public static void MapInventoryEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/inventory")
-            .WithTags("Inventory")
-            .RequireAuthorization();
+        var group = app.MapGroup("/api/inventory").WithTags("Inventory");
 
-        group.MapPost("/items", CreateItem);
-        group.MapPost("/items/consignment", CreateConsignmentItem);
-        group.MapGet("/items", GetItems);
-        group.MapGet("/items/{externalId:guid}", GetItemById);
-        group.MapPut("/items/{externalId:guid}", UpdateItem);
-        group.MapDelete("/items/{externalId:guid}", DeleteItem);
+        group.MapPost("/items", CreateItem).RequirePermission("inventory.items.create");
+        group.MapPost("/items/consignment", CreateConsignmentItem).RequirePermission("inventory.items.create");
+        group.MapGet("/items", GetItems).RequirePermission("inventory.items.view");
+        group.MapGet("/items/{externalId:guid}", GetItemById).RequirePermission("inventory.items.view");
+        group.MapPut("/items/{externalId:guid}", UpdateItem).RequirePermission("inventory.items.update");
+        group.MapDelete("/items/{externalId:guid}", DeleteItem).RequirePermission("inventory.items.delete");
 
         // Photo endpoints
-        group.MapPost("/items/{externalId:guid}/photos", UploadPhotos).DisableAntiforgery();
-        group.MapDelete("/items/{itemExternalId:guid}/photos/{photoExternalId:guid}", DeletePhoto);
-        group.MapPut("/items/{externalId:guid}/photos/reorder", ReorderPhotos);
+        group.MapPost("/items/{externalId:guid}/photos", UploadPhotos).RequirePermission("inventory.items.update").DisableAntiforgery();
+        group.MapDelete("/items/{itemExternalId:guid}/photos/{photoExternalId:guid}", DeletePhoto).RequirePermission("inventory.items.update");
+        group.MapPut("/items/{externalId:guid}/photos/reorder", ReorderPhotos).RequirePermission("inventory.items.update");
     }
 
     private static async Task<IResult> CreateItem(

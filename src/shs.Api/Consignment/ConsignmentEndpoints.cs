@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
 using shs.Infrastructure.Database;
@@ -12,24 +13,22 @@ public static class ConsignmentEndpoints
 {
     public static void MapConsignmentEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/consignments")
-            .WithTags("Consignments")
-            .RequireAuthorization();
+        var group = app.MapGroup("/api/consignments").WithTags("Consignments");
 
         // Reception endpoints
-        group.MapPost("/receptions", CreateReception);
-        group.MapGet("/receptions", GetReceptions);
-        group.MapGet("/receptions/{externalId:guid}", GetReceptionById);
-        group.MapGet("/receptions/{externalId:guid}/receipt", GetReceptionReceipt);
+        group.MapPost("/receptions", CreateReception).RequirePermission("consignment.receptions.create");
+        group.MapGet("/receptions", GetReceptions).RequirePermission("consignment.receptions.view");
+        group.MapGet("/receptions/{externalId:guid}", GetReceptionById).RequirePermission("consignment.receptions.view");
+        group.MapGet("/receptions/{externalId:guid}/receipt", GetReceptionReceipt).RequirePermission("consignment.receptions.view");
 
         // Evaluation endpoints (CU-09)
-        group.MapPost("/receptions/{externalId:guid}/items", AddEvaluationItem);
-        group.MapGet("/receptions/{externalId:guid}/items", GetReceptionItems);
-        group.MapDelete("/receptions/{receptionExternalId:guid}/items/{itemExternalId:guid}", RemoveEvaluationItem);
-        group.MapPut("/receptions/{externalId:guid}/complete-evaluation", CompleteEvaluation);
+        group.MapPost("/receptions/{externalId:guid}/items", AddEvaluationItem).RequirePermission("consignment.receptions.evaluate");
+        group.MapGet("/receptions/{externalId:guid}/items", GetReceptionItems).RequirePermission("consignment.receptions.view");
+        group.MapDelete("/receptions/{receptionExternalId:guid}/items/{itemExternalId:guid}", RemoveEvaluationItem).RequirePermission("consignment.receptions.evaluate");
+        group.MapPut("/receptions/{externalId:guid}/complete-evaluation", CompleteEvaluation).RequirePermission("consignment.receptions.evaluate");
 
         // Email endpoint (CU-10)
-        group.MapPost("/receptions/{externalId:guid}/send-evaluation-email", SendEvaluationEmail);
+        group.MapPost("/receptions/{externalId:guid}/send-evaluation-email", SendEvaluationEmail).RequirePermission("consignment.receptions.evaluate");
     }
 
     /// <summary>

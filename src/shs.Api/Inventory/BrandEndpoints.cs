@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Infrastructure.Database;
 
@@ -9,15 +10,13 @@ public static class BrandEndpoints
 {
     public static void MapBrandEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/brands")
-            .WithTags("Brands")
-            .RequireAuthorization();
+        var group = app.MapGroup("/api/brands").WithTags("Brands");
 
-        group.MapGet("/", GetAll);
-        group.MapGet("/{externalId:guid}", GetById);
-        group.MapPost("/", Create);
-        group.MapPut("/{externalId:guid}", Update);
-        group.MapDelete("/{externalId:guid}", Delete);
+        group.MapGet("/", GetAll).RequirePermission("inventory.brands.manage");
+        group.MapGet("/{externalId:guid}", GetById).RequirePermission("inventory.brands.manage");
+        group.MapPost("/", Create).RequirePermission("inventory.brands.manage");
+        group.MapPut("/{externalId:guid}", Update).RequirePermission("inventory.brands.manage");
+        group.MapDelete("/{externalId:guid}", Delete).RequirePermission("inventory.brands.manage");
     }
 
     private static async Task<IResult> GetAll(
@@ -75,6 +74,7 @@ public static class BrandEndpoints
 
     private static async Task<IResult> Create(
         [FromBody] CreateBrandRequest req,
+        HttpContext httpContext,
         [FromServices] ShsDbContext db,
         CancellationToken ct)
     {
@@ -98,7 +98,7 @@ public static class BrandEndpoints
             Description = req.Description?.Trim(),
             LogoUrl = req.LogoUrl?.Trim(),
             CreatedOn = DateTime.UtcNow,
-            CreatedBy = "system" // TODO: Get from JWT claims
+            CreatedBy = httpContext.User.GetUserEmail()
         };
 
         db.Brands.Add(brand);
@@ -123,6 +123,7 @@ public static class BrandEndpoints
     private static async Task<IResult> Update(
         Guid externalId,
         [FromBody] UpdateBrandRequest req,
+        HttpContext httpContext,
         [FromServices] ShsDbContext db,
         CancellationToken ct)
     {
@@ -149,7 +150,7 @@ public static class BrandEndpoints
         brand.Description = req.Description?.Trim();
         brand.LogoUrl = req.LogoUrl?.Trim();
         brand.UpdatedOn = DateTime.UtcNow;
-        brand.UpdatedBy = "system"; // TODO: Get from JWT claims
+        brand.UpdatedBy = httpContext.User.GetUserEmail();
 
         await db.SaveChangesAsync(ct);
 

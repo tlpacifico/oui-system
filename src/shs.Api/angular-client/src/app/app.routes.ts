@@ -13,7 +13,18 @@ import { ReceptionListPageComponent } from './features/inventory/pages/reception
 import { ReceptionReceivePageComponent } from './features/inventory/pages/reception-receive-page.component';
 import { PendingEvaluationsPageComponent } from './features/inventory/pages/pending-evaluations-page.component';
 import { ReceptionEvaluatePageComponent } from './features/inventory/pages/reception-evaluate-page.component';
+import { ReceptionDetailPageComponent } from './features/inventory/pages/reception-detail-page.component';
+import { ReturnListPageComponent } from './features/inventory/pages/return-list-page.component';
+import { ReturnItemsPageComponent } from './features/inventory/pages/return-items-page.component';
+import { ReturnDetailPageComponent } from './features/inventory/pages/return-detail-page.component';
+import { PosRegisterPageComponent } from './features/pos/pos-register-page.component';
+import { PosSalePageComponent } from './features/pos/pos-sale-page.component';
+import { PosSalesListPageComponent } from './features/pos/pos-sales-list-page.component';
+import { RoleListPageComponent } from './features/admin/pages/role-list-page.component';
+import { RoleDetailPageComponent } from './features/admin/pages/role-detail-page.component';
+import { PermissionListPageComponent } from './features/admin/pages/permission-list-page.component';
 import { authGuard } from './core/auth/auth.guard';
+import { permissionGuard, anyPermissionGuard } from './core/auth/permission.guard';
 
 export const routes: Routes = [
   {
@@ -89,6 +100,56 @@ export const routes: Routes = [
     path: 'consignments/receptions/:id/evaluate',
     component: ReceptionEvaluatePageComponent,
     canMatch: [authGuard],
+  },
+  {
+    path: 'consignments/receptions/:id',
+    component: ReceptionDetailPageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'consignments/returns',
+    component: ReturnListPageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'consignments/returns/new',
+    component: ReturnItemsPageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'consignments/returns/:id',
+    component: ReturnDetailPageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'pos',
+    component: PosRegisterPageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'pos/sale',
+    component: PosSalePageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'pos/sales',
+    component: PosSalesListPageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'admin/roles',
+    component: RoleListPageComponent,
+    canMatch: [authGuard, permissionGuard('admin.roles.view')],
+  },
+  {
+    path: 'admin/roles/:id',
+    component: RoleDetailPageComponent,
+    canMatch: [authGuard, permissionGuard('admin.roles.view')],
+  },
+  {
+    path: 'admin/permissions',
+    component: PermissionListPageComponent,
+    canMatch: [authGuard, permissionGuard('admin.permissions.view')],
   },
   {
     path: '**',

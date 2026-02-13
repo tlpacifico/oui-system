@@ -38,6 +38,10 @@ public class ItemEntity : EntityWithIdAuditable<long>, IHaveSoftDelete
     public bool IsRejected { get; set; }
     public string? RejectionReason { get; set; }
 
+    // Return info
+    public long? SupplierReturnId { get; set; }
+    public DateTime? ReturnedAt { get; set; }
+
     // Sales info
     public long? SaleId { get; set; }
     public DateTime? SoldAt { get; set; }
@@ -55,6 +59,7 @@ public class ItemEntity : EntityWithIdAuditable<long>, IHaveSoftDelete
     public SupplierEntity? Supplier { get; set; }
     public ReceptionEntity? Reception { get; set; }
     public SaleEntity? Sale { get; set; }
+    public SupplierReturnEntity? SupplierReturn { get; set; }
     public ICollection<TagEntity> Tags { get; set; } = new List<TagEntity>();
     public ICollection<ItemPhotoEntity> Photos { get; set; } = new List<ItemPhotoEntity>();
 }

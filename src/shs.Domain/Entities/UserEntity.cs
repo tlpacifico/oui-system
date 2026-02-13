@@ -8,4 +8,6 @@ public class UserEntity
     public string PasswordHash { get; set; } = string.Empty;
     public string? DisplayName { get; set; }
     public DateTime CreatedOn { get; set; }
+
+    public ICollection<UserRoleEntity> UserRoles { get; set; } = new List<UserRoleEntity>();
 }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Infrastructure.Database;
 
@@ -9,15 +10,13 @@ public static class CategoryEndpoints
 {
     public static void MapCategoryEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/categories")
-            .WithTags("Categories")
-            .RequireAuthorization();
+        var group = app.MapGroup("/api/categories").WithTags("Categories");
 
-        group.MapGet("/", GetAll);
-        group.MapGet("/{externalId:guid}", GetById);
-        group.MapPost("/", Create);
-        group.MapPut("/{externalId:guid}", Update);
-        group.MapDelete("/{externalId:guid}", Delete);
+        group.MapGet("/", GetAll).RequirePermission("inventory.categories.manage");
+        group.MapGet("/{externalId:guid}", GetById).RequirePermission("inventory.categories.manage");
+        group.MapPost("/", Create).RequirePermission("inventory.categories.manage");
+        group.MapPut("/{externalId:guid}", Update).RequirePermission("inventory.categories.manage");
+        group.MapDelete("/{externalId:guid}", Delete).RequirePermission("inventory.categories.manage");
     }
 
     private static async Task<IResult> GetAll(

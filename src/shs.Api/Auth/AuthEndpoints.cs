@@ -31,14 +31,14 @@ public static class AuthEndpoints
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
                 return Results.Unauthorized();
 
-            var token = BuildJwt(user, config);
+            var token = await BuildJwt(user, config, db, ct);
             var expiresAt = DateTime.UtcNow.AddMinutes(GetExpirationMinutes(config));
             var userInfo = new UserInfo(user.ExternalId, user.Email, user.DisplayName ?? user.Email);
             return Results.Ok(new LoginResponse(token, expiresAt, userInfo));
         });
     }
 
-    private static string BuildJwt(UserEntity user, IConfiguration config)
+    private static async Task<string> BuildJwt(UserEntity user, IConfiguration config, ShsDbContext db, CancellationToken ct)
     {
         var secret = config["Jwt:Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not set.");
         var issuer = config["Jwt:Issuer"] ?? "OUI-System";
@@ -49,13 +49,26 @@ public static class AuthEndpoints
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expires = DateTime.UtcNow.AddMinutes(expirationMinutes);
 
-        var claims = new[]
+        // Load user roles
+        var userRoles = await db.UserRoles
+            .Where(ur => ur.UserId == user.Id)
+            .Include(ur => ur.Role)
+            .Select(ur => ur.Role.Name)
+            .ToListAsync(ct);
+
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.ExternalId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim("display_name", user.DisplayName ?? user.Email)
         };
+
+        // Add role claims
+        foreach (var role in userRoles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
 
         var token = new JwtSecurityToken(
             issuer,

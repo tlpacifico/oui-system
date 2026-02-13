@@ -13,6 +13,12 @@ public class ShsDbContext : DbContext
     public DbSet<SalePaymentEntity> SalePayments => Set<SalePaymentEntity>();
     public DbSet<UserEntity> Users => Set<UserEntity>();
 
+    // RBAC entities
+    public DbSet<RoleEntity> Roles => Set<RoleEntity>();
+    public DbSet<PermissionEntity> Permissions => Set<PermissionEntity>();
+    public DbSet<UserRoleEntity> UserRoles => Set<UserRoleEntity>();
+    public DbSet<RolePermissionEntity> RolePermissions => Set<RolePermissionEntity>();
+
     // Inventory entities
     public DbSet<BrandEntity> Brands => Set<BrandEntity>();
     public DbSet<CategoryEntity> Categories => Set<CategoryEntity>();
@@ -21,6 +27,7 @@ public class ShsDbContext : DbContext
     public DbSet<ReceptionEntity> Receptions => Set<ReceptionEntity>();
     public DbSet<ItemEntity> Items => Set<ItemEntity>();
     public DbSet<ItemPhotoEntity> ItemPhotos => Set<ItemPhotoEntity>();
+    public DbSet<SupplierReturnEntity> SupplierReturns => Set<SupplierReturnEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

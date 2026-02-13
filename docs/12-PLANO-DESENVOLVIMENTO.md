@@ -1,6 +1,6 @@
 # Plano de Desenvolvimento - OUI System
 
-**Última atualização:** 2026-02-13
+**Última atualização:** 2026-02-13 (RBAC implementado)
 
 Referência: [10-AUTOMAKER-GUIDE.md](10-AUTOMAKER-GUIDE.md) (Kanban Cards e ordem de execução).
 
@@ -24,8 +24,8 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 | Fase | Descrição | Status |
 |------|-----------|--------|
 | **Fase 0** | Autenticação | ✅ Concluída |
-| **Fase 1** | Inventário & Consignações (M1 + M2) | 🔄 Em progresso (M1 ✅, M2 pendente) |
-| **Fase 2** | POS (M3) | Pendente |
+| **Fase 1** | Inventário & Consignações (M1 + M2) | ✅ Concluída |
+| **Fase 2** | POS (M3) + RBAC | ✅ Concluída |
 | **Fase 3** | Financeiro (M4) | Pendente |
 | **Fase 4** | Reports & Dashboard (M5) | Pendente |
 | **Fase 5** | Funcionalidades Extras | Pendente |
@@ -73,8 +73,8 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 | 1.2.8 | Frontend - Recepção de Peças | ✅ Concluído | CU-08 | Angular: `/consignments/receive` (PG-10), `/consignments/receptions` (lista), sidebar atualizado |
 | 1.2.9 | Frontend - Avaliações Pendentes | ✅ Concluído | - | Angular: `/consignments/pending-evaluations` com cards de progresso, sidebar atualizado (PG-NEW-1) |
 | 1.2.10 | Frontend - Avaliar Recepção | ✅ Concluído | CU-09, CU-10 | Angular: `/consignments/receptions/:id/evaluate` com formulário por peça, barra de progresso, aceitar/rejeitar, concluir avaliação (PG-NEW-2) |
-| 1.2.11 | Frontend - Detalhe da Consignação | 🔄 Próximo | - | Angular: `/consignments/:id` (PG-11) |
-| 1.2.12 | CU-14: Devolver Peças ao Fornecedor | Pendente | CU-14 | Backend + Frontend: `/consignments/returns` (PG-15) |
+| 1.2.11 | Frontend - Detalhe da Consignação | ✅ Concluído | - | Angular: `/consignments/receptions/:id` (PG-11) com header, KPIs (total/avaliadas/aceites/rejeitados), info da recepção, resumo financeiro (valor total, comissão média, valor fornecedor), tabela de peças com links, timeline, ações (recibo, avaliar, enviar email); Botão "Ver" na lista de recepções |
+| 1.2.12 | CU-14: Devolver Peças ao Fornecedor | ✅ Concluído | CU-14 | Backend: SupplierReturnEntity + migration, endpoints (GET/POST returnable-items, returns CRUD); Frontend: `/consignments/returns` (lista paginada com pesquisa), `/consignments/returns/new` (seleção fornecedor + itens com checkboxes, confirmação), `/consignments/returns/:id` (detalhe com KPIs, tabela, timeline); Sidebar "Devoluções" adicionado |
 
 **Ordem recomendada de implementação:**
 1. **Dados base (pré-requisitos):** 1.1.1 → 1.1.10 → 1.1.11 → 1.1.12
@@ -90,10 +90,10 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 | Card | Título | Status | Notas |
 |------|--------|--------|--------|
 | 2.1 | POS - Entidades do Banco de Dados | ✅ Concluído | CashRegister, Sale, SaleItem, SalePayment; enums; migração AddPosEntities |
-| 2.2 | POS - Cash Register Backend (open/close/status) | Pendente | Comandos e endpoints |
-| 2.3 | POS - Process Sale Backend | Pendente | Processamento de venda + comissão |
-| 2.4 | POS - Frontend (Tela de Venda) | Pendente | Angular: pos-register, pos-sale, pos-payment-dialog |
-| 2.5 | User Roles & Permissions (RBAC) | Pendente | Roles: Admin, Manager, Finance, Cashier (será integrado com Firebase Custom Claims) |
+| 2.2 | POS - Cash Register Backend (open/close/status) | ✅ Concluído | Endpoints: `POST /api/pos/register/open` (validação 1 caixa por operador), `POST /close` (cálculo automático de valor esperado, discrepância, totais por método pagamento), `GET /current` (caixa aberta do utilizador), `GET /{id}` (detalhe com vendas), `GET /status` (monitorização de todas as caixas); Claims do Firebase para identificar operador |
+| 2.3 | POS - Process Sale Backend | ✅ Concluído | `POST /api/pos/sales` com validação completa (caixa aberta, itens ToSell, pagamentos >= total, máx 2 métodos), cálculo de preços (subtotal, desconto %, desconto por item, total), geração de SaleNumber V{YYYYMMDD}-{seq:000}, actualização item→Sold com FinalSalePrice e CommissionAmount, cálculo de troco; `GET /sales/{id}` detalhe com itens/pagamentos; `GET /sales/today` resumo (count, revenue, avg ticket, por método); `GET /sales` pesquisa paginada com filtros data |
+| 2.4 | POS - Frontend (Tela de Venda) | ✅ Concluído | PosService com todos os endpoints; `/pos` - Caixa (abrir com valor inicial, fechar com contagem e sumário de discrepância, KPIs, ações rápidas); `/pos/sale` - Tela de venda full-width (pesquisa de itens ToSell à esquerda, carrinho à direita, desconto global %, dialog de pagamento com troco, atalhos F4/ESC); `/pos/sales` - Vendas de hoje (KPIs, breakdown por método pagamento, tabela recente); Sidebar "Vendas" com Caixa, Nova Venda, Vendas de Hoje |
+| 2.5 | User Roles & Permissions (RBAC) | ✅ Concluído | **Backend:** 4 entidades (Role, Permission, UserRole, RolePermission), migração AddRBACEntities, RbacSeedService (28 permissões, 4 roles: Admin/Manager/Cashier/Inventory Clerk), PermissionAuthorizationHandler (lookup de permissões por email de Firebase token), endpoints CRUD (`/api/roles`, `/api/permissions`, `/api/roles/{id}/permissions`, `/api/users/{id}/roles`, `/api/me/roles`, `/api/me/permissions`), todos endpoints protegidos com `.RequirePermission()`; **Frontend:** AuthService com `loadUserAuthContext()`, permissionGuard, `*hasPermission` e `*hasRole` directives, páginas admin (`/admin/roles`, `/admin/roles/:id`, `/admin/permissions`), sidebar "Administração" com visibilidade condicional; Integração com Firebase Auth mantida (email lookup para carregar permissões) |
 | 2.6 | Barcode & Label Printing | Pendente | Etiquetas e código de barras |
 
 ---

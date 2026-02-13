@@ -1,12 +1,18 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using shs.Api;
+using shs.Api.Admin;
 using shs.Api.Auth;
+using shs.Api.Authorization;
 using shs.Api.Consignment;
 using shs.Api.Inventory;
+using shs.Api.Pos;
 using shs.Infrastructure;
 using shs.Infrastructure.Database;
+using shs.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +26,7 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddOpenApi();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var firebaseConfig = builder.Configuration.GetSection("Firebase");
@@ -39,9 +46,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+builder.Services.AddScoped<RbacSeedService>();
 
 var app = builder.Build();
 
+// Auto-seed RBAC on startup
+using (var scope = app.Services.CreateScope())
+{
+    var seedService = scope.ServiceProvider.GetRequiredService<RbacSeedService>();
+    await seedService.SeedAsync();
+
+    // Assign Admin role to initial user
+    var db = scope.ServiceProvider.GetRequiredService<ShsDbContext>();
+    await AssignAdminRole.AssignAdminToUserAsync(
+        db,
+        email: "thacio.pacifico@gmail.com"
+    );
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -61,6 +84,14 @@ app.MapCategoryEndpoints();
 app.MapTagEndpoints();
 app.MapSupplierEndpoints();
 app.MapConsignmentEndpoints();
+app.MapSupplierReturnEndpoints();
+app.MapPosEndpoints();
+app.MapSalesEndpoints();
+app.MapRoleEndpoints();
+app.MapPermissionEndpoints();
+app.MapRolePermissionEndpoints();
+app.MapUserRoleEndpoints();
+app.MapMeEndpoints();
 app.MapGet("/", () => Results.Ok("OUI System API is running."));
 
 app.Run();
