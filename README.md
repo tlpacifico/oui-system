@@ -36,3 +36,11 @@ npm start  # ou: npm run start
 
 Por padrão o Angular sobe em `http://localhost:4200`. Em fases posteriores será configurado um proxy para `/api`.
 
+**Firebase (obrigatório para o frontend):** Antes de rodar o Angular, copie o arquivo de configuração e preencha com suas credenciais:
+
+```bash
+cp src/app/core/config/firebase.config.example.ts src/app/core/config/firebase.config.ts
+```
+
+Edite `firebase.config.ts` com os valores do seu projeto Firebase (disponíveis em [Firebase Console](https://console.firebase.google.com) → Configurações do projeto → Seus apps).
+

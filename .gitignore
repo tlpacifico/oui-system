@@ -41,6 +41,7 @@ tmp/
 .env.local
 .env.*.local
 appsettings.Development.json
+src/shs.Api/angular-client/src/app/core/config/firebase.config.ts
 
 # Build
 out/
