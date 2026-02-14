@@ -22,7 +22,22 @@ public class SettlementConfiguration : IEntityTypeConfiguration<SettlementEntity
             .IsRequired();
 
         b.Property(x => x.CommissionPercentage)
+            .HasPrecision(5, 2);
+
+        b.Property(x => x.CreditPercentageInStore)
             .HasPrecision(5, 2)
+            .IsRequired();
+
+        b.Property(x => x.CashRedemptionPercentage)
+            .HasPrecision(5, 2)
+            .IsRequired();
+
+        b.Property(x => x.StoreCreditAmount)
+            .HasPrecision(18, 2)
+            .IsRequired();
+
+        b.Property(x => x.CashRedemptionAmount)
+            .HasPrecision(18, 2)
             .IsRequired();
 
         b.Property(x => x.StoreCommissionAmount)

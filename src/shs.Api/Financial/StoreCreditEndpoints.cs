@@ -27,6 +27,9 @@ public static class StoreCreditEndpoints
         group.MapPost("/{externalId:guid}/use", UseStoreCredit)
             .RequirePermission("pos.sales.create");
 
+        group.MapPost("/use-by-supplier", UseStoreCreditBySupplier)
+            .RequirePermission("pos.sales.create");
+
         group.MapPost("/{externalId:guid}/adjust", AdjustStoreCredit)
             .RequirePermission("reports.view");
 
@@ -246,6 +249,79 @@ public static class StoreCreditEndpoints
             storeCredit.Status,
             storeCredit.IssuedOn,
             storeCredit.IssuedBy
+        });
+    }
+
+    // Use store credit by supplier (for POS - deducts from supplier's credits, oldest first)
+    private static async Task<IResult> UseStoreCreditBySupplier(
+        ShsDbContext db,
+        HttpContext httpContext,
+        [FromBody] UseStoreCreditBySupplierRequest req,
+        CancellationToken ct)
+    {
+        var userEmail = httpContext.User.GetUserEmail();
+
+        var supplier = await db.Suppliers.FindAsync([req.SupplierId], ct);
+        if (supplier == null)
+            return Results.NotFound(new { error = "Supplier not found." });
+
+        var credits = await db.StoreCredits
+            .Where(sc => !sc.IsDeleted && sc.SupplierId == req.SupplierId && sc.Status == StoreCreditStatus.Active)
+            .Where(sc => sc.ExpiresOn == null || sc.ExpiresOn > DateTime.UtcNow)
+            .OrderBy(sc => sc.IssuedOn)
+            .ToListAsync(ct);
+
+        var totalAvailable = credits.Sum(c => c.CurrentBalance);
+        if (req.Amount <= 0)
+            return Results.BadRequest(new { error = "O valor deve ser positivo." });
+        if (req.Amount > totalAvailable)
+            return Results.BadRequest(new { error = $"Saldo insuficiente. Disponível: {totalAvailable:C}" });
+
+        var remainingToUse = req.Amount;
+        var usedCredits = new List<object>();
+        var now = DateTime.UtcNow;
+
+        foreach (var credit in credits)
+        {
+            if (remainingToUse <= 0) break;
+
+            var useAmount = Math.Min(credit.CurrentBalance, remainingToUse);
+            if (useAmount <= 0) continue;
+
+            credit.CurrentBalance -= useAmount;
+            credit.UpdatedOn = now;
+            credit.UpdatedBy = userEmail;
+            if (credit.CurrentBalance == 0)
+                credit.Status = StoreCreditStatus.FullyUsed;
+
+            var transaction = new StoreCreditTransactionEntity
+            {
+                ExternalId = Guid.NewGuid(),
+                StoreCreditId = credit.Id,
+                SaleId = req.SaleId,
+                Amount = -useAmount,
+                BalanceAfter = credit.CurrentBalance,
+                TransactionType = StoreCreditTransactionType.Use,
+                TransactionDate = now,
+                ProcessedBy = userEmail,
+                Notes = req.Notes ?? "Crédito usado em compra",
+                CreatedOn = now,
+                CreatedBy = userEmail
+            };
+            db.StoreCreditTransactions.Add(transaction);
+
+            usedCredits.Add(new { credit.ExternalId, AmountUsed = useAmount, RemainingBalance = credit.CurrentBalance });
+            remainingToUse -= useAmount;
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        return Results.Ok(new
+        {
+            SupplierId = req.SupplierId,
+            SupplierName = supplier.Name,
+            TotalUsed = req.Amount,
+            CreditsUsed = usedCredits
         });
     }
 
@@ -473,6 +549,13 @@ public record IssueStoreCreditRequest(
 );
 
 public record UseStoreCreditRequest(
+    decimal Amount,
+    long? SaleId,
+    string? Notes
+);
+
+public record UseStoreCreditBySupplierRequest(
+    long SupplierId,
     decimal Amount,
     long? SaleId,
     string? Notes

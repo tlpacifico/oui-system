@@ -108,13 +108,16 @@ public static class SettlementEndpoints
         return Results.Ok(groupedBySupplier);
     }
 
-    // Calculate settlement amounts before creating
+    // Calculate settlement amounts before creating (uses supplier's PorcInLoja and PorcInDinheiro)
     private static async Task<IResult> CalculateSettlement(
         ShsDbContext db,
         [FromBody] CalculateSettlementRequest req,
         CancellationToken ct)
     {
-        // Get items to settle
+        var supplier = await db.Suppliers.FindAsync([req.SupplierId], ct);
+        if (supplier == null)
+            return Results.BadRequest(new { error = "Supplier not found." });
+
         var items = await db.Items
             .Where(i => !i.IsDeleted &&
                        i.Status == ItemStatus.Sold &&
@@ -132,41 +135,31 @@ public static class SettlementEndpoints
             .ToListAsync(ct);
 
         if (items.Count == 0)
-        {
             return Results.BadRequest(new { error = "No items found for settlement in this period." });
-        }
 
         var totalSalesAmount = items.Sum(i => i.FinalSalePrice ?? 0);
+        var porcInLoja = supplier.CreditPercentageInStore / 100m;
+        var porcInDinheiro = supplier.CashRedemptionPercentage / 100m;
 
-        // Calculate for both payment methods
-        var cashCommission = 0.40m; // 40% to supplier, 60% to store
-        var creditCommission = 0.50m; // 50% to supplier, 50% to store
-
-        var cashCalculation = new
-        {
-            PaymentMethod = "Cash",
-            CommissionPercentage = cashCommission * 100,
-            NetAmountToSupplier = totalSalesAmount * cashCommission,
-            StoreCommissionAmount = totalSalesAmount * (1 - cashCommission)
-        };
-
-        var creditCalculation = new
-        {
-            PaymentMethod = "StoreCredit",
-            CommissionPercentage = creditCommission * 100,
-            NetAmountToSupplier = totalSalesAmount * creditCommission,
-            StoreCommissionAmount = totalSalesAmount * (1 - creditCommission)
-        };
+        var storeCreditAmount = totalSalesAmount * porcInLoja;
+        var cashRedemptionAmount = totalSalesAmount * porcInDinheiro;
+        var netAmountToSupplier = storeCreditAmount + cashRedemptionAmount;
+        var storeCommissionAmount = totalSalesAmount - netAmountToSupplier;
 
         return Results.Ok(new
         {
             SupplierId = req.SupplierId,
+            SupplierName = supplier.Name,
             PeriodStart = req.PeriodStart,
             PeriodEnd = req.PeriodEnd,
             ItemCount = items.Count,
             TotalSalesAmount = totalSalesAmount,
-            CashOption = cashCalculation,
-            StoreCreditOption = creditCalculation
+            CreditPercentageInStore = supplier.CreditPercentageInStore,
+            CashRedemptionPercentage = supplier.CashRedemptionPercentage,
+            StoreCreditAmount = storeCreditAmount,
+            CashRedemptionAmount = cashRedemptionAmount,
+            NetAmountToSupplier = netAmountToSupplier,
+            StoreCommissionAmount = storeCommissionAmount
         });
     }
 
@@ -212,9 +205,12 @@ public static class SettlementEndpoints
         }
 
         var totalSalesAmount = items.Sum(i => i.FinalSalePrice ?? 0);
-        var commissionPercentage = req.PaymentMethod == SettlementPaymentMethod.Cash ? 0.40m : 0.50m;
-        var netAmountToSupplier = totalSalesAmount * commissionPercentage;
-        var storeCommissionAmount = totalSalesAmount * (1 - commissionPercentage);
+        var porcInLoja = supplier.CreditPercentageInStore / 100m;
+        var porcInDinheiro = supplier.CashRedemptionPercentage / 100m;
+        var storeCreditAmount = totalSalesAmount * porcInLoja;
+        var cashRedemptionAmount = totalSalesAmount * porcInDinheiro;
+        var netAmountToSupplier = storeCreditAmount + cashRedemptionAmount;
+        var storeCommissionAmount = totalSalesAmount - netAmountToSupplier;
 
         var now = DateTime.UtcNow;
         var settlement = new SettlementEntity
@@ -224,10 +220,13 @@ public static class SettlementEndpoints
             PeriodStart = req.PeriodStart,
             PeriodEnd = req.PeriodEnd,
             TotalSalesAmount = totalSalesAmount,
-            CommissionPercentage = commissionPercentage * 100, // Store as percentage (40 or 50)
+            CreditPercentageInStore = supplier.CreditPercentageInStore,
+            CashRedemptionPercentage = supplier.CashRedemptionPercentage,
+            StoreCreditAmount = storeCreditAmount,
+            CashRedemptionAmount = cashRedemptionAmount,
             StoreCommissionAmount = storeCommissionAmount,
             NetAmountToSupplier = netAmountToSupplier,
-            PaymentMethod = req.PaymentMethod,
+            PaymentMethod = SettlementPaymentMethod.StoreCredit, // Both credits are issued
             Status = SettlementStatus.Pending,
             Notes = req.Notes,
             CreatedOn = now,
@@ -257,10 +256,12 @@ public static class SettlementEndpoints
             settlement.PeriodStart,
             settlement.PeriodEnd,
             settlement.TotalSalesAmount,
-            settlement.CommissionPercentage,
+            settlement.CreditPercentageInStore,
+            settlement.CashRedemptionPercentage,
+            settlement.StoreCreditAmount,
+            settlement.CashRedemptionAmount,
             settlement.StoreCommissionAmount,
             settlement.NetAmountToSupplier,
-            settlement.PaymentMethod,
             settlement.Status,
             ItemCount = items.Count,
             settlement.Notes,
@@ -307,10 +308,12 @@ public static class SettlementEndpoints
                 s.PeriodStart,
                 s.PeriodEnd,
                 s.TotalSalesAmount,
-                s.CommissionPercentage,
+                s.CreditPercentageInStore,
+                s.CashRedemptionPercentage,
+                s.StoreCreditAmount,
+                s.CashRedemptionAmount,
                 s.StoreCommissionAmount,
                 s.NetAmountToSupplier,
-                s.PaymentMethod,
                 s.Status,
                 ItemCount = s.SaleItems.Count,
                 s.PaidOn,
@@ -352,10 +355,12 @@ public static class SettlementEndpoints
                 s.PeriodStart,
                 s.PeriodEnd,
                 s.TotalSalesAmount,
-                s.CommissionPercentage,
+                s.CreditPercentageInStore,
+                s.CashRedemptionPercentage,
+                s.StoreCreditAmount,
+                s.CashRedemptionAmount,
                 s.StoreCommissionAmount,
                 s.NetAmountToSupplier,
-                s.PaymentMethod,
                 s.Status,
                 s.PaidOn,
                 s.PaidBy,
@@ -421,16 +426,16 @@ public static class SettlementEndpoints
 
         var now = DateTime.UtcNow;
 
-        // If payment method is StoreCredit, create store credit record
-        if (settlement.PaymentMethod == SettlementPaymentMethod.StoreCredit)
+        // Create store credit (PorcInLoja) if amount > 0
+        if (settlement.StoreCreditAmount > 0)
         {
             var storeCredit = new StoreCreditEntity
             {
                 ExternalId = Guid.NewGuid(),
                 SupplierId = settlement.SupplierId,
                 SourceSettlementId = settlement.Id,
-                OriginalAmount = settlement.NetAmountToSupplier,
-                CurrentBalance = settlement.NetAmountToSupplier,
+                OriginalAmount = settlement.StoreCreditAmount,
+                CurrentBalance = settlement.StoreCreditAmount,
                 IssuedOn = now,
                 IssuedBy = userEmail,
                 Status = StoreCreditStatus.Active,
@@ -441,7 +446,6 @@ public static class SettlementEndpoints
             db.StoreCredits.Add(storeCredit);
             await db.SaveChangesAsync(ct);
 
-            // Create initial transaction
             var transaction = new StoreCreditTransactionEntity
             {
                 ExternalId = Guid.NewGuid(),
@@ -458,6 +462,26 @@ public static class SettlementEndpoints
 
             db.StoreCreditTransactions.Add(transaction);
             settlement.StoreCreditId = storeCredit.Id;
+        }
+
+        // Create cash redemption balance (PorcInDinheiro) if amount > 0
+        if (settlement.CashRedemptionAmount > 0)
+        {
+            var cashTransaction = new SupplierCashBalanceTransactionEntity
+            {
+                ExternalId = Guid.NewGuid(),
+                SupplierId = settlement.SupplierId,
+                SettlementId = settlement.Id,
+                Amount = settlement.CashRedemptionAmount,
+                TransactionType = SupplierCashBalanceTransactionType.SettlementCredit,
+                TransactionDate = now,
+                ProcessedBy = userEmail,
+                Notes = $"Credit from settlement {settlement.ExternalId}",
+                CreatedOn = now,
+                CreatedBy = userEmail
+            };
+
+            db.SupplierCashBalanceTransactions.Add(cashTransaction);
         }
 
         // Update settlement status
@@ -486,15 +510,19 @@ public static class SettlementEndpoints
 
         await db.SaveChangesAsync(ct);
 
+        var messages = new List<string>();
+        if (settlement.StoreCreditAmount > 0)
+            messages.Add($"Crédito em loja: {settlement.StoreCreditAmount:C}");
+        if (settlement.CashRedemptionAmount > 0)
+            messages.Add($"Saldo para resgate em dinheiro: {settlement.CashRedemptionAmount:C}");
+
         return Results.Ok(new
         {
             settlement.ExternalId,
             settlement.Status,
             settlement.PaidOn,
             settlement.PaidBy,
-            Message = settlement.PaymentMethod == SettlementPaymentMethod.Cash
-                ? $"Settlement paid in cash: {settlement.NetAmountToSupplier:C}"
-                : $"Store credit issued: {settlement.NetAmountToSupplier:C}"
+            Message = string.Join(". ", messages)
         });
     }
 
@@ -559,6 +587,5 @@ public record CreateSettlementRequest(
     long SupplierId,
     DateTime PeriodStart,
     DateTime PeriodEnd,
-    SettlementPaymentMethod PaymentMethod,
     string? Notes
 );

@@ -104,6 +104,7 @@ app.MapUserRoleEndpoints();
 app.MapMeEndpoints();
 app.MapSettlementEndpoints();
 app.MapStoreCreditEndpoints();
+app.MapCashRedemptionEndpoints();
 app.MapGet("/", () => Results.Ok("OUI System API is running."));
 
 app.Run();

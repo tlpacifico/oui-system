@@ -27,22 +27,42 @@ public class SettlementEntity
     public decimal TotalSalesAmount { get; set; }
 
     /// <summary>
-    /// Commission percentage to supplier (40% for cash, 50% for store credit)
+    /// @deprecated Use CreditPercentageInStore. Kept for migration.
     /// </summary>
-    public decimal CommissionPercentage { get; set; }
+    public decimal? CommissionPercentage { get; set; }
 
     /// <summary>
-    /// Amount the store keeps (store commission)
+    /// PorcInLoja rate used for this settlement
+    /// </summary>
+    public decimal CreditPercentageInStore { get; set; }
+
+    /// <summary>
+    /// PorcInDinheiro rate used for this settlement
+    /// </summary>
+    public decimal CashRedemptionPercentage { get; set; }
+
+    /// <summary>
+    /// Amount issued as store credit (TotalSalesAmount × PorcInLoja)
+    /// </summary>
+    public decimal StoreCreditAmount { get; set; }
+
+    /// <summary>
+    /// Amount available for cash redemption (TotalSalesAmount × PorcInDinheiro)
+    /// </summary>
+    public decimal CashRedemptionAmount { get; set; }
+
+    /// <summary>
+    /// Amount the store keeps
     /// </summary>
     public decimal StoreCommissionAmount { get; set; }
 
     /// <summary>
-    /// Net amount payable to supplier
+    /// Total to supplier (StoreCreditAmount + CashRedemptionAmount)
     /// </summary>
     public decimal NetAmountToSupplier { get; set; }
 
     /// <summary>
-    /// Payment method: Cash or StoreCredit
+    /// @deprecated Use StoreCreditAmount and CashRedemptionAmount. Kept for migration.
     /// </summary>
     public SettlementPaymentMethod PaymentMethod { get; set; }
 
@@ -81,6 +101,7 @@ public class SettlementEntity
 
     // Navigation
     public ICollection<SaleItemEntity> SaleItems { get; set; } = new List<SaleItemEntity>();
+    public ICollection<SupplierCashBalanceTransactionEntity> CashBalanceTransactions { get; set; } = new List<SupplierCashBalanceTransactionEntity>();
 }
 
 public enum SettlementPaymentMethod

@@ -11,6 +11,16 @@ public class SupplierEntity : EntityWithIdAuditable<long>, IHaveSoftDelete
     public string Initial { get; set; } = string.Empty; // Single letter for ID generation (e.g., "M")
     public string? Notes { get; set; }
 
+    /// <summary>
+    /// Percentage of sale value that becomes store credit (PorcInLoja). Default 50.
+    /// </summary>
+    public decimal CreditPercentageInStore { get; set; } = 50m;
+
+    /// <summary>
+    /// Percentage of sale value that can be redeemed in cash (PorcInDinheiro). Default 40.
+    /// </summary>
+    public decimal CashRedemptionPercentage { get; set; } = 40m;
+
     public bool IsDeleted { get; set; }
     public string? DeletedBy { get; set; }
     public DateTime? DeletedOn { get; set; }
@@ -20,4 +30,5 @@ public class SupplierEntity : EntityWithIdAuditable<long>, IHaveSoftDelete
     public ICollection<ItemEntity> Items { get; set; } = new List<ItemEntity>();
     public ICollection<SettlementEntity> Settlements { get; set; } = new List<SettlementEntity>();
     public ICollection<StoreCreditEntity> StoreCredits { get; set; } = new List<StoreCreditEntity>();
+    public ICollection<SupplierCashBalanceTransactionEntity> CashBalanceTransactions { get; set; } = new List<SupplierCashBalanceTransactionEntity>();
 }

@@ -13,5 +13,18 @@ public class SalePaymentConfiguration : IEntityTypeConfiguration<SalePaymentEnti
         b.Property(x => x.Amount).HasPrecision(18, 2);
         b.Property(x => x.Reference).HasMaxLength(256);
         b.Property(x => x.PaymentMethod).HasConversion<string>().HasMaxLength(32);
+
+        b.HasIndex(x => x.SupplierId);
+        b.HasIndex(x => x.StoreCreditId);
+
+        b.HasOne(x => x.Supplier)
+            .WithMany()
+            .HasForeignKey(x => x.SupplierId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        b.HasOne(x => x.StoreCredit)
+            .WithMany()
+            .HasForeignKey(x => x.StoreCreditId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

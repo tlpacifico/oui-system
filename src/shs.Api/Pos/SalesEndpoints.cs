@@ -152,6 +152,32 @@ public static class SalesEndpoints
 
             if (!Enum.TryParse<PaymentMethodType>(p.Method, out _))
                 return Results.BadRequest(new { error = $"Método de pagamento inválido: {p.Method}" });
+
+            if (p.Method == nameof(PaymentMethodType.StoreCredit) && !p.SupplierId.HasValue)
+                return Results.BadRequest(new { error = "Ao usar Crédito em Loja, deve identificar o fornecedor (SupplierId)." });
+        }
+
+        // Validate store credit balances for StoreCredit payments
+        foreach (var p in req.Payments.Where(x => x.Method == nameof(PaymentMethodType.StoreCredit)))
+        {
+            if (!p.SupplierId.HasValue) continue;
+
+            var creditBalance = await db.StoreCredits
+                .Where(sc => !sc.IsDeleted && sc.SupplierId == p.SupplierId && sc.Status == StoreCreditStatus.Active)
+                .Where(sc => sc.ExpiresOn == null || sc.ExpiresOn > DateTime.UtcNow)
+                .SumAsync(sc => sc.CurrentBalance, ct);
+
+            if (creditBalance < p.Amount)
+            {
+                var supplier = await db.Suppliers.FindAsync([p.SupplierId.Value], ct);
+                var name = supplier?.Name ?? p.SupplierId.ToString();
+                return Results.BadRequest(new
+                {
+                    error = $"Crédito insuficiente para o fornecedor {name}. Disponível: {creditBalance:C}",
+                    SupplierId = p.SupplierId,
+                    AvailableBalance = creditBalance
+                });
+            }
         }
 
         // Log warning for high discounts
@@ -204,12 +230,57 @@ public static class SalesEndpoints
                 PaymentMethod = Enum.Parse<PaymentMethodType>(p.Method),
                 Amount = p.Amount,
                 Reference = p.Reference?.Trim(),
+                SupplierId = p.SupplierId,
             }).ToList()
         };
 
         db.Sales.Add(sale);
 
         // Persist Sale first so it gets a database-generated Id (required for Items.SaleId FK)
+        await db.SaveChangesAsync(ct);
+
+        // ── Deduct store credits for StoreCredit payments ──
+        foreach (var payment in sale.Payments.Where(p => p.PaymentMethod == PaymentMethodType.StoreCredit && p.SupplierId.HasValue))
+        {
+            var credits = await db.StoreCredits
+                .Where(sc => !sc.IsDeleted && sc.SupplierId == payment.SupplierId!.Value && sc.Status == StoreCreditStatus.Active)
+                .Where(sc => sc.ExpiresOn == null || sc.ExpiresOn > DateTime.UtcNow)
+                .OrderBy(sc => sc.IssuedOn)
+                .ToListAsync(ct);
+
+            var remainingToUse = payment.Amount;
+            foreach (var credit in credits)
+            {
+                if (remainingToUse <= 0) break;
+                var useAmount = Math.Min(credit.CurrentBalance, remainingToUse);
+                if (useAmount <= 0) continue;
+
+                credit.CurrentBalance -= useAmount;
+                credit.UpdatedOn = DateTime.UtcNow;
+                credit.UpdatedBy = userId;
+                if (credit.CurrentBalance == 0)
+                    credit.Status = StoreCreditStatus.FullyUsed;
+
+                var transaction = new StoreCreditTransactionEntity
+                {
+                    ExternalId = Guid.NewGuid(),
+                    StoreCreditId = credit.Id,
+                    SaleId = sale.Id,
+                    Amount = -useAmount,
+                    BalanceAfter = credit.CurrentBalance,
+                    TransactionType = StoreCreditTransactionType.Use,
+                    TransactionDate = DateTime.UtcNow,
+                    ProcessedBy = userId,
+                    Notes = "Crédito usado em compra",
+                    CreatedOn = DateTime.UtcNow,
+                    CreatedBy = userId
+                };
+                db.StoreCreditTransactions.Add(transaction);
+                payment.StoreCreditId = credit.Id; // Link to first credit used for audit
+                remainingToUse -= useAmount;
+            }
+        }
+
         await db.SaveChangesAsync(ct);
 
         // ── Update item statuses to Sold ──
@@ -222,12 +293,14 @@ public static class SalesEndpoints
             item.UpdatedOn = DateTime.UtcNow;
             item.UpdatedBy = userId;
 
-            // Calculate commission amount
-            if (item.AcquisitionType == AcquisitionType.Consignment && item.SupplierId.HasValue)
+            // Calculate commission amounts (PorcInLoja + PorcInDinheiro) for settlement
+            if (item.AcquisitionType == AcquisitionType.Consignment && item.SupplierId.HasValue && item.Supplier != null)
             {
                 var finalSalePrice = item.FinalSalePrice.Value;
-                var commissionRate = item.CommissionPercentage / 100;
-                item.CommissionAmount = finalSalePrice * commissionRate;
+                var porcInLoja = item.Supplier.CreditPercentageInStore / 100m;
+                var porcInDinheiro = item.Supplier.CashRedemptionPercentage / 100m;
+                item.CommissionAmount = finalSalePrice * (porcInLoja + porcInDinheiro);
+                item.CommissionPercentage = item.Supplier.CreditPercentageInStore + item.Supplier.CashRedemptionPercentage;
             }
         }
 
@@ -456,7 +529,9 @@ public record SaleItemRequest(
 public record SalePaymentRequest(
     string Method,
     decimal Amount,
-    string? Reference
+    string? Reference,
+    /// <summary>Required when Method is StoreCredit - identifies which supplier's credit to use</summary>
+    long? SupplierId
 );
 
 // ── Response DTOs ──

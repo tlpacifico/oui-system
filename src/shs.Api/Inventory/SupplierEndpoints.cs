@@ -50,6 +50,8 @@ public static class SupplierEndpoints
                 sup.PhoneNumber,
                 sup.TaxNumber,
                 sup.Initial,
+                sup.CreditPercentageInStore,
+                sup.CashRedemptionPercentage,
                 sup.Items.Count(i => !i.IsDeleted),
                 sup.CreatedOn
             ))
@@ -73,6 +75,8 @@ public static class SupplierEndpoints
                 sup.TaxNumber,
                 sup.Initial,
                 sup.Notes,
+                sup.CreditPercentageInStore,
+                sup.CashRedemptionPercentage,
                 sup.Items.Count(i => !i.IsDeleted),
                 sup.CreatedOn,
                 sup.CreatedBy,
@@ -215,6 +219,8 @@ public static class SupplierEndpoints
             TaxNumber = req.TaxNumber?.Trim(),
             Initial = initialUpper,
             Notes = req.Notes?.Trim(),
+            CreditPercentageInStore = req.CreditPercentageInStore ?? 50m,
+            CashRedemptionPercentage = req.CashRedemptionPercentage ?? 40m,
             CreatedOn = DateTime.UtcNow,
             CreatedBy = "system" // TODO: Get from JWT claims
         };
@@ -232,6 +238,8 @@ public static class SupplierEndpoints
                 supplier.TaxNumber,
                 supplier.Initial,
                 supplier.Notes,
+                supplier.CreditPercentageInStore,
+                supplier.CashRedemptionPercentage,
                 0,
                 supplier.CreatedOn,
                 supplier.CreatedBy,
@@ -290,6 +298,8 @@ public static class SupplierEndpoints
         supplier.TaxNumber = req.TaxNumber?.Trim();
         supplier.Initial = initialUpper;
         supplier.Notes = req.Notes?.Trim();
+        supplier.CreditPercentageInStore = req.CreditPercentageInStore ?? supplier.CreditPercentageInStore;
+        supplier.CashRedemptionPercentage = req.CashRedemptionPercentage ?? supplier.CashRedemptionPercentage;
         supplier.UpdatedOn = DateTime.UtcNow;
         supplier.UpdatedBy = "system"; // TODO: Get from JWT claims
 
@@ -305,6 +315,8 @@ public static class SupplierEndpoints
             supplier.TaxNumber,
             supplier.Initial,
             supplier.Notes,
+            supplier.CreditPercentageInStore,
+            supplier.CashRedemptionPercentage,
             itemCount,
             supplier.CreatedOn,
             supplier.CreatedBy,
@@ -435,7 +447,9 @@ public record CreateSupplierRequest(
     string PhoneNumber,
     string? TaxNumber,
     string Initial,
-    string? Notes
+    string? Notes,
+    decimal? CreditPercentageInStore,
+    decimal? CashRedemptionPercentage
 );
 
 public record UpdateSupplierRequest(
@@ -444,7 +458,9 @@ public record UpdateSupplierRequest(
     string PhoneNumber,
     string? TaxNumber,
     string Initial,
-    string? Notes
+    string? Notes,
+    decimal? CreditPercentageInStore,
+    decimal? CashRedemptionPercentage
 );
 
 // Response DTOs
@@ -455,6 +471,8 @@ public record SupplierListResponse(
     string PhoneNumber,
     string? TaxNumber,
     string Initial,
+    decimal CreditPercentageInStore,
+    decimal CashRedemptionPercentage,
     int ItemCount,
     DateTime CreatedOn
 );
@@ -467,6 +485,8 @@ public record SupplierDetailResponse(
     string? TaxNumber,
     string Initial,
     string? Notes,
+    decimal CreditPercentageInStore,
+    decimal CashRedemptionPercentage,
     int ItemCount,
     DateTime CreatedOn,
     string? CreatedBy,

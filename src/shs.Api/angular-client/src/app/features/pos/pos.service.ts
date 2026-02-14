@@ -44,7 +44,7 @@ export interface CloseRegisterResponse {
 export interface ProcessSaleRequest {
   cashRegisterId: string;
   items: { itemExternalId: string; discountAmount: number }[];
-  payments: { method: string; amount: number; reference?: string }[];
+  payments: { method: string; amount: number; reference?: string; supplierId?: number }[];
   discountPercentage?: number;
   discountReason?: string;
   notes?: string;

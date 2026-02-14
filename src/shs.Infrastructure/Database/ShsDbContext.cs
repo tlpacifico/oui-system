@@ -33,6 +33,7 @@ public class ShsDbContext : DbContext
     public DbSet<SettlementEntity> Settlements => Set<SettlementEntity>();
     public DbSet<StoreCreditEntity> StoreCredits => Set<StoreCreditEntity>();
     public DbSet<StoreCreditTransactionEntity> StoreCreditTransactions => Set<StoreCreditTransactionEntity>();
+    public DbSet<SupplierCashBalanceTransactionEntity> SupplierCashBalanceTransactions => Set<SupplierCashBalanceTransactionEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

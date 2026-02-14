@@ -6,6 +6,8 @@ export interface Supplier {
   taxNumber?: string;
   initial: string;
   notes?: string;
+  creditPercentageInStore: number;
+  cashRedemptionPercentage: number;
   itemCount: number;
   createdOn: Date;
   createdBy?: string;
@@ -20,6 +22,8 @@ export interface SupplierListItem {
   phoneNumber: string;
   taxNumber?: string;
   initial: string;
+  creditPercentageInStore: number;
+  cashRedemptionPercentage: number;
   itemCount: number;
   createdOn: Date;
 }
@@ -31,6 +35,8 @@ export interface CreateSupplierRequest {
   taxNumber?: string;
   initial: string;
   notes?: string;
+  creditPercentageInStore?: number;
+  cashRedemptionPercentage?: number;
 }
 
 export interface UpdateSupplierRequest {
@@ -40,6 +46,8 @@ export interface UpdateSupplierRequest {
   taxNumber?: string;
   initial: string;
   notes?: string;
+  creditPercentageInStore?: number;
+  cashRedemptionPercentage?: number;
 }
 
 export interface SupplierItemListItem {

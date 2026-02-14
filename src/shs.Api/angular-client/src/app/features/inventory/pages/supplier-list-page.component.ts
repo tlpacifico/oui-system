@@ -201,6 +201,38 @@ import { SupplierListItem, CreateSupplierRequest, UpdateSupplierRequest } from '
               </div>
             </div>
 
+            <div class="form-row">
+              <div class="form-group form-group-grow">
+                <label for="supplierPorcInLoja">% Crédito em Loja (PorcInLoja)</label>
+                <input
+                  id="supplierPorcInLoja"
+                  type="number"
+                  [(ngModel)]="formCreditPercentageInStore"
+                  class="form-input"
+                  placeholder="50"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                />
+                <span class="form-hint">% do valor de venda que vira crédito para compras na loja</span>
+              </div>
+
+              <div class="form-group form-group-grow">
+                <label for="supplierPorcInDinheiro">% Resgate em Dinheiro (PorcInDinheiro)</label>
+                <input
+                  id="supplierPorcInDinheiro"
+                  type="number"
+                  [(ngModel)]="formCashRedemptionPercentage"
+                  class="form-input"
+                  placeholder="40"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                />
+                <span class="form-hint">% do valor de venda resgatável em numerário</span>
+              </div>
+            </div>
+
             <div class="form-group">
               <label for="supplierNotes">Notas</label>
               <textarea
@@ -603,6 +635,13 @@ import { SupplierListItem, CreateSupplierRequest, UpdateSupplierRequest } from '
       margin-top: 4px;
     }
 
+    .form-hint {
+      display: block;
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
     /* ── Alert ── */
     .alert {
       padding: 10px 14px;
@@ -679,6 +718,8 @@ export class SupplierListPageComponent implements OnInit {
   formTaxNumber = '';
   formInitial = '';
   formNotes = '';
+  formCreditPercentageInStore = 50;
+  formCashRedemptionPercentage = 40;
 
   // Delete state
   showDeleteConfirm = signal(false);
@@ -753,6 +794,8 @@ export class SupplierListPageComponent implements OnInit {
     this.formTaxNumber = '';
     this.formInitial = '';
     this.formNotes = '';
+    this.formCreditPercentageInStore = 50;
+    this.formCashRedemptionPercentage = 40;
     this.formSubmitted = false;
     this.isEditing.set(false);
     this.editingExternalId.set(null);
@@ -767,6 +810,8 @@ export class SupplierListPageComponent implements OnInit {
     this.formTaxNumber = supplier.taxNumber || '';
     this.formInitial = supplier.initial;
     this.formNotes = '';
+    this.formCreditPercentageInStore = supplier.creditPercentageInStore ?? 50;
+    this.formCashRedemptionPercentage = supplier.cashRedemptionPercentage ?? 40;
     this.formSubmitted = false;
     this.isEditing.set(true);
     this.editingExternalId.set(supplier.externalId);
@@ -777,6 +822,8 @@ export class SupplierListPageComponent implements OnInit {
     this.supplierService.getById(supplier.externalId).subscribe({
       next: (full) => {
         this.formNotes = full.notes || '';
+        this.formCreditPercentageInStore = full.creditPercentageInStore ?? 50;
+        this.formCashRedemptionPercentage = full.cashRedemptionPercentage ?? 40;
       }
     });
   }
@@ -810,6 +857,8 @@ export class SupplierListPageComponent implements OnInit {
       taxNumber: this.formTaxNumber.trim() || undefined,
       initial: this.formInitial.trim().toUpperCase(),
       notes: this.formNotes.trim() || undefined,
+      creditPercentageInStore: this.formCreditPercentageInStore,
+      cashRedemptionPercentage: this.formCashRedemptionPercentage,
     };
 
     if (this.isEditing() && this.editingExternalId()) {

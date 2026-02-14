@@ -22,6 +22,8 @@ public class SupplierConfiguration : IEntityTypeConfiguration<SupplierEntity>
         b.Property(x => x.Initial).HasMaxLength(5).IsRequired();
         b.HasIndex(x => x.Initial).IsUnique();
         b.Property(x => x.Notes).HasMaxLength(2000);
+        b.Property(x => x.CreditPercentageInStore).HasPrecision(5, 2).HasDefaultValue(50m);
+        b.Property(x => x.CashRedemptionPercentage).HasPrecision(5, 2).HasDefaultValue(40m);
         b.Property(x => x.IsDeleted).HasDefaultValue(false);
         b.Property(x => x.DeletedBy).HasMaxLength(256);
         b.HasQueryFilter(x => !x.IsDeleted);
