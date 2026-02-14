@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
@@ -9,7 +10,7 @@ public static class MeEndpoints
 {
     public static void MapMeEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/me").RequireAuthorization();
+        var group = app.MapGroup("/api/me");
 
         group.MapGet("/roles", GetMyRoles);
         group.MapGet("/permissions", GetMyPermissions);
@@ -20,12 +21,13 @@ public static class MeEndpoints
         [FromServices] ShsDbContext db,
         CancellationToken ct)
     {
-        var userId = httpContext.User.GetUserId();
-        if (userId == 0)
+        var email = httpContext.User.GetUserEmail();
+        if (string.IsNullOrEmpty(email))
             return Results.Unauthorized();
 
         var roles = await db.UserRoles
-            .Where(ur => ur.UserId == userId)
+            .Include(ur => ur.User)
+            .Where(ur => ur.User.Email == email)
             .Include(ur => ur.Role)
             .Select(ur => new { ur.Role.Name })
             .ToListAsync(ct);
@@ -38,12 +40,13 @@ public static class MeEndpoints
         [FromServices] ShsDbContext db,
         CancellationToken ct)
     {
-        var userId = httpContext.User.GetUserId();
-        if (userId == 0)
+        var email = httpContext.User.GetUserEmail();
+        if (string.IsNullOrEmpty(email))
             return Results.Unauthorized();
 
         var permissions = await db.UserRoles
-            .Where(ur => ur.UserId == userId)
+            .Include(ur => ur.User)
+            .Where(ur => ur.User.Email == email)
             .Include(ur => ur.Role)
             .ThenInclude(r => r.RolePermissions)
             .ThenInclude(rp => rp.Permission)

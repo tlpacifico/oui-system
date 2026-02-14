@@ -17,7 +17,7 @@ import { FinanceService, SettlementDetail, SettlementStatus } from '../finance.s
           <div class="detail-topbar-right">
             @if (settlement()!.status === 1) {
               <button
-                class="btn btn-outline btn-danger-outline"
+                class="btn btn-outline btn-danger"
                 (click)="confirmCancel()"
               >
                 Cancelar Acerto
@@ -35,16 +35,13 @@ import { FinanceService, SettlementDetail, SettlementStatus } from '../finance.s
 
         <!-- Header -->
         <div class="settlement-header">
-          <div class="header-left">
-            <h1>Acerto – {{ settlement()!.supplierName }}</h1>
-            <div class="header-meta">
-              <span>{{ formatPeriod(settlement()!.periodStart, settlement()!.periodEnd) }}</span>
-              <span class="meta-sep">·</span>
-              <span class="badge" [ngClass]="getStatusClass(settlement()!.status)">
-                {{ getStatusLabel(settlement()!.status) }}
-              </span>
-            </div>
+          <div class="header-info">
+            <span class="settlement-period">{{ formatPeriod(settlement()!.periodStart, settlement()!.periodEnd) }}</span>
+            <h1 class="settlement-name">Acerto – {{ settlement()!.supplierName }}</h1>
           </div>
+          <span class="badge badge-lg" [ngClass]="getStatusClass(settlement()!.status)">
+            {{ getStatusLabel(settlement()!.status) }}
+          </span>
         </div>
 
         <!-- KPIs -->
@@ -102,9 +99,7 @@ import { FinanceService, SettlementDetail, SettlementStatus } from '../finance.s
 
         <!-- Items table -->
         <div class="card table-card">
-          <div class="card-title-bar">
-            <span class="card-title">Itens do Acerto</span>
-          </div>
+          <div class="card-title">Itens do Acerto</div>
           <div class="table-wrapper">
             <table>
               <thead>
@@ -143,38 +138,216 @@ import { FinanceService, SettlementDetail, SettlementStatus } from '../finance.s
     }
   `,
   styles: [`
+    :host { display: block; }
+
     .page { max-width: 1000px; margin: 0 auto; }
+
     .detail-topbar {
-      display: flex; justify-content: space-between; align-items: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .detail-topbar-right { display: flex; gap: 8px; }
+
+    .settlement-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      gap: 20px;
+    }
+
+    .header-info { flex: 1; min-width: 0; }
+
+    .settlement-period {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .settlement-name {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+      color: #1e293b;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
       margin-bottom: 24px;
     }
-    .detail-topbar-right { display: flex; gap: 8px; }
-    .settlement-header { margin-bottom: 24px; }
-    .settlement-header h1 { font-size: 22px; font-weight: 700; margin: 0; }
-    .header-meta { font-size: 14px; color: #64748b; margin-top: 4px; }
-    .meta-sep { margin: 0 8px; }
-    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
-    .badge-pending { background: #fef3c7; color: #92400e; }
-    .badge-paid { background: #d1fae5; color: #065f46; }
-    .badge-cancelled { background: #fee2e2; color: #991b1b; }
-    .stat-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 16px; margin-bottom: 24px;
-    }
+
     .stat-card {
-      padding: 16px; text-align: center;
+      text-align: center;
+      padding: 20px;
     }
-    .stat-card.highlight { border: 2px solid #0f172a; }
-    .stat-label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
-    .stat-value { font-size: 18px; font-weight: 700; }
+
+    .stat-card.highlight {
+      border: 2px solid #6366f1;
+      background: #faf5ff;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1e293b;
+    }
+
     .stat-success { color: #059669; }
     .stat-info { color: #0284c7; }
-    .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-    .info-row label { display: block; font-size: 12px; color: #64748b; margin-bottom: 2px; }
-    .info-row span { font-size: 14px; }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 20px;
+    }
+
+    .table-card { padding: 0; }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0;
+    }
+
+    .table-card .card-title {
+      padding: 20px 20px 16px;
+      margin-bottom: 0;
+    }
+
+    .table-wrapper { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8fafc;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+
+    tr:hover td { background: #f1f5f9; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .info-row label {
+      display: block;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .info-row span { font-size: 14px; color: #1e293b; font-weight: 500; }
+
     .cell-right { text-align: right; }
-    .cell-mono { font-family: monospace; font-size: 13px; }
-    .state-message { text-align: center; padding: 48px; color: #64748b; }
+    .cell-mono { font-family: monospace; font-size: 12px; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-lg { padding: 6px 16px; font-size: 13px; }
+
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-paid { background: #dcfce7; color: #166534; }
+    .badge-cancelled { background: #fee2e2; color: #991b1b; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .btn-primary { background: #6366f1; color: white; }
+    .btn-primary:hover:not(:disabled) { background: #4f46e5; }
+
+    .btn-outline {
+      background: white;
+      color: #1e293b;
+      border-color: #e2e8f0;
+    }
+
+    .btn-outline:hover { background: #f8fafc; }
+
+    .btn-danger {
+      border-color: #fecaca;
+      color: #991b1b;
+    }
+
+    .btn-danger:hover { background: #fee2e2; }
+
+    .state-message {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #64748b;
+      font-size: 15px;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    @media (max-width: 1024px) {
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .settlement-header { flex-direction: column; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+    }
   `],
 })
 export class SettlementDetailPageComponent implements OnInit {

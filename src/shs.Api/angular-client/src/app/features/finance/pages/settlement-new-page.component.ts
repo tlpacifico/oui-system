@@ -14,10 +14,11 @@ type Step = 1 | 2 | 3;
     <div class="page">
       <div class="detail-topbar">
         <button class="btn btn-outline" (click)="goBack()">← Voltar</button>
+        <h1 class="page-title">Novo Acerto</h1>
+        <div></div>
       </div>
 
-      <h1>Novo Acerto</h1>
-      <p class="subtitle">Processar acerto com fornecedor consignante</p>
+      <p class="page-subtitle">Processar acerto com fornecedor consignante</p>
 
       <!-- Step indicator -->
       <div class="steps">
@@ -33,17 +34,18 @@ type Step = 1 | 2 | 3;
       </div>
 
       @if (loading()) {
-        <div class="loading">A carregar...</div>
+        <div class="state-message">A carregar...</div>
       } @else {
         <!-- Step 1: Select supplier and period -->
         @if (currentStep() === 1) {
-          <div class="card form-card">
+          <div class="card">
+            <div class="card-title">Fornecedor e Período</div>
             <div class="form-group">
               <label>Fornecedor *</label>
               <select
                 [(ngModel)]="selectedSupplierId"
                 (ngModelChange)="onSupplierChange()"
-                class="form-control"
+                class="form-input"
               >
                 <option [ngValue]="null">Selecione o fornecedor</option>
                 @for (g of pendingGroups(); track g.supplierId) {
@@ -55,22 +57,22 @@ type Step = 1 | 2 | 3;
             </div>
             @if (selectedSupplierId != null) {
               <div class="form-row">
-                <div class="form-group">
+                <div class="form-group form-group-grow">
                   <label>Data início *</label>
                   <input
                     type="date"
                     [(ngModel)]="periodStart"
                     (ngModelChange)="onPeriodChange()"
-                    class="form-control"
+                    class="form-input"
                   />
                 </div>
-                <div class="form-group">
+                <div class="form-group form-group-grow">
                   <label>Data fim *</label>
                   <input
                     type="date"
                     [(ngModel)]="periodEnd"
                     (ngModelChange)="onPeriodChange()"
-                    class="form-control"
+                    class="form-input"
                   />
                 </div>
               </div>
@@ -78,7 +80,7 @@ type Step = 1 | 2 | 3;
                 <label>Notas (opcional)</label>
                 <textarea
                   [(ngModel)]="notes"
-                  class="form-control"
+                  class="form-input form-textarea"
                   rows="2"
                   placeholder="Notas internas sobre este acerto..."
                 ></textarea>
@@ -96,7 +98,7 @@ type Step = 1 | 2 | 3;
 
         <!-- Step 2: Review breakdown -->
         @if (currentStep() === 2 && preview()) {
-          <div class="card">
+          <div class="card summary-card">
             <div class="card-title">Resumo do Acerto</div>
             <div class="summary-grid">
               <div class="summary-row">
@@ -141,7 +143,7 @@ type Step = 1 | 2 | 3;
 
         <!-- Step 3: Confirm and create -->
         @if (currentStep() === 3 && preview()) {
-          <div class="card">
+          <div class="card confirm-card">
             <div class="card-title">Confirmar criação do acerto</div>
             <p>
               Será criado um acerto para <strong>{{ preview()!.supplierName }}</strong>
@@ -169,49 +171,185 @@ type Step = 1 | 2 | 3;
     </div>
   `,
   styles: [`
+    :host { display: block; }
+
     .page { max-width: 640px; margin: 0 auto; }
-    .detail-topbar { margin-bottom: 20px; }
-    .subtitle { color: #64748b; margin: 4px 0 24px; font-size: 14px; }
+
+    .detail-topbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0;
+      flex: 1;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: #64748b;
+      margin: 0 0 24px;
+    }
+
     .steps {
-      display: flex; gap: 16px; margin-bottom: 32px;
-      padding: 16px; background: #f8fafc; border-radius: 8px;
+      display: flex;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding: 16px 20px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
     }
+
     .step {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 14px; color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 500;
     }
-    .step.active { color: #0f172a; font-weight: 500; }
+
+    .step.active { color: #1e293b; }
     .step.done { color: #059669; }
+
     .step-num {
-      width: 24px; height: 24px; border-radius: 50%;
-      background: #e2e8f0; color: #64748b;
-      display: inline-flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 600;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #64748b;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
     }
-    .step.active .step-num { background: #0f172a; color: #fff; }
+
+    .step.active .step-num { background: #6366f1; color: #fff; }
     .step.done .step-num { background: #059669; color: #fff; }
-    .loading { text-align: center; padding: 48px; color: #64748b; }
-    .form-card { max-width: 480px; }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+    }
+
     .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px; }
-    .form-control {
-      width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0;
-      border-radius: 6px; font-size: 14px;
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
     }
+
     .form-row { display: flex; gap: 16px; }
-    .form-row .form-group { flex: 1; }
+    .form-group-grow { flex: 1; }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      color: #1e293b;
+      font-family: inherit;
+      transition: border-color 0.15s;
+      background: white;
+    }
+
+    .form-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
     .form-actions { display: flex; gap: 12px; margin-top: 24px; }
+
     .summary-grid { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+
     .summary-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 8px 0; border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
     }
+
     .summary-row.highlight {
-      font-size: 16px; border-bottom: none;
-      margin-top: 8px; padding-top: 16px;
-      border-top: 2px solid #0f172a;
+      font-size: 16px;
+      font-weight: 700;
+      border-bottom: none;
+      margin-top: 8px;
+      padding-top: 16px;
+      border-top: 2px solid #6366f1;
+      color: #1e293b;
     }
+
     .text-muted { color: #64748b; font-size: 14px; margin-top: 16px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary { background: #6366f1; color: white; }
+    .btn-primary:hover:not(:disabled) { background: #4f46e5; }
+
+    .btn-outline {
+      background: white;
+      color: #1e293b;
+      border-color: #e2e8f0;
+    }
+
+    .btn-outline:hover { background: #f8fafc; }
+
+    .state-message {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #64748b;
+      font-size: 15px;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    @media (max-width: 768px) {
+      .form-row { flex-direction: column; }
+      .detail-topbar { flex-wrap: wrap; }
+    }
   `],
 })
 export class SettlementNewPageComponent implements OnInit {
