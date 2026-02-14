@@ -57,6 +57,19 @@
         <span class="icon">📋</span> Vendas de Hoje
       </a>
 
+      <div class="sidebar-section" *hasPermission="'reports.view'">
+        Financeiro
+      </div>
+      <a class="sidebar-item" routerLink="/finance/settlements" routerLinkActive="active" *hasPermission="'reports.view'">
+        <span class="icon">📒</span> Acertos
+      </a>
+      <a class="sidebar-item" routerLink="/finance/credits" routerLinkActive="active" *hasPermission="'reports.view'">
+        <span class="icon">💳</span> Créditos em Loja
+      </a>
+      <a class="sidebar-item" routerLink="/reports" routerLinkActive="active" *hasPermission="'reports.view'">
+        <span class="icon">📈</span> Relatórios
+      </a>
+
       <div class="sidebar-section" *hasPermission="['admin.roles.view', 'admin.permissions.view']">
         Administração
       </div>

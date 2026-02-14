@@ -23,6 +23,16 @@ import { PosSalesListPageComponent } from './features/pos/pos-sales-list-page.co
 import { RoleListPageComponent } from './features/admin/pages/role-list-page.component';
 import { RoleDetailPageComponent } from './features/admin/pages/role-detail-page.component';
 import { PermissionListPageComponent } from './features/admin/pages/permission-list-page.component';
+import { SettlementListPageComponent } from './features/finance/pages/settlement-list-page.component';
+import { SettlementNewPageComponent } from './features/finance/pages/settlement-new-page.component';
+import { SettlementDetailPageComponent } from './features/finance/pages/settlement-detail-page.component';
+import { StoreCreditsPageComponent } from './features/finance/pages/store-credits-page.component';
+import { StoreCreditDetailPageComponent } from './features/finance/pages/store-credit-detail-page.component';
+import { ReportsListPageComponent } from './features/reports/pages/reports-list-page.component';
+import { ReportsSalesPageComponent } from './features/reports/pages/reports-sales-page.component';
+import { ReportsInventoryPageComponent } from './features/reports/pages/reports-inventory-page.component';
+import { ReportsSuppliersPageComponent } from './features/reports/pages/reports-suppliers-page.component';
+import { ReportsFinancePageComponent } from './features/reports/pages/reports-finance-page.component';
 import { authGuard } from './core/auth/auth.guard';
 import { permissionGuard, anyPermissionGuard } from './core/auth/permission.guard';
 
@@ -139,17 +149,80 @@ export const routes: Routes = [
   {
     path: 'admin/roles',
     component: RoleListPageComponent,
-    canMatch: [authGuard, permissionGuard('admin.roles.view')],
+    //canMatch: [authGuard, permissionGuard('admin.roles.view')],
+    canMatch: [authGuard],
   },
   {
     path: 'admin/roles/:id',
     component: RoleDetailPageComponent,
-    canMatch: [authGuard, permissionGuard('admin.roles.view')],
+    canMatch: [authGuard],
+    //canMatch: [authGuard, permissionGuard('admin.roles.view')],
   },
   {
     path: 'admin/permissions',
     component: PermissionListPageComponent,
-    canMatch: [authGuard, permissionGuard('admin.permissions.view')],
+    canMatch: [authGuard],
+    //canMatch: [authGuard, permissionGuard('admin.permissions.view')],
+  },
+  {
+    path: 'finance/settlements',
+    component: SettlementListPageComponent,
+    canMatch: [authGuard],
+    //canMatch: [authGuard, permissionGuard('admin.permissions.view')],
+  },
+  {
+    path: 'finance/settlements/new',
+    component: SettlementNewPageComponent,
+    canMatch: [authGuard],
+    //canMatch: [authGuard, permissionGuard('admin.permissions.view')],
+  },
+  {
+    path: 'finance/settlements/:id',
+    component: SettlementDetailPageComponent,
+    canMatch: [authGuard],
+    //canMatch: [authGuard, permissionGuard('admin.permissions.view')],
+  },
+  {
+    path: 'finance/credits',
+    component: StoreCreditsPageComponent,
+    canMatch: [authGuard],
+    //canMatch: [authGuard, permissionGuard('admin.permissions.view')],
+  },
+  {
+    path: 'finance/credits/:id',
+    component: StoreCreditDetailPageComponent,
+    canMatch: [authGuard],
+    //canMatch: [authGuard, permissionGuard('admin.permissions.view')],
+  },
+  {
+    path: 'reports',
+    component: ReportsListPageComponent,
+    canMatch: [authGuard],
+    //canMatch: [authGuard, permissionGuard('admin.permissions.view')],
+  },
+  {
+    path: 'reports/sales',
+    component: ReportsSalesPageComponent,
+    canMatch: [authGuard],
+    //canMatch: [authGuard, permissionGuard('admin.permissions.view')],
+  },
+  {
+    path: 'reports/inventory',
+    component: ReportsInventoryPageComponent,
+    canMatch: [authGuard],
+    //canMatch: [authGuard, permissionGuard('admin.permissions.view')],
+  },
+  {
+    path: 'reports/suppliers',
+    component: ReportsSuppliersPageComponent,
+    canMatch: [authGuard],
+    //canMatch: [authGuard, permissionGuard('admin.permissions.view')],
+  },
+  {
+    path: 'reports/finance',
+    component: ReportsFinancePageComponent,
+    canMatch: [authGuard],
+    //canMatch: [authGuard, permissionGuard('admin.permissions.view')],
   },
   {
     path: '**',

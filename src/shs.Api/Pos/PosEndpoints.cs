@@ -12,13 +12,44 @@ public static class PosEndpoints
 {
     public static void MapPosEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/pos/register").WithTags("POS - Cash Register");
+        var registerGroup = app.MapGroup("/api/pos/register").WithTags("POS - Cash Register");
 
-        group.MapPost("/open", OpenRegister).RequirePermission("pos.register.open");
-        group.MapPost("/close", CloseRegister).RequirePermission("pos.register.close");
-        group.MapGet("/current", GetCurrentRegister).RequirePermission("pos.register.view");
-        group.MapGet("/status", GetAllRegistersStatus).RequirePermission("pos.register.view");
-        group.MapGet("/{externalId:guid}", GetRegisterById).RequirePermission("pos.register.view");
+        registerGroup.MapPost("/open", OpenRegister).RequirePermission("pos.register.open");
+        registerGroup.MapPost("/close", CloseRegister).RequirePermission("pos.register.close");
+        registerGroup.MapGet("/current", GetCurrentRegister).RequirePermission("pos.register.view");
+        registerGroup.MapGet("/status", GetAllRegistersStatus).RequirePermission("pos.register.view");
+        registerGroup.MapGet("/{externalId:guid}", GetRegisterById).RequirePermission("pos.register.view");
+
+        var posGroup = app.MapGroup("/api/pos").WithTags("POS");
+        posGroup.MapGet("/suppliers", GetPosSuppliers).RequirePermission("pos.sales.create");
+    }
+
+    /// <summary>
+    /// Get suppliers list for POS (e.g. when selecting supplier for Crédito em Loja payment).
+    /// Returns minimal data: id, name, initial.
+    /// </summary>
+    private static async Task<IResult> GetPosSuppliers(
+        [FromServices] ShsDbContext db,
+        [FromQuery] string? search,
+        CancellationToken ct)
+    {
+        var query = db.Suppliers.Where(s => !s.IsDeleted);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.ToLower();
+            query = query.Where(sup =>
+                sup.Name.ToLower().Contains(s) ||
+                sup.Initial.ToLower().Contains(s));
+        }
+
+        var suppliers = await query
+            .OrderBy(sup => sup.Name)
+            .Select(sup => new { sup.Id, sup.Name, sup.Initial })
+            .Take(200)
+            .ToListAsync(ct);
+
+        return Results.Ok(suppliers);
     }
 
     // ── Helpers ──

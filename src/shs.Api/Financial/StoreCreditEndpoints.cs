@@ -15,6 +15,9 @@ public static class StoreCreditEndpoints
         group.MapGet("/supplier/{supplierId}", GetSupplierStoreCredits)
             .RequirePermission("reports.view");
 
+        group.MapGet("/supplier/{supplierId}/balance", GetSupplierStoreCreditBalance)
+            .RequirePermission("pos.sales.create");
+
         group.MapGet("/{externalId:guid}", GetStoreCreditById)
             .RequirePermission("reports.view");
 
@@ -83,6 +86,30 @@ public static class StoreCreditEndpoints
             SupplierId = supplierId,
             TotalActiveBalance = totalBalance,
             Credits = credits
+        });
+    }
+
+    /// <summary>
+    /// Get the current store credit balance for a supplier (for POS - when operator identifies supplier for Crédito em Loja).
+    /// </summary>
+    private static async Task<IResult> GetSupplierStoreCreditBalance(
+        ShsDbContext db,
+        long supplierId,
+        CancellationToken ct)
+    {
+        var exists = await db.Suppliers.AnyAsync(s => s.Id == supplierId && !s.IsDeleted, ct);
+        if (!exists)
+            return Results.NotFound(new { error = "Fornecedor não encontrado." });
+
+        var totalBalance = await db.StoreCredits
+            .Where(sc => !sc.IsDeleted && sc.SupplierId == supplierId && sc.Status == StoreCreditStatus.Active)
+            .Where(sc => sc.ExpiresOn == null || sc.ExpiresOn > DateTime.UtcNow)
+            .SumAsync(sc => sc.CurrentBalance, ct);
+
+        return Results.Ok(new
+        {
+            SupplierId = supplierId,
+            TotalActiveBalance = totalBalance
         });
     }
 

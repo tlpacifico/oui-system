@@ -143,7 +143,7 @@ interface CartItem {
           </div>
 
           <!-- Pay button -->
-          <button class="btn btn-primary btn-pay" (click)="showPaymentDialog.set(true)">
+          <button class="btn btn-primary btn-pay" (click)="openPaymentDialog()">
             Finalizar Venda (F4)
           </button>
         }
@@ -157,14 +157,14 @@ interface CartItem {
 
       <!-- Payment Dialog -->
       @if (showPaymentDialog()) {
-        <div class="overlay" (click)="showPaymentDialog.set(false)">
+        <div class="overlay" (click)="closePaymentDialog()">
           <div class="dialog pay-dialog" (click)="$event.stopPropagation()">
             <h2>Pagamento</h2>
             <div class="pay-total">{{ totalAmount() | currency: 'EUR' }}</div>
 
             <div class="form-group">
               <label>Método de Pagamento</label>
-              <select class="form-control" [(ngModel)]="paymentMethod">
+              <select class="form-control" [(ngModel)]="paymentMethod" (ngModelChange)="onPaymentMethodChange()">
                 <option value="Cash">Dinheiro</option>
                 <option value="CreditCard">Cartão Crédito</option>
                 <option value="DebitCard">Cartão Débito</option>
@@ -172,6 +172,31 @@ interface CartItem {
                 <option value="StoreCredit">Crédito Loja</option>
               </select>
             </div>
+
+            @if (paymentMethod === 'StoreCredit') {
+              <div class="form-group">
+                <label>Fornecedor *</label>
+                <select
+                  class="form-control"
+                  [(ngModel)]="storeCreditSupplierId"
+                  (ngModelChange)="onStoreCreditSupplierChange()"
+                >
+                  <option [ngValue]="null">Selecione o fornecedor</option>
+                  @for (s of posSuppliers(); track s.id) {
+                    <option [ngValue]="s.id">{{ s.initial }} – {{ s.name }}</option>
+                  }
+                </select>
+                @if (storeCreditSupplierId != null && supplierCreditBalance() !== null) {
+                  <div class="credit-balance-display">
+                    <span class="credit-label">Crédito em Loja:</span>
+                    <span class="credit-value">{{ supplierCreditBalance()! | currency: 'EUR' }}</span>
+                  </div>
+                }
+                @if (storeCreditSupplierId != null && supplierCreditLoading()) {
+                  <div class="credit-loading">A carregar saldo...</div>
+                }
+              </div>
+            }
 
             <div class="form-group">
               <label>Valor (€)</label>
@@ -201,11 +226,11 @@ interface CartItem {
             }
 
             <div class="dialog-actions">
-              <button class="btn btn-outline" (click)="showPaymentDialog.set(false)">Cancelar</button>
+              <button class="btn btn-outline" (click)="closePaymentDialog()">Cancelar</button>
               <button
                 class="btn btn-primary"
                 (click)="confirmPayment()"
-                [disabled]="paying()"
+                [disabled]="paying() || (paymentMethod === 'StoreCredit' && storeCreditSupplierId == null)"
               >
                 {{ paying() ? 'A processar...' : 'Confirmar Pagamento' }}
               </button>
@@ -320,6 +345,10 @@ interface CartItem {
 
     .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
     .alert-error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .credit-balance-display { display: flex; justify-content: space-between; align-items: center; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-top: 8px; }
+    .credit-label { font-size: 13px; color: #166534; font-weight: 500; }
+    .credit-value { font-size: 18px; font-weight: 700; color: #16a34a; }
+    .credit-loading { font-size: 12px; color: #64748b; margin-top: 8px; }
 
     .success-dialog { text-align: center; }
     .success-icon { width: 56px; height: 56px; border-radius: 50%; background: #f0fdf4; color: #22c55e; font-size: 28px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; border: 2px solid #bbf7d0; }
@@ -362,6 +391,11 @@ export class PosSalePageComponent implements OnInit {
   paying = signal(false);
   payError = signal<string | null>(null);
   saleResult = signal<ProcessSaleResponse | null>(null);
+
+  storeCreditSupplierId: number | null = null;
+  posSuppliers = signal<{ id: number; name: string; initial: string }[]>([]);
+  supplierCreditBalance = signal<number | null>(null);
+  supplierCreditLoading = signal(false);
 
   private searchTimeout: any;
 
@@ -432,10 +466,68 @@ export class PosSalePageComponent implements OnInit {
     this.cart.set(updated);
   }
 
+  openPaymentDialog(): void {
+    this.showPaymentDialog.set(true);
+    if (this.paymentMethod === 'StoreCredit') {
+      this.posService.getPosSuppliers().subscribe({
+        next: (list) => this.posSuppliers.set(list),
+        error: () => this.posSuppliers.set([]),
+      });
+    }
+  }
+
+  closePaymentDialog(): void {
+    this.showPaymentDialog.set(false);
+    this.storeCreditSupplierId = null;
+    this.supplierCreditBalance.set(null);
+  }
+
+  onPaymentMethodChange(): void {
+    if (this.paymentMethod === 'StoreCredit') {
+      this.posService.getPosSuppliers().subscribe({
+        next: (list) => this.posSuppliers.set(list),
+        error: () => this.posSuppliers.set([]),
+      });
+      this.storeCreditSupplierId = null;
+      this.supplierCreditBalance.set(null);
+    } else {
+      this.storeCreditSupplierId = null;
+      this.supplierCreditBalance.set(null);
+    }
+  }
+
+  onStoreCreditSupplierChange(): void {
+    if (this.storeCreditSupplierId == null) {
+      this.supplierCreditBalance.set(null);
+      return;
+    }
+    this.supplierCreditLoading.set(true);
+    this.supplierCreditBalance.set(null);
+    this.posService.getSupplierStoreCreditBalance(this.storeCreditSupplierId).subscribe({
+      next: (res) => {
+        this.supplierCreditBalance.set(res.totalActiveBalance);
+        this.supplierCreditLoading.set(false);
+      },
+      error: () => {
+        this.supplierCreditBalance.set(null);
+        this.supplierCreditLoading.set(false);
+      },
+    });
+  }
+
   confirmPayment(): void {
     if (!this.register()) return;
     if (this.paymentAmount < this.totalAmount()) {
       this.payError.set('O valor do pagamento é insuficiente.');
+      return;
+    }
+    if (this.paymentMethod === 'StoreCredit' && this.storeCreditSupplierId == null) {
+      this.payError.set('Ao usar Crédito em Loja, deve identificar o fornecedor.');
+      return;
+    }
+    if (this.paymentMethod === 'StoreCredit' && this.storeCreditSupplierId != null && (this.supplierCreditBalance() ?? 0) < this.paymentAmount) {
+      const bal = this.supplierCreditBalance() ?? 0;
+      this.payError.set(`Saldo insuficiente. Crédito disponível: ${bal.toFixed(2)}€`);
       return;
     }
     if (this.discountPercentage > 10 && !this.discountReason.trim()) {
@@ -446,10 +538,18 @@ export class PosSalePageComponent implements OnInit {
     this.paying.set(true);
     this.payError.set(null);
 
+    const payment: { method: string; amount: number; supplierId?: number } = {
+      method: this.paymentMethod,
+      amount: this.paymentAmount,
+    };
+    if (this.paymentMethod === 'StoreCredit' && this.storeCreditSupplierId != null) {
+      payment.supplierId = this.storeCreditSupplierId;
+    }
+
     this.posService.processSale({
       cashRegisterId: this.register()!.externalId,
       items: this.cart().map(i => ({ itemExternalId: i.externalId, discountAmount: i.discount })),
-      payments: [{ method: this.paymentMethod, amount: this.paymentAmount }],
+      payments: [payment],
       discountPercentage: this.discountPercentage > 0 ? this.discountPercentage : undefined,
       discountReason: this.discountReason.trim() || undefined,
       notes: this.saleNotes.trim() || undefined,
@@ -486,7 +586,7 @@ export class PosSalePageComponent implements OnInit {
     event.preventDefault();
     if (this.cart().length > 0 && !this.showPaymentDialog() && !this.saleResult()) {
       this.paymentAmount = this.totalAmount();
-      this.showPaymentDialog.set(true);
+      this.openPaymentDialog();
     }
   }
 

@@ -59,6 +59,7 @@ public class RbacSeedService
             new() { ExternalId = Guid.NewGuid(), Name = "pos.sales.create", Category = "pos", Description = "Create sales", CreatedOn = now },
 
             // Reports Category
+            new() { ExternalId = Guid.NewGuid(), Name = "dashboard.view", Category = "dashboard", Description = "View dashboard", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "reports.view", Category = "reports", Description = "View reports", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "reports.export", Category = "reports", Description = "Export reports", CreatedOn = now },
         };
@@ -126,7 +127,7 @@ public class RbacSeedService
             "inventory.brands.manage", "inventory.categories.manage", "inventory.tags.manage", "inventory.suppliers.manage",
             "consignment.receptions.view", "consignment.receptions.evaluate",
             "consignment.returns.view",
-            "reports.view", "reports.export"
+            "dashboard.view", "reports.view", "reports.export"
         };
         var managerPermissions = permissions
             .Where(p => managerPermissionNames.Contains(p.Name))
@@ -143,7 +144,8 @@ public class RbacSeedService
         {
             "pos.register.view", "pos.register.open", "pos.register.close",
             "pos.sales.view", "pos.sales.create",
-            "inventory.items.view"
+            "inventory.items.view",
+            "dashboard.view"
         };
         var cashierPermissions = permissions
             .Where(p => cashierPermissionNames.Contains(p.Name))
@@ -161,7 +163,8 @@ public class RbacSeedService
             "inventory.items.view", "inventory.items.create", "inventory.items.update",
             "inventory.brands.manage", "inventory.categories.manage", "inventory.tags.manage", "inventory.suppliers.manage",
             "consignment.receptions.view", "consignment.receptions.create", "consignment.receptions.evaluate",
-            "consignment.returns.view", "consignment.returns.create"
+            "consignment.returns.view", "consignment.returns.create",
+            "dashboard.view"
         };
         var inventoryClerkPermissions = permissions
             .Where(p => inventoryClerkPermissionNames.Contains(p.Name))

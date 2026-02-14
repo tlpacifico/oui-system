@@ -1,6 +1,6 @@
 # Plano de Desenvolvimento - OUI System
 
-**Última atualização:** 2026-02-13 (RBAC implementado)
+**Última atualização:** 2026-02-14 (Reports API e Frontend implementados)
 
 Referência: [10-AUTOMAKER-GUIDE.md](10-AUTOMAKER-GUIDE.md) (Kanban Cards e ordem de execução).
 
@@ -102,10 +102,10 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 
 | Card | Título | Status |
 |------|--------|--------|
-| 3.1 | Settlement - Entidades | Pendente |
-| 3.2 | Settlement - Backend | Pendente |
-| 3.3 | Settlement - Frontend | Pendente |
-| 3.4 | Store Credits | Pendente |
+| 3.1 | Settlement - Entidades | ✅ Concluído | SettlementEntity, SaleItem.SettlementId, StoreCredit, SupplierCashBalanceTransaction; PorcInLoja + PorcInDinheiro |
+| 3.2 | Settlement - Backend | ✅ Concluído | Endpoints: GET pending-items, POST calculate, POST create, GET list, GET by id, POST process-payment, DELETE cancel |
+| 3.3 | Settlement - Frontend | ✅ Concluído | `/finance/settlements` (lista com tabs Pendentes/Processados/Todos), `/finance/settlements/new` (criar acerto), `/finance/settlements/:id` (detalhe, processar pagamento, cancelar); Sidebar "Financeiro" > "Acertos" |
+| 3.4 | Store Credits | ✅ Concluído | Frontend: `/finance/credits` (seleção fornecedor, créditos em loja, saldo resgate, emitir crédito, processar resgate); `/finance/credits/:id` (detalhe, ajustar, cancelar); Sidebar "Créditos em Loja" |
 
 ---
 
@@ -113,9 +113,9 @@ A ordem de implementação foi ajustada para começar pelo **Módulo de Inventá
 
 | Card | Título | Status |
 |------|--------|--------|
-| 4.1 | Dashboard API | Pendente |
-| 4.2 | Reports API | Pendente |
-| 4.3 | Dashboard & Reports Frontend | Pendente |
+| 4.1 | Dashboard API | ✅ Concluído | GET /api/dashboard?period=today\|week\|month: salesToday, salesMonth, inventory, pendingSettlements, topSellingItems, alerts, salesChart |
+| 4.2 | Reports API | ✅ Concluído | GET /api/reports/sales, /inventory, /suppliers, /finance com filtros de período |
+| 4.3 | Dashboard & Reports Frontend | ✅ Concluído | Dashboard + Relatórios (Vendas, Inventário, Fornecedores, Financeiro); Sidebar "Relatórios" |
 
 ---
 

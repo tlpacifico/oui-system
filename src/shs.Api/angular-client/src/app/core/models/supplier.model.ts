@@ -1,4 +1,5 @@
 export interface Supplier {
+  id: number;
   externalId: string;
   name: string;
   email: string;
@@ -16,6 +17,7 @@ export interface Supplier {
 }
 
 export interface SupplierListItem {
+  id: number;
   externalId: string;
   name: string;
   email: string;

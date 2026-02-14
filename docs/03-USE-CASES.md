@@ -457,7 +457,7 @@ Itens vendidos: Calca 20 EUR + Camisa 20 EUR = Total 40 EUR
    - Cartao de Credito
    - Cartao de Debito
    - MBWAY
-   - Credito em Loja (operador identifica o fornecedor para debitar do seu credito)
+   - Credito em Loja (operador identifica o fornecedor; sistema apresenta o credito em loja do fornecedor no ecra naquele momento; debita do saldo correto)
    - Misto (dividir entre metodos)
 8. Operador processa pagamento
 9. Sistema remove pecas do inventario disponivel
@@ -467,7 +467,8 @@ Itens vendidos: Calca 20 EUR + Camisa 20 EUR = Total 40 EUR
 **Fluxos Alternativos:**
 - 4a. Aplicar desconto: operador introduz percentagem/valor (sujeito a RN-14)
 - 4b. Aplicar cupao promocional: sistema valida e aplica
-- 7a. Pagamento dividido: cliente divide entre dois metodos de pagamento
+- 7a. Credito em Loja: ao identificar o fornecedor, sistema apresenta o credito em loja do fornecedor no ecra naquele momento
+- 7b. Pagamento dividido: cliente divide entre dois metodos de pagamento
 - 9a. Pecas consignadas: sistema regista venda para calculo de comissao
 - 9b. Pecas de compra propria: lucro total e da loja (sem comissao)
 
@@ -475,7 +476,7 @@ Itens vendidos: Calca 20 EUR + Camisa 20 EUR = Total 40 EUR
 - RN-14: Descontos acima de X% exigem autorizacao do gestor
 - RN-15: Cada peca consignada vendida deve ser rastreada para acerto com fornecedor (gera credito PorcInLoja + PorcInDinheiro)
 - RN-16: Pecas de compra propria nao geram comissao
-- RN-16a: Ao usar Credito em Loja, operador deve identificar o fornecedor para debitar do saldo correto
+- RN-16a: Ao usar Credito em Loja, operador deve identificar o fornecedor para debitar do saldo correto; sistema deve apresentar o credito em loja do fornecedor no ecra no momento da identificacao
 
 ---
 

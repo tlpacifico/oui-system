@@ -119,6 +119,17 @@ export interface SaleListItem {
   paymentMethods: string;
 }
 
+export interface PosSupplierItem {
+  id: number;
+  name: string;
+  initial: string;
+}
+
+export interface SupplierStoreCreditBalanceResponse {
+  supplierId: number;
+  totalActiveBalance: number;
+}
+
 export interface SalesPagedResult {
   data: SaleListItem[];
   totalCount: number;
@@ -146,6 +157,18 @@ export class PosService {
 
   getCurrentRegister(): Observable<CurrentRegisterResponse> {
     return this.http.get<CurrentRegisterResponse>(`${this.baseUrl}/pos/register/current`);
+  }
+
+  getPosSuppliers(search?: string): Observable<PosSupplierItem[]> {
+    let params = new HttpParams();
+    if (search) params = params.set('search', search);
+    return this.http.get<PosSupplierItem[]>(`${this.baseUrl}/pos/suppliers`, { params });
+  }
+
+  getSupplierStoreCreditBalance(supplierId: number): Observable<SupplierStoreCreditBalanceResponse> {
+    return this.http.get<SupplierStoreCreditBalanceResponse>(
+      `${this.baseUrl}/store-credits/supplier/${supplierId}/balance`
+    );
   }
 
   // ── Sales ──

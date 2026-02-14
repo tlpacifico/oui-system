@@ -11,14 +11,9 @@ public class SupplierEntity : EntityWithIdAuditable<long>, IHaveSoftDelete
     public string Initial { get; set; } = string.Empty; // Single letter for ID generation (e.g., "M")
     public string? Notes { get; set; }
 
-    /// <summary>
-    /// Percentage of sale value that becomes store credit (PorcInLoja). Default 50.
-    /// </summary>
+    /// <summary>Percentage of settlement amount credited to store credit (default 50%).</summary>
     public decimal CreditPercentageInStore { get; set; } = 50m;
-
-    /// <summary>
-    /// Percentage of sale value that can be redeemed in cash (PorcInDinheiro). Default 40.
-    /// </summary>
+    /// <summary>Percentage of settlement amount credited to cash redemption balance (default 40%).</summary>
     public decimal CashRedemptionPercentage { get; set; } = 40m;
 
     public bool IsDeleted { get; set; }

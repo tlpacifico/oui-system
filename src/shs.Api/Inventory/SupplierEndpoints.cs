@@ -44,6 +44,7 @@ public static class SupplierEndpoints
         var suppliers = await query
             .OrderBy(sup => sup.Name)
             .Select(sup => new SupplierListResponse(
+                sup.Id,
                 sup.ExternalId,
                 sup.Name,
                 sup.Email,
@@ -68,6 +69,7 @@ public static class SupplierEndpoints
         var supplier = await db.Suppliers
             .Where(sup => sup.ExternalId == externalId)
             .Select(sup => new SupplierDetailResponse(
+                sup.Id,
                 sup.ExternalId,
                 sup.Name,
                 sup.Email,
@@ -231,6 +233,7 @@ public static class SupplierEndpoints
         return Results.Created(
             $"/api/suppliers/{supplier.ExternalId}",
             new SupplierDetailResponse(
+                supplier.Id,
                 supplier.ExternalId,
                 supplier.Name,
                 supplier.Email,
@@ -308,6 +311,7 @@ public static class SupplierEndpoints
         var itemCount = await db.Items.CountAsync(i => i.SupplierId == supplier.Id && !i.IsDeleted, ct);
 
         return Results.Ok(new SupplierDetailResponse(
+            supplier.Id,
             supplier.ExternalId,
             supplier.Name,
             supplier.Email,
@@ -465,6 +469,7 @@ public record UpdateSupplierRequest(
 
 // Response DTOs
 public record SupplierListResponse(
+    long Id,
     Guid ExternalId,
     string Name,
     string Email,
@@ -478,6 +483,7 @@ public record SupplierListResponse(
 );
 
 public record SupplierDetailResponse(
+    long Id,
     Guid ExternalId,
     string Name,
     string Email,
