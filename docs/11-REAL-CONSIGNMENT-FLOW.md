@@ -81,14 +81,15 @@
 │                                                                     │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  ETAPA 6: ACERTO / PAGAMENTO AO FORNECEDOR                         │
+│  ETAPA 6: ACERTO / CRÉDITO AO FORNECEDOR                            │
 │  ─────────────────────────────────────────────────────────────────  │
 │                                                                     │
-│  1. Fornecedor recebe crédito de cada peça vendida:                 │
-│     • 40% do valor de venda em DINHEIRO                             │
-│     • OU 50% do valor de venda em CRÉDITO EM LOJA                  │
-│  2. Crédito em loja pode ser usado para comprar peças na loja       │
-│  3. Status da peça → "PG" (Pago) após acerto                       │
+│  1. Por cada peça vendida, fornecedor acumula (PorcInLoja + PorcInDinheiro): │
+│     • Crédito em loja (ex: 50%) - para compras na própria loja      │
+│     • Valor resgatável em dinheiro (ex: 40%) - pode levantar         │
+│  2. Crédito em loja: usado em compras (operador identifica fornecedor) │
+│  3. Resgate em dinheiro: fornecedor solicita e loja regista         │
+│  4. Status da peça → "PG" (Pago) após acerto                        │
 │                                                                     │
 │  Comunicação de acertos enviada via WhatsApp                        │
 │                                                                     │
@@ -124,21 +125,25 @@ Recebido ──► Avaliado ──► Consignado/DL ──► Vendido ──► 
 
 ---
 
-## 3. Comissões Reais da Oui Circular
+## 3. Sistema de Créditos do Fornecedor (Oui Circular)
 
-| Tipo de Pagamento | O que o FORNECEDOR recebe | O que a LOJA fica |
-|-------------------|--------------------------|-------------------|
-| **Dinheiro** | **40%** do valor de venda | **60%** do valor de venda |
-| **Crédito em Loja** | **50%** do valor de venda (como crédito) | **50%** do valor de venda |
+Quando um item de um fornecedor é vendido, o fornecedor acumula crédito na loja. Este crédito pode ser resgatado de duas formas:
 
-### Exemplo (peça vendida a €20):
-- **Pagamento em dinheiro:** Fornecedor recebe €8,00 / Loja fica €12,00
-- **Pagamento em crédito:** Fornecedor recebe €10,00 em crédito / Loja fica €10,00
+| Percentagem (por fornecedor) | Destino | Exemplo (Total 40 EUR) |
+|-----------------------------|---------|------------------------|
+| **PorcInLoja** (ex: 50%) | Crédito para compras na própria loja | 40 × 0,50 = **20 EUR** |
+| **PorcInDinheiro** (ex: 40%) | Resgate em numerário | 40 × 0,40 = **16 EUR** |
+| Restante | Loja | 4 EUR (10%) |
+
+### Exemplo (Calça 20€ + Camisa 20€ = 40€ total):
+- **Crédito em loja:** 40 × 0,50 = €20,00 (para comprar itens na loja)
+- **Resgate em dinheiro:** 40 × 0,40 = €16,00 (pode levantar em numerário)
 
 ### Nota:
-O crédito em loja é mais vantajoso para o fornecedor (50% vs 40%), e a loja incentiva esta opção porque:
-1. Não há saída de dinheiro
-2. O fornecedor gasta o crédito na própria loja (mais vendas)
+- PorcInLoja e PorcInDinheiro variam por fornecedor
+- O fornecedor acumula AMBOS quando os itens são vendidos
+- Numa nova venda, o operador deve identificar o fornecedor para utilizar o seu crédito em loja
+- É necessário registar tanto o **uso do crédito em compra** como o **resgate em dinheiro**
 
 ---
 
@@ -152,8 +157,7 @@ O crédito em loja é mais vantajoso para o fornecedor (50% vs 40%), e a loja in
 | **Avaliação** | Feita na hora com o cliente | Feita DEPOIS, sem o cliente |
 | **Receção** | Contagem + avaliação juntas | Apenas contagem → recibo assinado |
 | **Comunicação** | Não especificada | Email com valores + WhatsApp para acertos |
-| **Comissão cash** | Loja fica 40% | Loja fica 60% (fornecedor recebe 40%) |
-| **Comissão crédito** | Loja fica 30% | Loja fica 50% (fornecedor recebe 50%) |
+| **Comissão** | Escolha: 40% cash OU 50% crédito | PorcInLoja + PorcInDinheiro (ambos acumulam) |
 | **Fiscal** | NF-e, SEFAZ, ICMS | Legislação fiscal portuguesa |
 | **Status "Recebido"** | Não existia | Novo status necessário (pré-avaliação) |
 | **Status "PG" (Pago)** | Não existia explicitamente | Status importante no fluxo real |
@@ -187,9 +191,9 @@ Gerado quando o cliente entrega as peças.
 ║  As peças serão avaliadas e o cliente    ║
 ║  será informado dos valores por email.   ║
 ║                                          ║
-║  Comissões:                              ║
-║  • 40% do valor de venda em dinheiro     ║
-║  • 50% do valor de venda em crédito      ║
+║  Créditos (variam por fornecedor):       ║
+║  • PorcInLoja: % em crédito para compras ║
+║  • PorcInDinheiro: % resgatável em cash  ║
 ║                                          ║
 ║  Assinatura do cliente:                  ║
 ║  _____________________________           ║
@@ -227,9 +231,9 @@ PEÇAS RECUSADAS (2):
 
 As peças recusadas ficam disponíveis para levantamento na loja.
 
-Caso as peças sejam vendidas, receberá:
-• 40% em dinheiro (€38,00 se todas vendidas)
-• OU 50% em crédito em loja (€47,50 se todas vendidas)
+Caso as peças sejam vendidas, receberá (exemplo PorcInLoja=50%, PorcInDinheiro=40%):
+• Crédito em loja: €47,50 (50% do total)
+• Resgate em dinheiro: €38,00 (40% do total)
 
 Alguma questão, não hesite em contactar-nos.
 

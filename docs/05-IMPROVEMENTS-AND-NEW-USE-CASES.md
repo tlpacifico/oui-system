@@ -184,11 +184,12 @@ Baseado na análise da documentação atual e pesquisa de referência (SimpleCon
 **Ator Principal:** Caixa/Financeiro
 
 **Fluxo Principal:**
-1. Créditos gerados por: devolução de venda, pagamento a fornecedor em crédito
-2. Sistema mantém saldo de crédito por pessoa (cliente ou fornecedor)
-3. No POS, crédito aparece como forma de pagamento disponível
-4. Extrato de créditos: emissão, uso parcial, saldo, vencimento
-5. Alerta de créditos próximos do vencimento (180 dias)
+1. Créditos do fornecedor gerados por vendas (PorcInLoja) e valor resgatável (PorcInDinheiro)
+2. Sistema mantém dois saldos por fornecedor: crédito em loja + valor para resgate em dinheiro
+3. No POS, ao usar crédito: operador identifica o fornecedor para debitar do saldo PorcInLoja
+4. Resgate em dinheiro: fornecedor solicita, funcionário regista (valor, data, fornecedor)
+5. Extrato de créditos: emissão, uso em compra, resgate em dinheiro, saldo, vencimento
+6. Alerta de créditos próximos do vencimento (180 dias)
 
 ---
 

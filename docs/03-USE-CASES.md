@@ -146,13 +146,16 @@
    - Telefone (+351 XXX XXX XXX)
    - NIF (opcional)
    - Inicial (letra para geracao de ID das pecas)
+   - PorcInLoja (% do valor de venda que vira credito em loja, ex: 50)
+   - PorcInDinheiro (% do valor de venda resgatavel em dinheiro, ex: 40)
 4. Sistema gera codigo do fornecedor
 5. Sistema guarda fornecedor
 
 **Regras de Negocio:**
-- Comissoes sao fixas para todos os fornecedores da Oui Circular:
-  - 40% do valor de venda em dinheiro para o fornecedor (loja fica 60%)
-  - 50% do valor de venda em credito em loja para o fornecedor (loja fica 50%)
+- Cada fornecedor tem percentagens configuráveis:
+  - **PorcInLoja** (% do valor de venda que vira credito em loja) - ex: 50%
+  - **PorcInDinheiro** (% do valor de venda que pode ser resgatado em dinheiro) - ex: 40%
+- Quando um item e vendido, o fornecedor acumula AMBOS: credito em loja E valor resgatavel em dinheiro
 
 ---
 
@@ -323,7 +326,7 @@ Recebido --> Avaliado --> A Venda (DL) --> Vendido (VD) --> Pago (PG)
 **Regras de Negocio:**
 - RN-03: Periodo de consignacao padrao: 60 dias [TODO]
 - RN-04: Apos expiracao, sistema alerta para renovacao ou devolucao [TODO]
-- RN-05: Comissoes fixas: 40% dinheiro / 50% credito para o fornecedor
+- RN-05: PorcInLoja e PorcInDinheiro configuráveis por fornecedor
 
 ---
 
@@ -351,30 +354,49 @@ Recebido --> Avaliado --> A Venda (DL) --> Vendido (VD) --> Pago (PG)
 **Fluxo Principal:**
 1. Sistema lista pecas vendidas pendentes de pagamento, agrupadas por fornecedor
 2. Gestor seleciona fornecedor e periodo
-3. Sistema calcula:
+3. Sistema calcula (usando PorcInLoja e PorcInDinheiro do fornecedor):
    - Valor total de vendas
-   - Montante da comissao da loja
-   - Montante liquido a pagar ao fornecedor
-4. Sistema gera relatorio detalhado por peca
-5. Gestor seleciona metodo de pagamento:
-   - **Pagamento em dinheiro:** Fornecedor recebe 40% do valor de venda (loja fica 60%)
-   - **Credito em loja:** Fornecedor recebe 50% do valor de venda como credito (loja fica 50%)
-6. Gestor confirma pagamento
-7. Sistema regista pagamento e envia comprovativo ao fornecedor (via WhatsApp)
+   - Credito em loja: Total x PorcInLoja (ex: 50%)
+   - Valor resgatavel em dinheiro: Total x PorcInDinheiro (ex: 40%)
+4. Sistema gera credito em loja automaticamente para o fornecedor
+5. Gestor processa resgate em dinheiro (se solicitado pelo fornecedor)
+6. Sistema regista: credito emitido + resgate em dinheiro (se aplicavel)
+7. Sistema envia comprovativo ao fornecedor (via WhatsApp)
 8. Sistema atualiza estado das pecas para `Pago (PG)`
 
-**Exemplo de Calculo:**
+**Exemplo de Calculo (PorcInLoja=50%, PorcInDinheiro=40%):**
 ```
-Peca vendida a 20,00 EUR:
-- Opcao Dinheiro:  Fornecedor recebe 8,00 EUR  | Loja fica 12,00 EUR
-- Opcao Credito:   Fornecedor recebe 10,00 EUR (credito) | Loja fica 10,00 EUR
+Itens vendidos: Calca 20 EUR + Camisa 20 EUR = Total 40 EUR
+- Credito em loja:    40 x 0,50 = 20,00 EUR (para compras na loja)
+- Resgate em dinheiro: 40 x 0,40 = 16,00 EUR (pode levantar em numerario)
+- Loja fica: 40 - 20 - 16 = 4,00 EUR (10%)
 ```
 
 **Regras de Negocio:**
-- RN-05: Comissoes fixas: 40% dinheiro / 50% credito em loja para o fornecedor
+- RN-05: PorcInLoja e PorcInDinheiro configuráveis por fornecedor
 - RN-06: Limite minimo de acerto (opcional): 10,00 EUR
 - RN-07: Relatorio de acerto deve listar cada peca com data de venda, preco e comissao
 - RN-08: Comunicacao de acertos feita via WhatsApp
+
+---
+
+### CU-13a: Resgatar Credito do Fornecedor em Dinheiro [TODO] - P1
+
+**Ator Principal:** Gestor/Financeiro
+**Pre-condicoes:** Fornecedor tem saldo PorcInDinheiro disponivel para resgate
+
+**Fluxo Principal:**
+1. Fornecedor solicita resgate do credito em dinheiro
+2. Funcionario identifica o fornecedor no sistema
+3. Sistema apresenta saldo disponivel para resgate em dinheiro (valor acumulado PorcInDinheiro)
+4. Fornecedor indica valor a resgatar (ate ao saldo disponivel)
+5. Funcionario confirma e processa o resgate
+6. Sistema regista a transacao de resgate (data, valor, fornecedor)
+7. Funcionario entrega o numerario ao fornecedor
+
+**Regras de Negocio:**
+- RN-13a: O valor resgatado nao pode exceder o saldo PorcInDinheiro do fornecedor
+- RN-13b: Resgates devem ser registados para auditoria e conciliacao
 
 ---
 
@@ -435,7 +457,7 @@ Peca vendida a 20,00 EUR:
    - Cartao de Credito
    - Cartao de Debito
    - MBWAY
-   - Credito em Loja
+   - Credito em Loja (operador identifica o fornecedor para debitar do seu credito)
    - Misto (dividir entre metodos)
 8. Operador processa pagamento
 9. Sistema remove pecas do inventario disponivel
@@ -451,8 +473,9 @@ Peca vendida a 20,00 EUR:
 
 **Regras de Negocio:**
 - RN-14: Descontos acima de X% exigem autorizacao do gestor
-- RN-15: Cada peca consignada vendida deve ser rastreada para acerto com fornecedor
+- RN-15: Cada peca consignada vendida deve ser rastreada para acerto com fornecedor (gera credito PorcInLoja + PorcInDinheiro)
 - RN-16: Pecas de compra propria nao geram comissao
+- RN-16a: Ao usar Credito em Loja, operador deve identificar o fornecedor para debitar do saldo correto
 
 ---
 
@@ -647,7 +670,7 @@ Peca vendida a 20,00 EUR:
 1. Admin acede a configuracao do sistema
 2. Admin pode definir:
    - Periodo de consignacao padrao (dias)
-   - Comissoes padrao (atualmente fixas: 40% dinheiro / 50% credito)
+   - PorcInLoja e PorcInDinheiro padrao para novos fornecedores
    - Desconto maximo sem autorizacao
    - Taxa de conversao de pontos de fidelizacao
    - Informacao da loja (nome, morada, NIF)
@@ -683,10 +706,15 @@ Recebido --> Avaliado (AV) --> A Venda (DL) --> Vendido (VD) --> Pago (PG)
 
 ## RESUMO DE COMISSOES (Oui Circular - Portugal)
 
-| Tipo de Pagamento | Fornecedor Recebe | Loja Fica |
-|-------------------|-------------------|-----------|
-| **Dinheiro** | **40%** do valor de venda | **60%** do valor de venda |
-| **Credito em Loja** | **50%** do valor de venda (como credito) | **50%** do valor de venda |
+**Modelo de Credito do Fornecedor:** Quando um item e vendido, o fornecedor acumula credito que pode ser usado de duas formas:
+
+| Percentagem (por fornecedor) | Destino | Exemplo (Total 40 EUR, PorcInLoja=50%, PorcInDinheiro=40%) |
+|-----------------------------|---------|------------------------------------------------------------|
+| **PorcInLoja** | Credito para compras na propria loja | 40 x 0,50 = **20 EUR** de credito em loja |
+| **PorcInDinheiro** | Resgate em numerario | 40 x 0,40 = **16 EUR** resgataveis em dinheiro |
+| Restante | Loja | 4 EUR (10%) |
+
+**Nota:** PorcInLoja e PorcInDinheiro variam por fornecedor. O fornecedor pode usar o credito em loja em compras OU resgatar em dinheiro (ate ao valor PorcInDinheiro acumulado).
 
 ---
 
@@ -698,7 +726,7 @@ Recebido --> Avaliado (AV) --> A Venda (DL) --> Vendido (VD) --> Pago (PG)
 | Cartao de Credito | Via terminal POS |
 | Cartao de Debito | Via terminal POS |
 | MBWAY | Pagamento instantaneo via telemovel |
-| Credito em Loja | Saldo de credito do cliente (de acertos ou devolucoes) |
+| Credito em Loja | Saldo de credito do fornecedor (PorcInLoja). Operador identifica o fornecedor para debitar do seu credito |
 
 ---
 
@@ -708,5 +736,5 @@ A Oui Circular opera com dois tipos de entrada de pecas:
 
 | Tipo | Descricao | Comissao | Exemplos |
 |------|-----------|----------|----------|
-| **Consignacao** | Pecas de fornecedores/clientes | 40% dinheiro / 50% credito para fornecedor | Clientes que trazem roupas |
+| **Consignacao** | Pecas de fornecedores/clientes | PorcInLoja (credito) + PorcInDinheiro (resgate) por fornecedor | Clientes que trazem roupas |
 | **Compra Propria** | Pecas compradas pela loja | Sem comissao (lucro total da loja) | Humana, Vinted, H&M, acervo pessoal |

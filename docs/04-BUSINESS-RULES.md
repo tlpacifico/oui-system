@@ -15,14 +15,18 @@
   2. Notify supplier via WhatsApp/email
   3. Allow options: renew (extend 30 days), return, or renegotiate
 
-### RN-CON-03: Commission Rates
-- Each supplier has two commission rates:
-  - **Cash commission** (`CommissionPercentageInCash`): the **client receives 40%** of the sale price; the store keeps **60%**
-  - **Credit commission** (`CommissionPercentageInCredit`): the **client receives 50%** of the sale price as store credit; the store keeps **50%**
-- Credit commission is higher for the client, incentivizing store credit over cash
-- **Example:** Item sold for **€20**:
-  - Cash payment: client receives **€8**, store keeps **€12**
-  - Credit payment: client receives **€10** in store credit, store keeps **€10**
+### RN-CON-03: Supplier Credit Percentages (PorcInLoja, PorcInDinheiro)
+- Each supplier has two configurable percentages that determine how sale proceeds are allocated:
+  - **PorcInLoja** (`CreditPercentageInStore`): % of sale value that becomes **store credit** (usable for purchases in the store)
+  - **PorcInDinheiro** (`CashRedemptionPercentage`): % of sale value that can be **redeemed in cash**
+- When a supplier's item is sold, the supplier accumulates **BOTH**:
+  - Store credit = Total × PorcInLoja (e.g., 50% → €20 on €40 total)
+  - Cash redemption balance = Total × PorcInDinheiro (e.g., 40% → €16 on €40 total)
+- The remainder stays with the store (e.g., 10% if PorcInLoja=50%, PorcInDinheiro=40%)
+- **Example:** Items sold for **€40** total (Calça €20 + Camisa €20), PorcInLoja=50%, PorcInDinheiro=40%:
+  - Store credit: €40 × 0.50 = **€20** (for purchases in store)
+  - Cash redemption: €40 × 0.40 = **€16** (can be withdrawn)
+  - Store keeps: €4 (10%)
 
 ### RN-CON-04: Consignment Status Lifecycle
 ```
@@ -57,7 +61,7 @@ Recebido --> Avaliado --> A Venda --> Vendido --> Pago
 - Email contains:
   - List of **accepted items** with their evaluated values
   - List of **rejected items** with the reason for rejection (e.g., defect, stain, wear)
-  - Statement of commission terms: **40% cash / 50% store credit**
+  - Statement of credit terms: **PorcInLoja** (store credit) and **PorcInDinheiro** (cash redemption) for that supplier
   - Instructions for how and when to collect rejected items
 - If no email is on file, the client is contacted via WhatsApp
 
@@ -66,7 +70,7 @@ Recebido --> Avaliado --> A Venda --> Vendido --> Pago
   - Identification number
   - Description
   - Evaluated value
-  - Commission rate agreed (40% cash / 50% credit)
+  - Credit percentages agreed (PorcInLoja, PorcInDinheiro)
   - Consignment period
 - Both parties (store + supplier) must sign the contract
 - Contract serves as legal proof of consignment terms
@@ -139,7 +143,8 @@ Based on market practices:
 - Discount reason must be recorded
 
 ### RN-POS-03: Payment Methods
-- Accepted methods: **Cash, Credit Card, Debit Card, MBWAY, Store Credit**
+- Accepted methods: **Cash, Credit Card, Debit Card, MBWAY, Store Credit (Supplier)**
+- When **Store Credit** is used: the operator must **identify the supplier** to debit from their PorcInLoja balance
 - Split payment allowed: customer can combine up to 2 payment methods
 - Total of all payments must equal or exceed sale total
 - Change is only given for cash payments
@@ -148,7 +153,7 @@ Based on market practices:
 When a sale is finalized:
 1. Each sold item's status changes to `Vendido`
 2. Items are removed from available inventory
-3. For consigned items: sale is recorded for future commission settlement
+3. For consigned items: sale is recorded; supplier accumulates PorcInLoja (store credit) and PorcInDinheiro (cash redemption) based on their percentages
 4. Receipt is generated
 5. Cash register totals are updated
 6. If customer is registered: loyalty points are credited
@@ -181,11 +186,13 @@ When a sale is finalized:
   - Item status changes to `Devolvido`
   - Loss is absorbed by the store (supplier not penalized)
 
-### RN-RET-03: Store Credit
-- Store credits have an expiration period: **180 days** (6 months)
+### RN-RET-03: Store Credit (Supplier)
+- Supplier store credits (PorcInLoja) have an expiration period: **180 days** (6 months)
 - Credits are non-transferable
-- Credits can be used in combination with other payment methods
+- Credits can be used in combination with other payment methods when the supplier makes a purchase
 - Partial credit usage is allowed (remaining balance is preserved)
+- **Use in store:** When a supplier buys items, the operator must identify the supplier to debit from their store credit balance
+- **Cash redemption:** The supplier can redeem their PorcInDinheiro balance for cash; each redemption must be recorded (date, amount, supplier)
 
 ---
 
@@ -218,16 +225,16 @@ Closing report must include:
 - Settlement can only be processed for items sold before the settlement date
 
 ### RN-SET-02: Settlement Calculation
-For each sold consigned item:
+For each sold consigned item, using the supplier's PorcInLoja and PorcInDinheiro:
 ```
-If PaymentType = Cash:
-    ClientPayment = SalePrice * 40 / 100
-    StoreKeeps = SalePrice - ClientPayment
+TotalSalesAmount = Sum of all sold items' FinalSalePrice for the period
 
-If PaymentType = CreditInStore:
-    ClientCredit = SalePrice * 50 / 100
-    StoreKeeps = SalePrice - ClientCredit
+StoreCreditAmount = TotalSalesAmount * (Supplier.PorcInLoja / 100)
+CashRedemptionAmount = TotalSalesAmount * (Supplier.PorcInDinheiro / 100)
+StoreKeeps = TotalSalesAmount - StoreCreditAmount - CashRedemptionAmount
 ```
+- Store credit is issued to the supplier (usable for purchases)
+- Cash redemption is recorded and can be withdrawn by the supplier
 
 ### RN-SET-03: Settlement Minimum
 - Minimum settlement amount: **€20.00**
@@ -236,18 +243,25 @@ If PaymentType = CreditInStore:
 
 ### RN-SET-04: Settlement Communication
 - Suppliers are notified of pending settlements via **WhatsApp**
-- Settlement summary includes: items sold, amounts, commission breakdown
-- Supplier confirms preferred payment method (cash or store credit)
+- Settlement summary includes: items sold, amounts, store credit issued (PorcInLoja), cash redemption available (PorcInDinheiro)
+- Supplier can use store credit for purchases or request cash redemption of their PorcInDinheiro balance
 
 ### RN-SET-05: Settlement Report
 Settlement receipt must include:
 - Supplier name and NIF
 - Period covered
 - List of sold items (ID, name, sale date, sale price)
-- Commission rate and amount per item
-- Total sales, total commission, net payable to supplier
-- Payment method (cash, MBWAY, or store credit)
+- PorcInLoja and PorcInDinheiro rates
+- Store credit issued (Total × PorcInLoja)
+- Cash redemption amount (Total × PorcInDinheiro)
+- Total sales, amounts to supplier (credit + cash), store portion
 - Signature fields for both parties
+
+### RN-SET-06: Cash Redemption Recording
+- When a supplier redeems their PorcInDinheiro balance for cash, the transaction must be recorded
+- Record: supplier ID, amount redeemed, date, user who processed
+- Redemption cannot exceed the supplier's available PorcInDinheiro balance
+- Both **use of credit in store** (purchase) and **cash redemption** must be tracked for audit
 
 ---
 
