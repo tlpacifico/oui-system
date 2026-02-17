@@ -11,6 +11,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.13" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="9.0.13" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -21,5 +22,9 @@
     <ProjectReference Include="..\shs.Application\shs.Application.csproj" />
     <ProjectReference Include="..\shs.Infrastructure\shs.Infrastructure.csproj" />
   </ItemGroup>
+
+  <Target Name="BuildAngularClient" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release' or '$(Configuration)' == 'Production'">
+    <Exec Command="npm run build" WorkingDirectory="$(ProjectDir)angular-client" />
+  </Target>
 
 </Project>

@@ -23,7 +23,9 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(builder.Configuration["Cors:AllowedOrigins"]?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? new[] { "http://localhost:4200" })
+        policy.WithOrigins(
+                builder.Configuration["Cors:AllowedOrigins"]?.Split(',', StringSplitOptions.RemoveEmptyEntries) ??
+                new[] { "http://localhost:4200" })
             .AllowAnyMethod()
             .AllowAnyHeader();
     });
@@ -61,17 +63,23 @@ builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddScoped<RbacSeedService>();
+if (builder.Environment.IsProduction())
+{
+    builder.Services.AddSpaStaticFiles(spa => { spa.RootPath = "angular-client/dist"; });
+}
 
 var app = builder.Build();
 
-// Auto-seed RBAC on startup
+// Apply migrations and auto-seed RBAC on startup
 using (var scope = app.Services.CreateScope())
 {
+    var db = scope.ServiceProvider.GetRequiredService<ShsDbContext>();
+    await db.Database.MigrateAsync();
+
     var seedService = scope.ServiceProvider.GetRequiredService<RbacSeedService>();
     await seedService.SeedAsync();
 
     // Assign Admin role to initial user
-    var db = scope.ServiceProvider.GetRequiredService<ShsDbContext>();
     await AssignAdminRole.AssignAdminToUserAsync(
         db,
         email: "thacio.pacifico@gmail.com"
@@ -109,8 +117,6 @@ app.MapReportsEndpoints();
 app.MapSettlementEndpoints();
 app.MapStoreCreditEndpoints();
 app.MapCashRedemptionEndpoints();
-app.MapGet("/", () => Results.Ok("OUI System API is running."));
+app.MapFallbackToFile("index.html");
 
 app.Run();
-
-
