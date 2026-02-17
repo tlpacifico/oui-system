@@ -57,15 +57,15 @@ public static class SettlementEndpoints
             query = query.Where(i => i.SupplierId == supplierId.Value);
         }
 
-        // Filter by date range if provided
+        // Filter by date range if provided (convert to UTC for PostgreSQL)
         if (startDate.HasValue)
         {
-            query = query.Where(i => i.UpdatedOn >= startDate.Value);
+            query = query.Where(i => i.UpdatedOn >= ToUtc(startDate.Value));
         }
 
         if (endDate.HasValue)
         {
-            query = query.Where(i => i.UpdatedOn < endDate.Value.AddDays(1));
+            query = query.Where(i => i.UpdatedOn < ToUtc(endDate.Value).AddDays(1));
         }
 
         // Get items with their sale information
@@ -118,13 +118,16 @@ public static class SettlementEndpoints
         if (supplier == null)
             return Results.BadRequest(new { error = "Supplier not found." });
 
+        var periodStart = ToUtc(req.PeriodStart);
+        var periodEnd = ToUtc(req.PeriodEnd).AddDays(1);
+
         var items = await db.Items
             .Where(i => !i.IsDeleted &&
                        i.Status == ItemStatus.Sold &&
                        i.AcquisitionType == AcquisitionType.Consignment &&
                        i.SupplierId == req.SupplierId &&
-                       i.UpdatedOn >= req.PeriodStart &&
-                       i.UpdatedOn < req.PeriodEnd.AddDays(1))
+                       i.UpdatedOn >= periodStart &&
+                       i.UpdatedOn < periodEnd)
             .Select(i => new
             {
                 i.Id,
@@ -179,14 +182,17 @@ public static class SettlementEndpoints
             return Results.BadRequest(new { error = "Supplier not found." });
         }
 
+        var periodStart = ToUtc(req.PeriodStart);
+        var periodEnd = ToUtc(req.PeriodEnd).AddDays(1);
+
         // Get items to settle (sold, consignment, not yet settled)
         var items = await db.Items
             .Where(i => !i.IsDeleted &&
                        i.Status == ItemStatus.Sold &&
                        i.AcquisitionType == AcquisitionType.Consignment &&
                        i.SupplierId == req.SupplierId &&
-                       i.UpdatedOn >= req.PeriodStart &&
-                       i.UpdatedOn < req.PeriodEnd.AddDays(1))
+                       i.UpdatedOn >= periodStart &&
+                       i.UpdatedOn < periodEnd)
             .Select(i => new { i.Id, i.FinalSalePrice })
             .ToListAsync(ct);
 
@@ -217,8 +223,8 @@ public static class SettlementEndpoints
         {
             ExternalId = Guid.NewGuid(),
             SupplierId = req.SupplierId,
-            PeriodStart = req.PeriodStart,
-            PeriodEnd = req.PeriodEnd,
+            PeriodStart = periodStart,
+            PeriodEnd = ToUtc(req.PeriodEnd), // Use date-only end (no AddDays for storage)
             TotalSalesAmount = totalSalesAmount,
             CreditPercentageInStore = supplier.CreditPercentageInStore,
             CashRedemptionPercentage = supplier.CashRedemptionPercentage,
@@ -574,6 +580,11 @@ public static class SettlementEndpoints
             Message = "Settlement cancelled successfully."
         });
     }
+    /// <summary>
+    /// Converts DateTime to UTC for PostgreSQL compatibility. Npgsql requires UTC for timestamptz.
+    /// </summary>
+    private static DateTime ToUtc(DateTime dt) =>
+        dt.Kind == DateTimeKind.Utc ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
 }
 
 // DTOs

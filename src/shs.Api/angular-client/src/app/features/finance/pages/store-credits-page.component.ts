@@ -2,7 +2,7 @@ import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { FinanceService, StoreCreditItem, SupplierCashBalanceResponse, SupplierStoreCreditsResponse } from '../finance.service';
+import { FinanceService, SupplierCashBalanceResponse, SupplierStoreCreditsResponse } from '../finance.service';
 import { SupplierService } from '../../inventory/services/supplier.service';
 import { SupplierListItem } from '../../../core/models/supplier.model';
 
@@ -11,142 +11,138 @@ import { SupplierListItem } from '../../../core/models/supplier.model';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="page">
-      <div class="page-header">
-        <div>
-          <h1>Créditos em Loja</h1>
-          <p class="subtitle">Créditos e saldo para resgate em dinheiro dos fornecedores</p>
-        </div>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Créditos em Loja</h1>
+        <p class="page-subtitle">Créditos e saldo para resgate em dinheiro dos fornecedores</p>
       </div>
-
-      <!-- Supplier selector -->
-      <div class="card form-card">
-        <div class="form-group">
-          <label>Fornecedor</label>
-          <select
-            [(ngModel)]="selectedSupplierId"
-            (ngModelChange)="onSupplierChange()"
-            class="form-control"
+      @if (selectedSupplierId != null && supplierData()) {
+        <div class="page-header-actions">
+          <button class="btn btn-primary" (click)="openIssueCredit()">
+            Emitir Crédito em Loja
+          </button>
+          <button
+            class="btn btn-outline"
+            (click)="openCashRedemption()"
+            [disabled]="cashBalance() <= 0"
           >
-            <option [ngValue]="null">Selecione o fornecedor</option>
-            @for (s of suppliers(); track s.externalId) {
-              <option [ngValue]="s.id">{{ s.initial }} – {{ s.name }}</option>
-            }
-          </select>
+            Processar Resgate em Dinheiro
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Filters -->
+    <div class="card filters-card">
+      <div class="filters-bar">
+        <label class="filter-label">Fornecedor</label>
+        <select
+          [(ngModel)]="selectedSupplierId"
+          (ngModelChange)="onSupplierChange()"
+          class="filter-select filter-supplier"
+        >
+          <option [ngValue]="null">Selecione o fornecedor</option>
+          @for (s of suppliers(); track s.externalId) {
+            <option [ngValue]="s.id">{{ s.initial }} – {{ s.name }}</option>
+          }
+        </select>
+        @if (selectedSupplierId != null) {
+          <button class="btn btn-outline btn-sm" (click)="clearSupplier()">Limpar</button>
+        }
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="state-message">A carregar...</div>
+    } @else if (selectedSupplierId == null) {
+      <div class="state-message">Selecione um fornecedor para ver os créditos em loja e o saldo para resgate.</div>
+    } @else if (supplierData()) {
+      <!-- KPIs -->
+      <div class="stat-grid">
+        <div class="card stat-card">
+          <div class="stat-label">Crédito em Loja (total)</div>
+          <div class="stat-value stat-success">{{ storeCreditsTotal() | currency: 'EUR' }}</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-label">Saldo para Resgate</div>
+          <div class="stat-value stat-info">{{ cashBalance() | currency: 'EUR' }}</div>
         </div>
       </div>
 
-      @if (loading()) {
-        <div class="loading">A carregar...</div>
-      } @else if (selectedSupplierId != null && supplierData()) {
-        <!-- KPIs -->
-        <div class="stat-grid">
-          <div class="card stat-card">
-            <div class="stat-label">Crédito em Loja (total)</div>
-            <div class="stat-value stat-success">{{ storeCreditsTotal() | currency: 'EUR' }}</div>
-          </div>
-          <div class="card stat-card">
-            <div class="stat-label">Saldo para Resgate</div>
-            <div class="stat-value stat-info">{{ cashBalance() | currency: 'EUR' }}</div>
-          </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="card actions-card">
-          <div class="card-title">Ações</div>
-          <div class="actions-row">
-            <button class="btn btn-primary" (click)="openIssueCredit()">
-              Emitir Crédito em Loja
-            </button>
-            <button
-              class="btn btn-outline"
-              (click)="openCashRedemption()"
-              [disabled]="cashBalance() <= 0"
-            >
-              Processar Resgate em Dinheiro
-            </button>
-          </div>
-        </div>
-
-        <!-- Store credits list -->
-        <div class="card table-card">
-          <div class="card-title-bar">
-            <span class="card-title">Créditos em Loja</span>
-          </div>
+      <!-- Store credits list -->
+      <div class="card table-card">
+        <div class="table-wrapper">
           @if (storeCredits().length === 0) {
             <div class="empty-state">Nenhum crédito em loja.</div>
           } @else {
-            <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Emitido em</th>
+                  <th class="cell-right">Original</th>
+                  <th class="cell-right">Saldo</th>
+                  <th>Estado</th>
+                  <th>Origem</th>
+                  <th class="cell-actions">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of storeCredits(); track c.externalId) {
+                  <tr>
+                    <td>{{ c.issuedOn | date: 'dd/MM/yyyy' }}</td>
+                    <td class="cell-right">{{ c.originalAmount | currency: 'EUR' }}</td>
+                    <td class="cell-right">{{ c.currentBalance | currency: 'EUR' }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="'badge-' + getCreditStatusBadgeClass(c.status)">
+                        {{ getCreditStatusLabel(c.status) }}
+                      </span>
+                    </td>
+                    <td>{{ c.sourceSettlement ? 'Acerto' : 'Manual' }}</td>
+                    <td class="cell-actions">
+                      <button class="btn btn-outline btn-sm" (click)="viewCredit(c.externalId)">Ver</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      </div>
+
+      <!-- Cash balance history -->
+      @if (cashBalance() !== 0 || cashHistory().length > 0) {
+        <div class="card table-card">
+          <div class="table-wrapper">
+            @if (cashHistory().length === 0) {
+              <div class="empty-state">Sem movimentos. Saldo disponível: {{ cashBalance() | currency: 'EUR' }}</div>
+            } @else {
               <table>
                 <thead>
                   <tr>
-                    <th>Emitido em</th>
-                    <th class="cell-right">Original</th>
-                    <th class="cell-right">Saldo</th>
-                    <th>Estado</th>
+                    <th>Data</th>
+                    <th class="cell-right">Valor</th>
+                    <th>Tipo</th>
+                    <th>Processado por</th>
                     <th>Origem</th>
-                    <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @for (c of storeCredits(); track c.externalId) {
+                  @for (t of cashHistory(); track t.externalId) {
                     <tr>
-                      <td>{{ c.issuedOn | date: 'dd/MM/yyyy' }}</td>
-                      <td class="cell-right">{{ c.originalAmount | currency: 'EUR' }}</td>
-                      <td class="cell-right">{{ c.currentBalance | currency: 'EUR' }}</td>
-                      <td><span class="badge" [ngClass]="getCreditStatusClass(c.status)">{{ getCreditStatusLabel(c.status) }}</span></td>
-                      <td>{{ c.sourceSettlement ? 'Acerto' : 'Manual' }}</td>
-                      <td>
-                        <button class="btn btn-outline btn-sm" (click)="viewCredit(c.externalId)">
-                          Ver
-                        </button>
-                      </td>
+                      <td>{{ t.transactionDate | date: 'dd/MM/yyyy HH:mm' }}</td>
+                      <td class="cell-right" [class.cell-negative]="t.amount < 0">{{ t.amount | currency: 'EUR' }}</td>
+                      <td>{{ getTransactionTypeLabel(t.transactionType) }}</td>
+                      <td>{{ t.processedBy }}</td>
+                      <td>{{ t.settlementPeriod || '—' }}</td>
                     </tr>
                   }
                 </tbody>
               </table>
-            </div>
-          }
-        </div>
-
-        <!-- Cash balance history -->
-        @if (cashBalance() !== 0 || cashHistory().length > 0) {
-          <div class="card table-card">
-            <div class="card-title-bar">
-              <span class="card-title">Histórico Resgate em Dinheiro</span>
-            </div>
-            @if (cashHistory().length === 0) {
-              <div class="empty-state">Sem movimentos. Saldo disponível: {{ cashBalance() | currency: 'EUR' }}</div>
-            } @else {
-              <div class="table-wrapper">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th class="cell-right">Valor</th>
-                      <th>Tipo</th>
-                      <th>Processado por</th>
-                      <th>Origem</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (t of cashHistory(); track t.externalId) {
-                      <tr>
-                        <td>{{ t.transactionDate | date: 'dd/MM/yyyy HH:mm' }}</td>
-                        <td class="cell-right" [class.negative]="t.amount < 0">{{ t.amount | currency: 'EUR' }}</td>
-                        <td>{{ getTransactionTypeLabel(t.transactionType) }}</td>
-                        <td>{{ t.processedBy }}</td>
-                        <td>{{ t.settlementPeriod || '—' }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
             }
           </div>
-        }
+        </div>
       }
-    </div>
+    }
 
     <!-- Issue credit modal -->
     @if (showIssueModal()) {
@@ -208,38 +204,260 @@ import { SupplierListItem } from '../../../core/models/supplier.model';
     }
   `,
   styles: [`
-    .page { max-width: 900px; margin: 0 auto; }
-    .page-header { margin-bottom: 24px; }
-    .subtitle { color: #64748b; margin: 4px 0 0; font-size: 14px; }
-    .form-card { margin-bottom: 24px; max-width: 400px; }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px; }
-    .form-control { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; }
-    .loading { text-align: center; padding: 48px; color: #64748b; }
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .stat-card { padding: 16px; text-align: center; }
-    .stat-label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
-    .stat-value { font-size: 18px; font-weight: 700; }
+    :host { display: block; }
+
+    /* ── Page header ── */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 4px;
+      color: #1e293b;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: #64748b;
+      margin: 0;
+    }
+
+    .page-header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 20px;
+    }
+
+    .filters-card {
+      margin-bottom: 20px;
+      padding: 16px;
+    }
+
+    .table-card {
+      margin-bottom: 20px;
+      padding: 0;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: #6366f1;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #4f46e5;
+    }
+
+    .btn-outline {
+      background: white;
+      color: #1e293b;
+      border-color: #e2e8f0;
+    }
+
+    .btn-outline:hover {
+      background: #f8fafc;
+    }
+
+    .btn-outline:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    /* ── Filters ── */
+    .filters-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    .filter-select {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+      background: white;
+      outline: none;
+      color: #1e293b;
+    }
+
+    .filter-select:focus {
+      border-color: #6366f1;
+    }
+
+    .filter-supplier {
+      min-width: 280px;
+    }
+
+    /* ── Stats ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
     .stat-success { color: #059669; }
     .stat-info { color: #0284c7; }
-    .actions-card { margin-bottom: 24px; }
-    .actions-row { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* ── Table ── */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8fafc;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+
+    tr:hover td {
+      background: #f1f5f9;
+    }
+
     .cell-right { text-align: right; }
-    .cell-right.negative { color: #dc2626; }
-    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
-    .badge-active { background: #d1fae5; color: #065f46; }
-    .badge-used { background: #e2e8f0; color: #475569; }
-    .badge-cancelled { background: #fee2e2; color: #991b1b; }
-    .badge-expired { background: #fef3c7; color: #92400e; }
-    .empty-state { padding: 24px; text-align: center; color: #64748b; }
+    .cell-negative { color: #dc2626; }
+
+    .cell-actions {
+      display: flex;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-info { background: #dbeafe; color: #1e40af; }
+    .badge-gray { background: #f1f5f9; color: #475569; }
+
+    /* ── States ── */
+    .state-message {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #64748b;
+      font-size: 15px;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .empty-state {
+      padding: 24px;
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    /* ── Modal ── */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px; }
+    .form-control { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; }
-    .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 101; min-width: 400px; max-width: 90vw; }
+    .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 101; min-width: 400px; max-width: 90vw; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; }
     .modal-header h3 { margin: 0; font-size: 18px; }
     .btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; line-height: 1; }
     .modal-body { padding: 20px; }
     .modal-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 16px 20px; border-top: 1px solid #e2e8f0; }
     .balance-info { margin-bottom: 16px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-supplier {
+        min-width: 100%;
+      }
+    }
   `],
 })
 export class StoreCreditsPageComponent implements OnInit {
@@ -250,7 +468,7 @@ export class StoreCreditsPageComponent implements OnInit {
   suppliers = signal<SupplierListItem[]>([]);
   selectedSupplierId: number | null = null;
   supplierData = signal<{ credits: SupplierStoreCreditsResponse; cash: SupplierCashBalanceResponse; history: any[] } | null>(null);
-  loading = signal(true);
+  loading = signal(false);
   issuing = signal(false);
   redeeming = signal(false);
 
@@ -270,6 +488,7 @@ export class StoreCreditsPageComponent implements OnInit {
   ngOnInit(): void {
     this.supplierService.getAll().subscribe({
       next: (list) => this.suppliers.set(list),
+      error: () => {},
     });
   }
 
@@ -280,6 +499,12 @@ export class StoreCreditsPageComponent implements OnInit {
       return;
     }
     this.loadSupplierData();
+  }
+
+  clearSupplier(): void {
+    this.selectedSupplierId = null;
+    this.supplierData.set(null);
+    this.loading.set(false);
   }
 
   private loadSupplierData(): void {
@@ -377,9 +602,9 @@ export class StoreCreditsPageComponent implements OnInit {
     return map[status] ?? '—';
   }
 
-  getCreditStatusClass(status: number): string {
-    const map: Record<number, string> = { 1: 'badge-active', 2: 'badge-used', 3: 'badge-cancelled', 4: 'badge-expired' };
-    return map[status] ?? '';
+  getCreditStatusBadgeClass(status: number): string {
+    const map: Record<number, string> = { 1: 'success', 2: 'gray', 3: 'danger', 4: 'warning' };
+    return map[status] ?? 'gray';
   }
 
   getTransactionTypeLabel(type: number): string {

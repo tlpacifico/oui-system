@@ -19,6 +19,20 @@ interface CartItem {
   photoUrl?: string;
 }
 
+interface PaymentEntry {
+  method: string;
+  amount: number;
+  supplierId: number | null;
+}
+
+const PAYMENT_METHODS = [
+  { value: 'Cash', label: 'Dinheiro' },
+  { value: 'CreditCard', label: 'Cartão Crédito' },
+  { value: 'DebitCard', label: 'Cartão Débito' },
+  { value: 'PIX', label: 'PIX' },
+  { value: 'StoreCredit', label: 'Crédito Loja' },
+] as const;
+
 @Component({
   selector: 'oui-pos-sale-page',
   standalone: true,
@@ -158,63 +172,82 @@ interface CartItem {
       <!-- Payment Dialog -->
       @if (showPaymentDialog()) {
         <div class="overlay" (click)="closePaymentDialog()">
-          <div class="dialog pay-dialog" (click)="$event.stopPropagation()">
+          <div class="dialog pay-dialog pay-dialog-multi" (click)="$event.stopPropagation()">
             <h2>Pagamento</h2>
             <div class="pay-total">{{ totalAmount() | currency: 'EUR' }}</div>
 
-            <div class="form-group">
-              <label>Método de Pagamento</label>
-              <select class="form-control" [(ngModel)]="paymentMethod" (ngModelChange)="onPaymentMethodChange()">
-                <option value="Cash">Dinheiro</option>
-                <option value="CreditCard">Cartão Crédito</option>
-                <option value="DebitCard">Cartão Débito</option>
-                <option value="PIX">PIX</option>
-                <option value="StoreCredit">Crédito Loja</option>
-              </select>
-            </div>
+            <div class="payments-list">
+              @for (entry of paymentEntries; track $index; let i = $index) {
+                <div class="payment-entry-row">
+                  <div class="payment-entry-fields">
+                    <select
+                      class="form-control form-control-sm payment-method-select"
+                      [(ngModel)]="entry.method"
+                      (ngModelChange)="onPaymentMethodChange(i)"
+                    >
+                      @for (pm of paymentMethodsList; track pm.value) {
+                        <option [value]="pm.value">{{ pm.label }}</option>
+                      }
+                    </select>
 
-            @if (paymentMethod === 'StoreCredit') {
-              <div class="form-group">
-                <label>Fornecedor *</label>
-                <select
-                  class="form-control"
-                  [(ngModel)]="storeCreditSupplierId"
-                  (ngModelChange)="onStoreCreditSupplierChange()"
-                >
-                  <option [ngValue]="null">Selecione o fornecedor</option>
-                  @for (s of posSuppliers(); track s.id) {
-                    <option [ngValue]="s.id">{{ s.initial }} – {{ s.name }}</option>
-                  }
-                </select>
-                @if (storeCreditSupplierId != null && supplierCreditBalance() !== null) {
-                  <div class="credit-balance-display">
-                    <span class="credit-label">Crédito em Loja:</span>
-                    <span class="credit-value">{{ supplierCreditBalance()! | currency: 'EUR' }}</span>
+                    @if (entry.method === 'StoreCredit') {
+                      <select
+                        class="form-control form-control-sm"
+                        [(ngModel)]="entry.supplierId"
+                        (ngModelChange)="onStoreCreditSupplierChange(i)"
+                      >
+                        <option [ngValue]="null">Selecione o fornecedor</option>
+                        @for (s of posSuppliers(); track s.id) {
+                          <option [ngValue]="s.id">{{ s.initial }} – {{ s.name }}</option>
+                        }
+                      </select>
+                      @if (entry.supplierId != null && getSupplierBalance(entry.supplierId) !== null) {
+                        <div class="credit-balance-inline">
+                          Saldo: {{ getSupplierBalance(entry.supplierId)! | currency: 'EUR' }}
+                        </div>
+                      }
+                    }
+
+                    <input
+                      type="number"
+                      class="form-control form-control-sm payment-amount-input"
+                      [(ngModel)]="entry.amount"
+                      min="0"
+                      step="0.01"
+                      placeholder="Valor"
+                    />
                   </div>
-                }
-                @if (storeCreditSupplierId != null && supplierCreditLoading()) {
-                  <div class="credit-loading">A carregar saldo...</div>
-                }
-              </div>
-            }
-
-            <div class="form-group">
-              <label>Valor (€)</label>
-              <input
-                type="number"
-                class="form-control form-control-lg"
-                [(ngModel)]="paymentAmount"
-                min="0"
-                step="0.01"
-              />
+                  @if (paymentEntries.length > 1) {
+                    <button type="button" class="btn-remove-payment" (click)="removePaymentEntry(i)" title="Remover">
+                      &times;
+                    </button>
+                  }
+                </div>
+              }
             </div>
 
-            @if (paymentMethod === 'Cash' && paymentAmount > totalAmount()) {
-              <div class="change-display">
-                <span>Troco:</span>
-                <span class="change-value">{{ (paymentAmount - totalAmount()) | currency: 'EUR' }}</span>
+            <button type="button" class="btn btn-outline btn-add-payment" (click)="addPaymentEntry()">
+              + Adicionar forma de pagamento
+            </button>
+
+            <div class="payment-summary">
+              <div class="total-row">
+                <span>Total pago</span>
+                <span>{{ totalPaid | currency: 'EUR' }}</span>
               </div>
-            }
+              @if (totalPaid >= totalAmount() && hasCashOverpayment) {
+                <div class="change-display">
+                  <span>Troco:</span>
+                  <span class="change-value">{{ (totalPaid - totalAmount()) | currency: 'EUR' }}</span>
+                </div>
+              }
+              @if (totalPaid < totalAmount()) {
+                <div class="remaining-display">
+                  <span>Falta:</span>
+                  <span class="remaining-value">{{ (totalAmount() - totalPaid) | currency: 'EUR' }}</span>
+                </div>
+              }
+            </div>
 
             <div class="form-group">
               <label>Notas (opcional)</label>
@@ -230,7 +263,7 @@ interface CartItem {
               <button
                 class="btn btn-primary"
                 (click)="confirmPayment()"
-                [disabled]="paying() || (paymentMethod === 'StoreCredit' && storeCreditSupplierId == null)"
+                [disabled]="paying() || !canConfirmPayment()"
               >
                 {{ paying() ? 'A processar...' : 'Confirmar Pagamento' }}
               </button>
@@ -339,6 +372,20 @@ interface CartItem {
     .dialog-actions .btn { flex: 1; justify-content: center; padding: 12px; }
 
     .pay-total { font-size: 36px; font-weight: 800; text-align: center; margin: 16px 0 24px; color: #1e293b; }
+    .pay-dialog-multi { max-width: 520px; }
+    .payments-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; max-height: 240px; overflow-y: auto; }
+    .payment-entry-row { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .payment-entry-fields { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .payment-method-select { min-width: 130px; }
+    .payment-amount-input { width: 90px; text-align: right; }
+    .form-control-sm { padding: 6px 10px; font-size: 13px; }
+    .btn-remove-payment { background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; }
+    .btn-remove-payment:hover { color: #ef4444; background: #fef2f2; }
+    .btn-add-payment { width: 100%; margin-bottom: 16px; }
+    .payment-summary { padding: 12px 0; border-top: 1px solid #e2e8f0; margin-bottom: 16px; }
+    .remaining-display { display: flex; justify-content: space-between; align-items: center; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; margin-top: 8px; }
+    .remaining-value { font-size: 16px; font-weight: 700; color: #dc2626; }
+    .credit-balance-inline { font-size: 11px; color: #16a34a; font-weight: 500; }
     .change-display { display: flex; justify-content: space-between; align-items: center; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; }
     .change-display.large { margin: 16px 0; }
     .change-value { font-size: 20px; font-weight: 700; color: #16a34a; }
@@ -385,23 +432,28 @@ export class PosSalePageComponent implements OnInit {
   discountReason = '';
 
   showPaymentDialog = signal(false);
-  paymentMethod = 'Cash';
-  paymentAmount = 0;
+  paymentEntries: PaymentEntry[] = [];
   saleNotes = '';
   paying = signal(false);
   payError = signal<string | null>(null);
   saleResult = signal<ProcessSaleResponse | null>(null);
 
-  storeCreditSupplierId: number | null = null;
+  paymentMethodsList = PAYMENT_METHODS;
   posSuppliers = signal<{ id: number; name: string; initial: string }[]>([]);
-  supplierCreditBalance = signal<number | null>(null);
-  supplierCreditLoading = signal(false);
+  supplierBalances: Record<number, number> = {};
+  supplierLoadingMap: Record<number, boolean> = {};
 
   private searchTimeout: any;
 
   subtotal = computed(() => this.cart().reduce((s, i) => s + i.price, 0));
   discountAmount = computed(() => this.subtotal() * this.discountPercentage / 100);
   totalAmount = computed(() => Math.max(0, this.subtotal() - this.discountAmount()));
+  get totalPaid(): number {
+    return this.paymentEntries.reduce((s, e) => s + e.amount, 0);
+  }
+  get hasCashOverpayment(): boolean {
+    return this.totalPaid >= this.totalAmount() && this.paymentEntries.some(e => e.method === 'Cash');
+  }
 
   ngOnInit(): void {
     this.posService.getCurrentRegister().subscribe({
@@ -468,67 +520,109 @@ export class PosSalePageComponent implements OnInit {
 
   openPaymentDialog(): void {
     this.showPaymentDialog.set(true);
-    if (this.paymentMethod === 'StoreCredit') {
-      this.posService.getPosSuppliers().subscribe({
-        next: (list) => this.posSuppliers.set(list),
-        error: () => this.posSuppliers.set([]),
-      });
+    if (this.paymentEntries.length === 0) {
+      this.paymentEntries = [{ method: 'Cash', amount: this.totalAmount(), supplierId: null }];
     }
+    this.posService.getPosSuppliers().subscribe({
+      next: (list) => this.posSuppliers.set(list),
+      error: () => this.posSuppliers.set([]),
+    });
   }
 
   closePaymentDialog(): void {
     this.showPaymentDialog.set(false);
-    this.storeCreditSupplierId = null;
-    this.supplierCreditBalance.set(null);
+    this.paymentEntries = [];
+    this.supplierBalances = {};
+    this.supplierLoadingMap = {};
   }
 
-  onPaymentMethodChange(): void {
-    if (this.paymentMethod === 'StoreCredit') {
-      this.posService.getPosSuppliers().subscribe({
-        next: (list) => this.posSuppliers.set(list),
-        error: () => this.posSuppliers.set([]),
-      });
-      this.storeCreditSupplierId = null;
-      this.supplierCreditBalance.set(null);
-    } else {
-      this.storeCreditSupplierId = null;
-      this.supplierCreditBalance.set(null);
+  addPaymentEntry(): void {
+    const remaining = Math.max(0, this.totalAmount() - this.totalPaid);
+    this.paymentEntries.push({
+      method: 'Cash',
+      amount: remaining > 0 ? remaining : 0,
+      supplierId: null,
+    });
+  }
+
+  removePaymentEntry(index: number): void {
+    if (this.paymentEntries.length <= 1) return;
+    this.paymentEntries.splice(index, 1);
+  }
+
+  onPaymentMethodChange(index: number): void {
+    const entry = this.paymentEntries[index];
+    if (entry.method !== 'StoreCredit') {
+      entry.supplierId = null;
     }
   }
 
-  onStoreCreditSupplierChange(): void {
-    if (this.storeCreditSupplierId == null) {
-      this.supplierCreditBalance.set(null);
-      return;
-    }
-    this.supplierCreditLoading.set(true);
-    this.supplierCreditBalance.set(null);
-    this.posService.getSupplierStoreCreditBalance(this.storeCreditSupplierId).subscribe({
+  onStoreCreditSupplierChange(index: number): void {
+    const entry = this.paymentEntries[index];
+    if (entry.supplierId == null) return;
+    this.supplierLoadingMap[entry.supplierId] = true;
+    this.posService.getSupplierStoreCreditBalance(entry.supplierId).subscribe({
       next: (res) => {
-        this.supplierCreditBalance.set(res.totalActiveBalance);
-        this.supplierCreditLoading.set(false);
+        this.supplierBalances[entry.supplierId!] = res.totalActiveBalance;
+        this.supplierLoadingMap[entry.supplierId!] = false;
       },
       error: () => {
-        this.supplierCreditBalance.set(null);
-        this.supplierCreditLoading.set(false);
+        this.supplierLoadingMap[entry.supplierId!] = false;
       },
     });
   }
 
+  getSupplierBalance(supplierId: number): number | null {
+    if (this.supplierLoadingMap[supplierId]) return null;
+    const bal = this.supplierBalances[supplierId];
+    return bal !== undefined ? bal : null;
+  }
+
+  canConfirmPayment(): boolean {
+    if (this.totalPaid < this.totalAmount()) return false;
+    for (const e of this.paymentEntries) {
+      if (e.method === 'StoreCredit' && e.supplierId == null) return false;
+      if (e.method === 'StoreCredit' && e.supplierId != null) {
+        const bal = this.getSupplierBalance(e.supplierId);
+        if (bal !== null && e.amount > bal) return false;
+      }
+    }
+    return true;
+  }
+
   confirmPayment(): void {
     if (!this.register()) return;
-    if (this.paymentAmount < this.totalAmount()) {
-      this.payError.set('O valor do pagamento é insuficiente.');
+    if (this.totalPaid < this.totalAmount()) {
+      this.payError.set('O valor total dos pagamentos é insuficiente.');
       return;
     }
-    if (this.paymentMethod === 'StoreCredit' && this.storeCreditSupplierId == null) {
-      this.payError.set('Ao usar Crédito em Loja, deve identificar o fornecedor.');
-      return;
+    for (const e of this.paymentEntries) {
+      if (e.method === 'StoreCredit' && e.supplierId == null) {
+        this.payError.set('Ao usar Crédito em Loja, deve identificar o fornecedor.');
+        return;
+      }
+      if (e.method === 'StoreCredit' && e.supplierId != null) {
+        const bal = this.getSupplierBalance(e.supplierId) ?? 0;
+        if (e.amount > bal) {
+          this.payError.set(`Saldo insuficiente para fornecedor. Crédito disponível: ${bal.toFixed(2)}€`);
+          return;
+        }
+      }
     }
-    if (this.paymentMethod === 'StoreCredit' && this.storeCreditSupplierId != null && (this.supplierCreditBalance() ?? 0) < this.paymentAmount) {
-      const bal = this.supplierCreditBalance() ?? 0;
-      this.payError.set(`Saldo insuficiente. Crédito disponível: ${bal.toFixed(2)}€`);
-      return;
+    // Validate total StoreCredit per supplier doesn't exceed balance
+    const storeCreditBySupplier: Record<number, number> = {};
+    for (const e of this.paymentEntries) {
+      if (e.method === 'StoreCredit' && e.supplierId != null) {
+        storeCreditBySupplier[e.supplierId] = (storeCreditBySupplier[e.supplierId] ?? 0) + e.amount;
+      }
+    }
+    for (const [supplierIdStr, total] of Object.entries(storeCreditBySupplier)) {
+      const supplierId = Number(supplierIdStr);
+      const bal = this.getSupplierBalance(supplierId) ?? 0;
+      if (total > bal) {
+        this.payError.set(`Saldo insuficiente. Total Crédito Loja para este fornecedor: ${total.toFixed(2)}€, disponível: ${bal.toFixed(2)}€`);
+        return;
+      }
     }
     if (this.discountPercentage > 10 && !this.discountReason.trim()) {
       this.payError.set('É necessário indicar o motivo do desconto superior a 10%.');
@@ -538,18 +632,18 @@ export class PosSalePageComponent implements OnInit {
     this.paying.set(true);
     this.payError.set(null);
 
-    const payment: { method: string; amount: number; supplierId?: number } = {
-      method: this.paymentMethod,
-      amount: this.paymentAmount,
-    };
-    if (this.paymentMethod === 'StoreCredit' && this.storeCreditSupplierId != null) {
-      payment.supplierId = this.storeCreditSupplierId;
-    }
+    const payments = this.paymentEntries
+      .filter(e => e.amount > 0)
+      .map(e => {
+        const p: { method: string; amount: number; supplierId?: number } = { method: e.method, amount: e.amount };
+        if (e.method === 'StoreCredit' && e.supplierId != null) p.supplierId = e.supplierId;
+        return p;
+      });
 
     this.posService.processSale({
       cashRegisterId: this.register()!.externalId,
       items: this.cart().map(i => ({ itemExternalId: i.externalId, discountAmount: i.discount })),
-      payments: [payment],
+      payments,
       discountPercentage: this.discountPercentage > 0 ? this.discountPercentage : undefined,
       discountReason: this.discountReason.trim() || undefined,
       notes: this.saleNotes.trim() || undefined,
@@ -571,7 +665,7 @@ export class PosSalePageComponent implements OnInit {
     this.cart.set([]);
     this.discountPercentage = 0;
     this.discountReason = '';
-    this.paymentAmount = 0;
+    this.paymentEntries = [];
     this.saleNotes = '';
     this.searchTerm = '';
     this.loadItems();
@@ -585,7 +679,7 @@ export class PosSalePageComponent implements OnInit {
   onF4(event: Event): void {
     event.preventDefault();
     if (this.cart().length > 0 && !this.showPaymentDialog() && !this.saleResult()) {
-      this.paymentAmount = this.totalAmount();
+      this.paymentEntries = [{ method: 'Cash', amount: this.totalAmount(), supplierId: null }];
       this.openPaymentDialog();
     }
   }
