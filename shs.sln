@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "shs.Domain", "src\shs.Domai
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "shs.Infrastructure", "src\shs.Infrastructure\shs.Infrastructure.csproj", "{742EA1D2-CEC9-4224-B5F5-95280156EF1E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "shs.Import", "src\shs.Import\shs.Import.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,8 @@ Global
 		{742EA1D2-CEC9-4224-B5F5-95280156EF1E}.Release|x64.Build.0 = Release|Any CPU
 		{742EA1D2-CEC9-4224-B5F5-95280156EF1E}.Release|x86.ActiveCfg = Release|Any CPU
 		{742EA1D2-CEC9-4224-B5F5-95280156EF1E}.Release|x86.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,5 +84,6 @@ Global
 		{917D29AA-9D99-4387-AEEF-C58D8A1CDD84} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{1C960AEE-F3F9-4071-A72B-D2A6B5678F0D} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{742EA1D2-CEC9-4224-B5F5-95280156EF1E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

@@ -10,8 +10,10 @@ public static class InfrastructureServiceCollection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? "Host=localhost;Database=oui_system;Username=postgres;Password=postgres";
+        //var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var connectionString = "Server=localhost;Port=5432;Database=oui_system;Username=postgres;Password=LarLaw6emmDmezaV";
+        if (string.IsNullOrEmpty(connectionString))
+            throw new InvalidOperationException("Connection string not found");
 
         services.AddDbContext<ShsDbContext>(options =>
             options.UseNpgsql(connectionString));
