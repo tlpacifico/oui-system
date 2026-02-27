@@ -40,7 +40,7 @@ public static class DashboardEndpoints
         };
 
         // ── Sales Month ──
-        var monthStart = new DateTime(today.Year, today.Month, 1);
+        var monthStart = DateTime.SpecifyKind(new DateTime(today.Year, today.Month, 1), DateTimeKind.Utc);
         var monthEnd = monthStart.AddMonths(1);
         var lastMonthStart = monthStart.AddMonths(-1);
         var lastMonthEnd = monthStart;
