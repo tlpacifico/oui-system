@@ -70,7 +70,7 @@
         <span class="icon">📈</span> Relatórios
       </a>
 
-      <div class="sidebar-section" *hasPermission="['admin.roles.view', 'admin.permissions.view']">
+      <div class="sidebar-section" *hasPermission="['admin.roles.view', 'admin.permissions.view', 'admin.settings.view']">
         Administração
       </div>
       <a class="sidebar-item" routerLink="/admin/roles" routerLinkActive="active" *hasPermission="'admin.roles.view'">
@@ -78,6 +78,9 @@
       </a>
       <a class="sidebar-item" routerLink="/admin/permissions" routerLinkActive="active" *hasPermission="'admin.permissions.view'">
         <span class="icon">🔐</span> Permissões
+      </a>
+      <a class="sidebar-item" routerLink="/admin/settings" routerLinkActive="active" *hasPermission="'admin.permissions.view'">
+        <span class="icon">⚙️</span> Configurações
       </a>
     </aside>
 

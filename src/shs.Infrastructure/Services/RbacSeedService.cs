@@ -33,6 +33,8 @@ public class RbacSeedService
             new() { ExternalId = Guid.NewGuid(), Name = "admin.permissions.view", Category = "admin", Description = "View permissions", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "admin.users.view", Category = "admin", Description = "View users", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "admin.users.manage-roles", Category = "admin", Description = "Assign/revoke user roles", CreatedOn = now },
+            new() { ExternalId = Guid.NewGuid(), Name = "admin.settings.view", Category = "admin", Description = "View system settings", CreatedOn = now },
+            new() { ExternalId = Guid.NewGuid(), Name = "admin.settings.update", Category = "admin", Description = "Update system settings", CreatedOn = now },
 
             // Inventory Category
             new() { ExternalId = Guid.NewGuid(), Name = "inventory.items.view", Category = "inventory", Description = "View items", CreatedOn = now },

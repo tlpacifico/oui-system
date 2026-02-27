@@ -29,6 +29,9 @@ public class ShsDbContext : DbContext
     public DbSet<ItemPhotoEntity> ItemPhotos => Set<ItemPhotoEntity>();
     public DbSet<SupplierReturnEntity> SupplierReturns => Set<SupplierReturnEntity>();
 
+    // System settings
+    public DbSet<SystemSettingEntity> SystemSettings => Set<SystemSettingEntity>();
+
     // Financial entities
     public DbSet<SettlementEntity> Settlements => Set<SettlementEntity>();
     public DbSet<StoreCreditEntity> StoreCredits => Set<StoreCreditEntity>();

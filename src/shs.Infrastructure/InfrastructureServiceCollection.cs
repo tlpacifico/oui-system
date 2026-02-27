@@ -25,6 +25,9 @@ public static class InfrastructureServiceCollection
         services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
         services.AddScoped<IEmailService, EmailService>();
 
+        // System settings
+        services.AddScoped<SystemSettingService>();
+
         return services;
     }
 }

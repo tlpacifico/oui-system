@@ -63,6 +63,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddScoped<RbacSeedService>();
+builder.Services.AddScoped<SystemSettingSeedService>();
 if (builder.Environment.IsProduction())
 {
     builder.Services.AddSpaStaticFiles(spa => { spa.RootPath = "angular-client/dist"; });
@@ -78,6 +79,9 @@ using (var scope = app.Services.CreateScope())
 
     var seedService = scope.ServiceProvider.GetRequiredService<RbacSeedService>();
     await seedService.SeedAsync();
+
+    var settingSeedService = scope.ServiceProvider.GetRequiredService<SystemSettingSeedService>();
+    await settingSeedService.SeedAsync();
 
     // Assign Admin role to initial user
     await AssignAdminRole.AssignAdminToUserAsync(
@@ -117,6 +121,7 @@ app.MapReportsEndpoints();
 app.MapSettlementEndpoints();
 app.MapStoreCreditEndpoints();
 app.MapCashRedemptionEndpoints();
+app.MapSystemSettingEndpoints();
 app.MapFallbackToFile("index.html");
 
 app.Run();
