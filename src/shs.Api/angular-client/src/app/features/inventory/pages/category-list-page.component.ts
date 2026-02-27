@@ -293,7 +293,9 @@ import { CategoryListItem } from '../../../core/models/category.model';
       text-overflow: ellipsis;
     }
 
-    .cell-actions { display: flex; gap: 4px; white-space: nowrap; }
+    .cell-actions { white-space: nowrap; }
+    .cell-actions .btn { margin-right: 4px; }
+    .cell-actions .btn:last-child { margin-right: 0; }
 
     .badge {
       display: inline-block;
