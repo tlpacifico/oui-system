@@ -34,25 +34,55 @@ dotnet ef database update --project src/shs.Infrastructure --startup-project src
 
 ## Architecture
 
-Clean Architecture with 4 layers:
+Clean Architecture com 4 camadas, seguindo o guia arquitetural em `C:\Repos\Thacio\architecture-guide\`:
 
 ```
 shs.Api (Presentation)  →  shs.Application  →  shs.Domain  ←  shs.Infrastructure
 ```
 
-- **shs.Api** — Minimal API endpoints organized by feature folder (Auth/, Inventory/, Pos/, Financial/, Consignment/, Dashboard/, Reports/, Admin/). Also hosts the Angular SPA under `angular-client/`.
-- **shs.Application** — Application layer (placeholder, intended for CQRS handlers/validators).
-- **shs.Domain** — Entities, enums, interfaces. No external dependencies. All entities inherit `EntityWithIdAuditable` (Id, ExternalId GUID, CreatedBy/UpdatedBy, CreatedOn/UpdatedOn, soft delete).
-- **shs.Infrastructure** — EF Core DbContext (`ShsDbContext`, 23 DbSets), entity configurations in `Database/Configurations/`, migrations in `Database/Migrations/`, services (ItemIdGenerator, Email, RbacSeed).
-- **shs.Import** — Console app for importing real business data from spreadsheets.
+- **shs.Api** — Minimal API endpoints organizados por feature folder (Auth/, Inventory/, Pos/, Financial/, Consignment/, Dashboard/, Reports/, Admin/). Tambem hospeda o Angular SPA em `angular-client/`.
+- **shs.Application** — Application layer (placeholder, destinado a CQRS handlers/validators).
+- **shs.Domain** — Entities, enums, interfaces. Sem dependencias externas. Todas as entidades herdam `EntityWithIdAuditable` (Id, ExternalId GUID, CreatedBy/UpdatedBy, CreatedOn/UpdatedOn, soft delete).
+- **shs.Infrastructure** — EF Core DbContext (`ShsDbContext`, 23 DbSets), entity configurations em `Database/Configurations/`, migrations em `Database/Migrations/`, services (ItemIdGenerator, Email, RbacSeed).
+- **shs.Import** — Console app para importar dados reais de planilhas.
 
-## Key Patterns
+## Guia Arquitetural de Referencia
 
-- **Endpoint pattern:** Each feature folder has `*Endpoints.cs` files with static `Map*Endpoints(RouteGroupBuilder)` methods, all wired in `Program.cs`.
-- **RBAC:** 28 permissions across 6 areas, 4 roles (Admin, Manager, Cashier, Inventory Clerk). Seeded by `RbacSeedService`. Endpoints use `.RequirePermission("permission.name")` extension.
-- **Soft delete:** Entities implement `IHaveSoftDelete`. Global query filters exclude deleted records. `SoftDeleteInterceptor` converts DELETE to UPDATE.
-- **Audit fields:** `UpdateCreatedUpdatedPropertiesInterceptor` auto-populates CreatedOn/UpdatedOn/CreatedBy/UpdatedBy.
-- **ExternalId:** `UpdateExternalIdInterceptor` auto-generates GUIDs for public-facing IDs (entities use int PK internally, GUID externally).
+Este projeto deve evoluir seguindo os padroes documentados em `C:\Repos\Thacio\architecture-guide\`. Consultar antes de gerar ou modificar codigo:
+
+| Arquivo | Quando consultar |
+|---------|-----------------|
+| `01-visao-geral.md` | Principios gerais, dependencias entre camadas |
+| `02-common-domain.md` | Ao criar/modificar entidades, usar Result\<T\>, DomainEvent, Error |
+| `03-common-application.md` | Ao implementar CQRS (Commands, Queries, Validators, Pipeline Behaviors) |
+| `04-common-infrastructure.md` | Outbox/Inbox, Cache, EventBus |
+| `05-common-presentation.md` | Ao criar endpoints (IEndpoint pattern, ApiResults) |
+| `06-modulo-template.md` | Ao extrair features para modulos independentes |
+| `09-checklist-novo-projeto.md` | Referencia de pacotes NuGet por camada |
+
+### Padroes a adotar progressivamente
+
+1. **Result Pattern** — Metodos de dominio devem retornar `Result<T>` em vez de lançar exceçoes para erros de negocio (ver `02-common-domain.md`)
+2. **CQRS** — Commands (escritas via EF Core) e Queries (leituras via Dapper) despachados por MediatR. Implementar em `shs.Application` (ver `03-common-application.md`)
+3. **Pipeline Behaviors** — ValidationPipelineBehavior + RequestLoggingPipelineBehavior + ExceptionHandlingPipelineBehavior (ver `03-common-application.md`)
+4. **IEndpoint pattern** — Migrar de metodos estaticos `Map*Endpoints` para classes que implementam `IEndpoint` com auto-discovery (ver `05-common-presentation.md`)
+5. **Modularizaçao** — Quando o projeto crescer, extrair features (Inventory, POS, Financial, etc.) para modulos independentes com Domain/Application/Infrastructure/Presentation proprios (ver `06-modulo-template.md`)
+
+### Convençoes de codigo (do guia)
+
+- Commands e Queries: `sealed record`
+- Handlers: `internal sealed class`
+- Validators: `internal sealed class` estendendo `AbstractValidator<TCommand>`
+- Entidades: construtores privados com static factory methods
+- Erros de dominio: constantes tipadas por entidade (ex: `ItemErrors.NaoEncontrado`)
+
+## Key Patterns (atuais)
+
+- **Endpoint pattern:** Cada feature folder tem arquivos `*Endpoints.cs` com metodos estaticos `Map*Endpoints(RouteGroupBuilder)`, registrados em `Program.cs`.
+- **RBAC:** 28 permissions em 6 areas, 4 roles (Admin, Manager, Cashier, Inventory Clerk). Seed por `RbacSeedService`. Endpoints usam `.RequirePermission("permission.name")`.
+- **Soft delete:** Entidades implementam `IHaveSoftDelete`. Query filters globais excluem registros deletados. `SoftDeleteInterceptor` converte DELETE em UPDATE.
+- **Audit fields:** `UpdateCreatedUpdatedPropertiesInterceptor` popula automaticamente CreatedOn/UpdatedOn/CreatedBy/UpdatedBy.
+- **ExternalId:** `UpdateExternalIdInterceptor` gera GUIDs para IDs publicos (PK int interno, GUID externo).
 - **Item lifecycle:** Received → Evaluated → AwaitingAcceptance → ToSell → Sold → Paid (or Returned/Rejected).
 
 ## Angular Client Structure
