@@ -114,15 +114,15 @@ jobs:
             cd /opt/oui-system
 
             # Escrever .env com valores dos GitHub Secrets
-            cat > .env <<ENVEOF
-DB_CONNECTION_STRING=${DB_CONNECTION_STRING}
-FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
-EMAIL_HOST=${EMAIL_HOST}
-EMAIL_PORT=${EMAIL_PORT}
-EMAIL_USERNAME=${EMAIL_USERNAME}
-EMAIL_PASSWORD=${EMAIL_PASSWORD}
-EMAIL_FROM=${EMAIL_FROM}
-ENVEOF
+            printf '%s\n' \
+              "DB_CONNECTION_STRING=${DB_CONNECTION_STRING}" \
+              "FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}" \
+              "EMAIL_HOST=${EMAIL_HOST}" \
+              "EMAIL_PORT=${EMAIL_PORT}" \
+              "EMAIL_USERNAME=${EMAIL_USERNAME}" \
+              "EMAIL_PASSWORD=${EMAIL_PASSWORD}" \
+              "EMAIL_FROM=${EMAIL_FROM}" \
+              > .env
 
             # Pull nova imagem
             docker compose pull
