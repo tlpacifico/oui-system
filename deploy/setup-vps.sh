@@ -51,16 +51,13 @@ mkdir -p "$APP_DIR"
 chown "$DEPLOY_USER:$DEPLOY_USER" "$APP_DIR"
 
 # ── 6. Copiar ficheiros de deploy ─────────────────────────────────────────────
-echo "[6/7] A copiar docker-compose.yml e .env.example..."
+echo "[6/7] A copiar docker-compose.yml..."
 # Substituir GITHUB_USER no docker-compose.yml
 sed "s/GITHUB_USER/$GITHUB_USER/g" "$(dirname "$0")/docker-compose.yml" \
     > "$APP_DIR/docker-compose.yml"
 
-if [ ! -f "$APP_DIR/.env" ]; then
-    cp "$(dirname "$0")/.env.example" "$APP_DIR/.env"
-    echo ""
-    echo "  ⚠  Editar $APP_DIR/.env com os valores reais antes do primeiro deploy!"
-fi
+# O .env é gerado automaticamente pelo GitHub Actions no deploy.
+# Não é necessário copiar .env.example manualmente.
 
 chown -R "$DEPLOY_USER:$DEPLOY_USER" "$APP_DIR"
 
@@ -94,10 +91,10 @@ echo "════════════════════════�
 echo " Setup concluído!"
 echo ""
 echo " Próximos passos:"
-echo "  1. Editar $APP_DIR/.env com os valores reais"
-echo "  2. Copiar deploy/Caddyfile para /etc/caddy/Caddyfile"
+echo "  1. Copiar deploy/Caddyfile para /etc/caddy/Caddyfile"
 echo "     e substituir o domínio"
-echo "  3. sudo systemctl reload caddy"
-echo "  4. Configurar os Secrets no GitHub (ver docs/14-DEPLOY-PIPELINE.md)"
-echo "  5. Executar o primeiro deploy manualmente no GitHub Actions"
+echo "  2. sudo systemctl reload caddy"
+echo "  3. Configurar os Secrets no GitHub (ver docs/14-DEPLOY-PIPELINE.md)"
+echo "     O .env é gerado automaticamente pelo workflow de deploy."
+echo "  4. Executar o primeiro deploy manualmente no GitHub Actions"
 echo "════════════════════════════════════════"

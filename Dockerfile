@@ -5,10 +5,34 @@ FROM node:22-alpine AS frontend
 
 WORKDIR /frontend
 
+# Firebase config via build args (valores vêm dos GitHub Secrets)
+ARG FIREBASE_API_KEY
+ARG FIREBASE_AUTH_DOMAIN
+ARG FIREBASE_PROJECT_ID
+ARG FIREBASE_STORAGE_BUCKET
+ARG FIREBASE_MESSAGING_SENDER_ID
+ARG FIREBASE_APP_ID
+ARG FIREBASE_MEASUREMENT_ID
+
 COPY src/shs.Api/angular-client/package*.json ./
 RUN npm ci --prefer-offline
 
 COPY src/shs.Api/angular-client/ ./
+
+# Gerar firebase.config.ts a partir dos build args
+RUN printf "export const firebaseConfig = {\n\
+  apiKey: '%s',\n\
+  authDomain: '%s',\n\
+  projectId: '%s',\n\
+  storageBucket: '%s',\n\
+  messagingSenderId: '%s',\n\
+  appId: '%s',\n\
+  measurementId: '%s',\n\
+};\n" \
+  "$FIREBASE_API_KEY" "$FIREBASE_AUTH_DOMAIN" "$FIREBASE_PROJECT_ID" \
+  "$FIREBASE_STORAGE_BUCKET" "$FIREBASE_MESSAGING_SENDER_ID" \
+  "$FIREBASE_APP_ID" "$FIREBASE_MEASUREMENT_ID" \
+  > src/app/core/config/firebase.config.ts
 
 # defaultConfiguration no angular.json já é "production"
 RUN npm run build
