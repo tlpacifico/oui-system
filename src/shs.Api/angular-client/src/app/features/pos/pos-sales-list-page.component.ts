@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { PosService, TodaySalesResponse, SaleListItem } from './pos.service';
+import { PosService, TodaySalesResponse, SaleListItem, SaleDetail } from './pos.service';
 
 @Component({
   selector: 'oui-pos-sales-list-page',
@@ -82,7 +82,7 @@ import { PosService, TodaySalesResponse, SaleListItem } from './pos.service';
                 </thead>
                 <tbody>
                   @for (sale of data()!.recentSales; track sale.externalId) {
-                    <tr>
+                    <tr class="row-clickable" (click)="openSaleDetail(sale)">
                       <td class="cell-mono">{{ sale.saleNumber }}</td>
                       <td>{{ sale.saleDate | date: 'HH:mm' }}</td>
                       <td class="cell-center">{{ sale.itemCount }}</td>
@@ -107,6 +107,116 @@ import { PosService, TodaySalesResponse, SaleListItem } from './pos.service';
             <a class="btn btn-primary" routerLink="/pos/sale">Iniciar Venda</a>
           </div>
         }
+      }
+
+      <!-- Sale Detail Modal -->
+      @if (selectedSale()) {
+        <div class="overlay" (click)="closeSaleDetail()">
+          <div class="modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h2>Venda {{ selectedSale()!.saleNumber }}</h2>
+              <button class="btn-close" (click)="closeSaleDetail()">&times;</button>
+            </div>
+
+            @if (loadingDetail()) {
+              <div class="loading">A carregar detalhes...</div>
+            } @else {
+              <div class="modal-body">
+                <!-- Sale info -->
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <span class="detail-label">Data</span>
+                    <span class="detail-value">{{ selectedSale()!.saleDate | date: 'dd/MM/yyyy HH:mm' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Operador</span>
+                    <span class="detail-value">{{ selectedSale()!.cashierName }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Caixa</span>
+                    <span class="detail-value">#{{ selectedSale()!.registerNumber }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Estado</span>
+                    <span class="badge" [ngClass]="getStatusClass(selectedSale()!.status)">
+                      {{ getStatusLabel(selectedSale()!.status) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Items table -->
+                <div class="section-title">Itens ({{ selectedSale()!.items.length }})</div>
+                <div class="table-wrapper">
+                  <table class="detail-table">
+                    <thead>
+                      <tr>
+                        <th>Ref.</th>
+                        <th>Artigo</th>
+                        <th>Marca</th>
+                        <th>Tam.</th>
+                        <th>Cor</th>
+                        <th>Fornecedor</th>
+                        <th class="cell-right">Preço</th>
+                        <th class="cell-right">Desc.</th>
+                        <th class="cell-right">Final</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of selectedSale()!.items; track item.itemExternalId) {
+                        <tr>
+                          <td class="cell-mono">{{ item.identificationNumber }}</td>
+                          <td>{{ item.name }}</td>
+                          <td>{{ item.brand }}</td>
+                          <td>{{ item.size }}</td>
+                          <td>{{ item.color }}</td>
+                          <td>{{ item.supplierName || '—' }}</td>
+                          <td class="cell-right">{{ item.unitPrice | currency: 'EUR' }}</td>
+                          <td class="cell-right">{{ item.discountAmount > 0 ? (item.discountAmount | currency: 'EUR') : '—' }}</td>
+                          <td class="cell-right cell-bold">{{ item.finalPrice | currency: 'EUR' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Payments -->
+                <div class="section-title">Pagamentos</div>
+                <div class="payments-list">
+                  @for (p of selectedSale()!.payments; track $index) {
+                    <div class="payment-row">
+                      <span>{{ getPaymentLabel(p.method) }}</span>
+                      <span class="cell-bold">{{ p.amount | currency: 'EUR' }}</span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Totals -->
+                <div class="totals">
+                  <div class="total-row">
+                    <span>Subtotal</span>
+                    <span>{{ selectedSale()!.subtotal | currency: 'EUR' }}</span>
+                  </div>
+                  @if (selectedSale()!.discountAmount > 0) {
+                    <div class="total-row discount-row">
+                      <span>Desconto ({{ selectedSale()!.discountPercentage }}%)</span>
+                      <span>-{{ selectedSale()!.discountAmount | currency: 'EUR' }}</span>
+                    </div>
+                  }
+                  <div class="total-row total-final">
+                    <span>Total</span>
+                    <span>{{ selectedSale()!.totalAmount | currency: 'EUR' }}</span>
+                  </div>
+                </div>
+
+                @if (selectedSale()!.notes) {
+                  <div class="notes-section">
+                    <span class="detail-label">Notas:</span> {{ selectedSale()!.notes }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
       }
     </div>
   `,
@@ -148,6 +258,7 @@ import { PosService, TodaySalesResponse, SaleListItem } from './pos.service';
     .cell-bold { font-weight: 700; }
     tbody tr { transition: background 0.15s; }
     tbody tr:hover { background: #f8fafc; }
+    .row-clickable { cursor: pointer; }
 
     .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
     .badge-active { background: #f0fdf4; color: #16a34a; }
@@ -164,7 +275,38 @@ import { PosService, TodaySalesResponse, SaleListItem } from './pos.service';
     .btn-primary:hover { background: #4f46e5; }
     .btn-outline { background: transparent; }
 
-    @media (max-width: 768px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+    /* Modal */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: #fff; border-radius: 16px; width: 90%; max-width: 860px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #e2e8f0; }
+    .modal-header h2 { font-size: 18px; font-weight: 700; margin: 0; }
+    .btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; padding: 0 4px; line-height: 1; }
+    .btn-close:hover { color: #1e293b; }
+    .modal-body { padding: 24px; overflow-y: auto; }
+
+    .detail-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .detail-item { display: flex; flex-direction: column; gap: 4px; }
+    .detail-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+    .detail-value { font-size: 14px; font-weight: 600; color: #1e293b; }
+
+    .section-title { font-size: 14px; font-weight: 700; color: #1e293b; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+    .detail-table th { font-size: 10px; padding: 8px 10px; }
+    .detail-table td { padding: 8px 10px; font-size: 12px; }
+
+    .payments-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .payment-row { display: flex; justify-content: space-between; padding: 8px 12px; background: #f8fafc; border-radius: 8px; font-size: 13px; }
+
+    .totals { border-top: 2px solid #e2e8f0; padding-top: 12px; margin-top: 8px; }
+    .total-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: #64748b; }
+    .discount-row { color: #dc2626; }
+    .total-final { font-size: 16px; font-weight: 700; color: #1e293b; padding-top: 8px; border-top: 1px solid #e2e8f0; margin-top: 4px; }
+
+    .notes-section { margin-top: 16px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 13px; color: #475569; }
+
+    @media (max-width: 768px) {
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .detail-grid { grid-template-columns: repeat(2, 1fr); }
+    }
   `]
 })
 export class PosSalesListPageComponent implements OnInit {
@@ -172,6 +314,8 @@ export class PosSalesListPageComponent implements OnInit {
 
   data = signal<TodaySalesResponse | null>(null);
   loading = signal(true);
+  selectedSale = signal<SaleDetail | null>(null);
+  loadingDetail = signal(false);
   objectKeys = Object.keys;
 
   ngOnInit(): void {
@@ -208,5 +352,21 @@ export class PosSalesListPageComponent implements OnInit {
 
   getStatusClass(status: string): string {
     return status === 'Active' ? 'badge-active' : 'badge-voided';
+  }
+
+  openSaleDetail(sale: SaleListItem): void {
+    this.loadingDetail.set(true);
+    this.selectedSale.set({ saleNumber: sale.saleNumber } as SaleDetail);
+    this.posService.getSaleById(sale.externalId).subscribe({
+      next: (detail) => {
+        this.selectedSale.set(detail);
+        this.loadingDetail.set(false);
+      },
+      error: () => this.loadingDetail.set(false),
+    });
+  }
+
+  closeSaleDetail(): void {
+    this.selectedSale.set(null);
   }
 }

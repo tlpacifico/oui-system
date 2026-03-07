@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
+using shs.Domain.Notifications;
 using shs.Infrastructure.Database;
 
 namespace shs.Api.Pos;
@@ -38,6 +39,7 @@ public static class SalesEndpoints
         [FromBody] ProcessSaleRequest req,
         HttpContext httpCtx,
         [FromServices] ShsDbContext db,
+        [FromServices] ISaleNotificationDispatcher dispatcher,
         CancellationToken ct)
     {
         var userId = GetUserId(httpCtx);
@@ -305,6 +307,11 @@ public static class SalesEndpoints
         }
 
         await db.SaveChangesAsync(ct);
+
+        // Dispatch post-sale notification (auto-settlement, etc.)
+        var soldItemIds = items.Select(i => i.Id).ToArray();
+        await dispatcher.DispatchSaleCompletedAsync(
+            new SaleCompletedNotification(sale.Id, sale.SaleDate, soldItemIds), ct);
 
         // Calculate change (for cash payments)
         var change = paymentTotal > totalAmount ? paymentTotal - totalAmount : 0;

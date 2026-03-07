@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using shs.Domain.Notifications;
 using shs.Infrastructure.Database;
+using shs.Infrastructure.Notifications;
 using shs.Infrastructure.Services;
 
 namespace shs.Infrastructure;
@@ -27,6 +29,10 @@ public static class InfrastructureServiceCollection
 
         // System settings
         services.AddScoped<SystemSettingService>();
+
+        // Notification infrastructure
+        services.AddScoped<ISaleNotificationHandler, AutoSettlementHandler>();
+        services.AddScoped<ISaleNotificationDispatcher, SaleNotificationDispatcher>();
 
         return services;
     }
