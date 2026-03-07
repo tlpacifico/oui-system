@@ -58,3 +58,5 @@ coverage/
 *.lcov
 nul
 src/shs.Api/nul
+docs/_Oui estoque atual.xlsx
+docs/Consignados - Clientes.xlsx

@@ -1,0 +1,6 @@
+# Caddyfile — /etc/caddy/Caddyfile na VPS
+# HTTPS automático via Let's Encrypt (sem configuração adicional)
+
+oui.TEUDOMINIO.com {
+    reverse_proxy localhost:8080
+}

@@ -1,0 +1,39 @@
+services:
+  oui-system:
+    image: ghcr.io/GITHUB_USER/oui-system:latest
+    container_name: oui-system
+    restart: unless-stopped
+    network_mode: host          # acede ao PostgreSQL em localhost:5432
+
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+      ASPNETCORE_ENVIRONMENT: "Production"
+
+      # Connection string — PostgreSQL instalado na VPS (localhost)
+      ConnectionStrings__DefaultConnection: "${DB_CONNECTION_STRING}"
+
+      # Firebase
+      Firebase__ProjectId: "${FIREBASE_PROJECT_ID}"
+
+      # Email (MailKit)
+      Email__Host: "${EMAIL_HOST}"
+      Email__Port: "${EMAIL_PORT}"
+      Email__Username: "${EMAIL_USERNAME}"
+      Email__Password: "${EMAIL_PASSWORD}"
+      Email__From: "${EMAIL_FROM}"
+
+    volumes:
+      # Fotos dos items — persistir fora do container
+      - oui-uploads:/app/wwwroot/uploads
+
+    # Healthcheck básico
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  oui-uploads:
+    driver: local
