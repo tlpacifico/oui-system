@@ -16,7 +16,6 @@ desktop.ini
 
 # Node (caso use ferramentas JS)
 node_modules/
-package-lock.json
 
 # .NET
 bin/
