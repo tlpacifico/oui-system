@@ -36,11 +36,11 @@ COPY src/ src/
 # (UseStaticFiles + MapFallbackToFile servem a partir de wwwroot/)
 COPY --from=frontend /frontend/dist/angular-client/browser/ src/shs.Api/wwwroot/
 
-# Publicar — sem reconstruir Angular (MSBuild target ignorado porque
-# o output já está em wwwroot antes do publish)
+# Publicar — o restore recorre ao cache NuGet do layer anterior,
+# evitando conflito com fallback folders do Windows no assets.json.
+# MSBuild target do Angular é ignorado (output já está em wwwroot/).
 RUN dotnet publish src/shs.Api \
     --configuration Release \
-    --no-restore \
     --output /publish \
     /p:SkipBuildAngularClient=true
 

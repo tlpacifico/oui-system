@@ -1,0 +1,27 @@
+# Build artifacts — excluir para evitar conflito de assets Windows/Linux
+**/obj/
+**/bin/
+
+# Node modules — copiados explicitamente no Stage 1
+**/node_modules/
+
+# Angular build output — gerado no Stage 1
+src/shs.Api/angular-client/dist/
+
+# Ficheiros locais desnecessários
+**/.env
+**/.env.*
+!deploy/.env.example
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vs/
+.vscode/
+*.user
+
+# Docker
+.dockerignore
+Dockerfile

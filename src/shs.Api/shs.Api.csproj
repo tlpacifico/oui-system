@@ -23,7 +23,8 @@
     <ProjectReference Include="..\shs.Infrastructure\shs.Infrastructure.csproj" />
   </ItemGroup>
 
-  <Target Name="BuildAngularClient" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release' or '$(Configuration)' == 'Production'">
+  <Target Name="BuildAngularClient" BeforeTargets="Build"
+          Condition="('$(Configuration)' == 'Release' or '$(Configuration)' == 'Production') and '$(SkipBuildAngularClient)' != 'true'">
     <Exec Command="npm run build" WorkingDirectory="$(ProjectDir)angular-client" />
   </Target>
 
