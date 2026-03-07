@@ -11,7 +11,7 @@ set -euo pipefail
 
 DEPLOY_USER="deploy"
 APP_DIR="/opt/oui-system"
-GITHUB_USER="ALTERAR"   # ← substituir pelo teu utilizador GitHub
+GITHUB_USER="tlpacifico"   # ← substituir pelo teu utilizador GitHub
 
 echo "════════════════════════════════════════"
 echo " OUI System — Setup VPS"
