@@ -1,6 +1,6 @@
 services:
   oui-system:
-    image: ghcr.io/GITHUB_USER/oui-system:latest
+    image: ghcr.io/tlpacifico/oui-system:latest
     container_name: oui-system
     restart: unless-stopped
     network_mode: host          # acede ao PostgreSQL em localhost:5432
