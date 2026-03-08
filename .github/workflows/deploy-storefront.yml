@@ -1,0 +1,45 @@
+name: Deploy Storefront (Cloudflare Pages)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/storefront/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: src/storefront/package-lock.json
+
+      - name: Install dependencies
+        working-directory: src/storefront
+        run: npm ci
+
+      - name: Build
+        working-directory: src/storefront
+        env:
+          NUXT_PUBLIC_API_URL: ${{ secrets.STOREFRONT_API_URL }}
+        run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=oui-storefront
+          workingDirectory: src/storefront
