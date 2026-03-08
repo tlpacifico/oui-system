@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ReceptionService } from '../services/reception.service';
+import { ApprovalService } from '../../consignment/approval/approval.service';
 import { ReceptionDetail, EvaluationItemResponse } from '../../../core/models/reception.model';
 import { environment } from '../../../../environments/environment';
 
@@ -30,6 +31,11 @@ import { environment } from '../../../../environments/environment';
             <button class="btn btn-outline btn-email" (click)="sendEmail()" [disabled]="sendingEmail()">
               {{ sendingEmail() ? 'A enviar...' : 'Enviar Email' }}
             </button>
+            @if (hasAwaitingItems()) {
+              <button class="btn btn-approve" (click)="staffApprove()" [disabled]="approving()">
+                {{ approving() ? 'A aprovar...' : 'Aprovar Peças' }}
+              </button>
+            }
           }
         </div>
       </div>
@@ -188,6 +194,8 @@ import { environment } from '../../../../environments/environment';
                     <td>
                       @if (item.isRejected) {
                         <span class="badge badge-red" [title]="item.rejectionReason || ''">Rejeitado</span>
+                      } @else if (item.status === 'AwaitingAcceptance') {
+                        <span class="badge badge-yellow">Aguarda Aprovação</span>
                       } @else {
                         <span class="badge badge-green">{{ item.status === 'ToSell' ? 'À Venda' : 'Aceite' }}</span>
                       }
@@ -518,6 +526,8 @@ import { environment } from '../../../../environments/environment';
     .btn-outline:hover:not(:disabled) { background: #f8fafc; }
     .btn-email { border-color: #c7d2fe; color: #4f46e5; }
     .btn-email:hover:not(:disabled) { background: #eef2ff; }
+    .btn-approve { background: #16a34a; color: white; }
+    .btn-approve:hover:not(:disabled) { background: #15803d; }
 
     /* ── Empty ── */
     .empty-card {
@@ -613,6 +623,7 @@ export class ReceptionDetailPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly receptionService = inject(ReceptionService);
+  private readonly approvalService = inject(ApprovalService);
 
   reception = signal<ReceptionDetail | null>(null);
   items = signal<EvaluationItemResponse[]>([]);
@@ -621,6 +632,8 @@ export class ReceptionDetailPageComponent implements OnInit {
   sendingEmail = signal(false);
   emailMessage = signal<string | null>(null);
   emailError = signal(false);
+  approving = signal(false);
+  hasAwaitingItems = signal(false);
 
   // Computed
   acceptedItems = signal<EvaluationItemResponse[]>([]);
@@ -647,6 +660,7 @@ export class ReceptionDetailPageComponent implements OnInit {
         this.reception.set(reception);
         this.items.set(items);
         this.computeFinancials(items);
+        this.hasAwaitingItems.set(items.some(i => i.status === 'AwaitingAcceptance'));
         this.loading.set(false);
       },
       error: () => {
@@ -704,6 +718,27 @@ export class ReceptionDetailPageComponent implements OnInit {
       error: (err) => {
         this.sendingEmail.set(false);
         this.emailMessage.set(err.error?.error || 'Erro ao enviar email.');
+        this.emailError.set(true);
+      }
+    });
+  }
+
+  staffApprove(): void {
+    this.approving.set(true);
+    this.emailMessage.set(null);
+    this.emailError.set(false);
+
+    this.approvalService.staffApprove(this.reception()!.externalId).subscribe({
+      next: (result) => {
+        this.approving.set(false);
+        this.emailMessage.set(`Aprovação registada: ${result.itemsApproved} peças aprovadas.`);
+        this.emailError.set(false);
+        // Reload data to reflect new item statuses
+        this.loadData(this.reception()!.externalId);
+      },
+      error: (err) => {
+        this.approving.set(false);
+        this.emailMessage.set(err.error?.error || 'Erro ao aprovar peças.');
         this.emailError.set(true);
       }
     });

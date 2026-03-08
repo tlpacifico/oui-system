@@ -39,6 +39,9 @@ public static class InfrastructureServiceCollection
         services.AddScoped<ExcelConsignadosReader>();
         services.AddScoped<ImportService>();
 
+        // Ecommerce background services
+        services.AddHostedService<EcommerceReservationExpirationService>();
+
         return services;
     }
 }

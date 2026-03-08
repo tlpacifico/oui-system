@@ -306,6 +306,49 @@ public static class SalesEndpoints
             }
         }
 
+        // Unpublish ecommerce products for sold items
+        var soldItemDbIds = items.Select(i => i.Id).ToList();
+        var ecommerceProducts = await db.EcommerceProducts
+            .Where(p => soldItemDbIds.Contains(p.ItemId) &&
+                (p.Status == EcommerceProductStatus.Published || p.Status == EcommerceProductStatus.Reserved))
+            .ToListAsync(ct);
+
+        foreach (var ep in ecommerceProducts)
+        {
+            ep.Status = EcommerceProductStatus.Sold;
+            ep.UnpublishedAt = DateTime.UtcNow;
+        }
+
+        // Cancel pending ecommerce orders that contain sold items
+        if (ecommerceProducts.Count > 0)
+        {
+            var reservedProductIds = ecommerceProducts
+                .Where(p => p.Status == EcommerceProductStatus.Sold) // was Reserved, now Sold
+                .Select(p => p.Id)
+                .ToList();
+
+            if (reservedProductIds.Count > 0)
+            {
+                var affectedOrderIds = await db.EcommerceOrderItems
+                    .Where(oi => reservedProductIds.Contains(oi.ProductId))
+                    .Select(oi => oi.OrderId)
+                    .Distinct()
+                    .ToListAsync(ct);
+
+                var ordersToCancel = await db.EcommerceOrders
+                    .Where(o => affectedOrderIds.Contains(o.Id) &&
+                        (o.Status == EcommerceOrderStatus.Pending || o.Status == EcommerceOrderStatus.Confirmed))
+                    .ToListAsync(ct);
+
+                foreach (var order in ordersToCancel)
+                {
+                    order.Status = EcommerceOrderStatus.Cancelled;
+                    order.CancelledAt = DateTime.UtcNow;
+                    order.CancellationReason = "Item vendido na loja física";
+                }
+            }
+        }
+
         await db.SaveChangesAsync(ct);
 
         // Dispatch post-sale notification (auto-settlement, etc.)

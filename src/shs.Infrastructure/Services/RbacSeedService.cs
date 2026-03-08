@@ -54,6 +54,7 @@ public class RbacSeedService
             new() { ExternalId = Guid.NewGuid(), Name = "consignment.receptions.view", Category = "consignment", Description = "View receptions", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "consignment.receptions.create", Category = "consignment", Description = "Create receptions", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "consignment.receptions.evaluate", Category = "consignment", Description = "Evaluate receptions", CreatedOn = now },
+            new() { ExternalId = Guid.NewGuid(), Name = "consignment.receptions.approve", Category = "consignment", Description = "Approve reception evaluations", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "consignment.returns.view", Category = "consignment", Description = "View returns", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "consignment.returns.create", Category = "consignment", Description = "Create returns", CreatedOn = now },
 
@@ -68,6 +69,14 @@ public class RbacSeedService
             new() { ExternalId = Guid.NewGuid(), Name = "dashboard.view", Category = "dashboard", Description = "View dashboard", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "reports.view", Category = "reports", Description = "View reports", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "reports.export", Category = "reports", Description = "Export reports", CreatedOn = now },
+
+            // Ecommerce Category
+            new() { ExternalId = Guid.NewGuid(), Name = "ecommerce.products.view", Category = "ecommerce", Description = "View ecommerce products", CreatedOn = now },
+            new() { ExternalId = Guid.NewGuid(), Name = "ecommerce.products.publish", Category = "ecommerce", Description = "Publish items to ecommerce", CreatedOn = now },
+            new() { ExternalId = Guid.NewGuid(), Name = "ecommerce.products.update", Category = "ecommerce", Description = "Update ecommerce products", CreatedOn = now },
+            new() { ExternalId = Guid.NewGuid(), Name = "ecommerce.products.unpublish", Category = "ecommerce", Description = "Unpublish ecommerce products", CreatedOn = now },
+            new() { ExternalId = Guid.NewGuid(), Name = "ecommerce.orders.view", Category = "ecommerce", Description = "View ecommerce orders", CreatedOn = now },
+            new() { ExternalId = Guid.NewGuid(), Name = "ecommerce.orders.manage", Category = "ecommerce", Description = "Manage ecommerce orders", CreatedOn = now },
         };
 
         _db.Permissions.AddRange(permissions);
@@ -131,8 +140,10 @@ public class RbacSeedService
         {
             "inventory.items.view", "inventory.items.create", "inventory.items.update", "inventory.items.delete",
             "inventory.brands.manage", "inventory.categories.manage", "inventory.tags.manage", "inventory.suppliers.manage",
-            "consignment.receptions.view", "consignment.receptions.evaluate",
+            "consignment.receptions.view", "consignment.receptions.evaluate", "consignment.receptions.approve",
             "consignment.returns.view",
+            "ecommerce.products.view", "ecommerce.products.publish", "ecommerce.products.update", "ecommerce.products.unpublish",
+            "ecommerce.orders.view", "ecommerce.orders.manage",
             "dashboard.view", "reports.view", "reports.export"
         };
         var managerPermissions = permissions
@@ -168,7 +179,7 @@ public class RbacSeedService
         {
             "inventory.items.view", "inventory.items.create", "inventory.items.update",
             "inventory.brands.manage", "inventory.categories.manage", "inventory.tags.manage", "inventory.suppliers.manage",
-            "consignment.receptions.view", "consignment.receptions.create", "consignment.receptions.evaluate",
+            "consignment.receptions.view", "consignment.receptions.create", "consignment.receptions.evaluate", "consignment.receptions.approve",
             "consignment.returns.view", "consignment.returns.create",
             "dashboard.view"
         };
@@ -194,7 +205,14 @@ public class RbacSeedService
         var now = DateTime.UtcNow;
         var newPermissions = new Dictionary<string, string>
         {
-            ["admin.import.execute"] = "Execute data import from Excel"
+            ["admin.import.execute"] = "Execute data import from Excel",
+            ["consignment.receptions.approve"] = "Approve reception evaluations",
+            ["ecommerce.products.view"] = "View ecommerce products",
+            ["ecommerce.products.publish"] = "Publish items to ecommerce",
+            ["ecommerce.products.update"] = "Update ecommerce products",
+            ["ecommerce.products.unpublish"] = "Unpublish ecommerce products",
+            ["ecommerce.orders.view"] = "View ecommerce orders",
+            ["ecommerce.orders.manage"] = "Manage ecommerce orders"
         };
 
         var existingNames = await _db.Permissions.Select(p => p.Name).ToListAsync();

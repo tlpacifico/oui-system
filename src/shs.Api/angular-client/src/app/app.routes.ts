@@ -34,6 +34,7 @@ import { ReportsSalesPageComponent } from './features/reports/pages/reports-sale
 import { ReportsInventoryPageComponent } from './features/reports/pages/reports-inventory-page.component';
 import { ReportsSuppliersPageComponent } from './features/reports/pages/reports-suppliers-page.component';
 import { ReportsFinancePageComponent } from './features/reports/pages/reports-finance-page.component';
+import { ApprovalPageComponent } from './features/consignment/approval/approval-page.component';
 import { authGuard } from './core/auth/auth.guard';
 import { permissionGuard, anyPermissionGuard } from './core/auth/permission.guard';
 
@@ -41,6 +42,10 @@ export const routes: Routes = [
   {
     path: 'login',
     component: LoginPageComponent,
+  },
+  {
+    path: 'approval/:token',
+    component: ApprovalPageComponent,
   },
   {
     path: '',

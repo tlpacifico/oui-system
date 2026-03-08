@@ -128,6 +128,10 @@
 | GET | `/receptions/pending-evaluation` | Listar rececoes pendentes de avaliacao | Manager |
 | POST | `/receptions/:id/evaluate` | Submeter avaliacao de todos os itens | Manager |
 | POST | `/receptions/:id/send-evaluation-email` | Enviar email de avaliacao ao cliente | Manager |
+| PUT | `/receptions/:id/approve` | Staff aprova pecas manualmente | Manager |
+| GET | `/approval/:token` | Ver detalhes para aprovacao (publico, sem auth) | — |
+| POST | `/approval/:token/approve` | Fornecedor aprova via link (publico, sem auth) | — |
+| POST | `/approval/:token/reject` | Fornecedor recusa via link (publico, sem auth) | — |
 
 **POST `/receptions` - Body:**
 ```json

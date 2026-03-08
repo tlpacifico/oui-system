@@ -29,6 +29,7 @@ public class EvaluationEmailData
     public required string SupplierEmail { get; init; }
     public required DateTime ReceptionDate { get; init; }
     public required string ReceptionRef { get; init; }
+    public string? ApprovalUrl { get; init; }
     public required List<EvaluationEmailItem> AcceptedItems { get; init; }
     public required List<EvaluationEmailItem> RejectedItems { get; init; }
 }
@@ -214,10 +215,19 @@ public class EmailService : IEmailService
             // Rejected items
             + rejectedSection
 
+            // Approval button (if token provided)
+            + (data.ApprovalUrl != null
+                ? "<div style=\"margin-top:28px;text-align:center;\">"
+                  + "<p style=\"font-size:14px;color:#1e293b;margin:0 0 16px;font-weight:600;\">Para aprovar os pre\u00e7os e autorizar a venda, clique no bot\u00e3o abaixo:</p>"
+                  + "<a href=\"" + E(data.ApprovalUrl) + "\" style=\"display:inline-block;padding:14px 40px;background:#6366f1;color:white;text-decoration:none;border-radius:8px;font-size:15px;font-weight:700;letter-spacing:0.5px;\">Aprovar Pre\u00e7os</a>"
+                  + "<p style=\"font-size:12px;color:#94a3b8;margin:12px 0 0;\">Este link \u00e9 v\u00e1lido por 7 dias.</p>"
+                  + "</div>"
+                : "")
+
             // Footer note
             + "<div style=\"margin-top:32px;padding:16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;\">"
             + "<p style=\"font-size:13px;color:#64748b;margin:0;line-height:1.6;\">"
-            + "<b>Nota:</b> As pe\u00e7as aceites ser\u00e3o colocadas \u00e0 venda na loja. "
+            + "<b>Nota:</b> As pe\u00e7as aceites s\u00f3 ser\u00e3o colocadas \u00e0 venda ap\u00f3s a sua aprova\u00e7\u00e3o. "
             + "Ap\u00f3s a venda, ser\u00e1 emitido o acerto financeiro de acordo com a comiss\u00e3o acordada."
             + (totalRejected > 0
                 ? " As pe\u00e7as recusadas podem ser levantadas na loja a qualquer momento."

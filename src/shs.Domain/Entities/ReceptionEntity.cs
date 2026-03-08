@@ -20,4 +20,5 @@ public class ReceptionEntity : EntityWithIdAuditable<long>, IHaveSoftDelete
     // Navigation
     public SupplierEntity Supplier { get; set; } = null!;
     public ICollection<ItemEntity> Items { get; set; } = new List<ItemEntity>();
+    public ICollection<ReceptionApprovalTokenEntity> ApprovalTokens { get; set; } = new List<ReceptionApprovalTokenEntity>();
 }

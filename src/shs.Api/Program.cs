@@ -9,6 +9,7 @@ using shs.Api.Auth;
 using shs.Api.Authorization;
 using shs.Api.Consignment;
 using shs.Api.Dashboard;
+using shs.Api.Ecommerce;
 using shs.Api.Reports;
 using shs.Api.Financial;
 using shs.Api.Inventory;
@@ -25,7 +26,7 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 builder.Configuration["Cors:AllowedOrigins"]?.Split(',', StringSplitOptions.RemoveEmptyEntries) ??
-                new[] { "http://localhost:4200" })
+                new[] { "http://localhost:4200", "http://localhost:3000" })
             .AllowAnyMethod()
             .AllowAnyHeader();
     });
@@ -108,6 +109,7 @@ app.MapCategoryEndpoints();
 app.MapTagEndpoints();
 app.MapSupplierEndpoints();
 app.MapConsignmentEndpoints();
+app.MapApprovalEndpoints();
 app.MapSupplierReturnEndpoints();
 app.MapPosEndpoints();
 app.MapSalesEndpoints();
@@ -123,6 +125,8 @@ app.MapStoreCreditEndpoints();
 app.MapCashRedemptionEndpoints();
 app.MapSystemSettingEndpoints();
 app.MapImportEndpoints();
+app.MapEcommerceAdminEndpoints();
+app.MapEcommercePublicEndpoints();
 app.MapFallbackToFile("index.html");
 
 app.Run();

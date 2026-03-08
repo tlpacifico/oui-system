@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ItemService } from '../services/item.service';
+import { EcommerceService } from '../services/ecommerce.service';
 import { ItemListItem, ItemStatus } from '../../../core/models/item.model';
 import { environment } from '../../../../environments/environment';
 
@@ -104,6 +105,9 @@ import { environment } from '../../../../environments/environment';
                   <td class="cell-actions">
                     <button class="btn btn-outline btn-sm" [routerLink]="['/inventory/items', item.externalId]">Ver</button>
                     <button class="btn btn-outline btn-sm" [routerLink]="['/inventory/items', item.externalId, 'edit']">Editar</button>
+                    @if (item.status === 'ToSell') {
+                      <button class="btn btn-ecommerce btn-sm" (click)="publishToEcommerce(item)" [disabled]="publishing()">Publicar</button>
+                    }
                   </td>
                 </tr>
               }
@@ -320,6 +324,21 @@ import { environment } from '../../../../environments/environment';
       margin-right: 0;
     }
 
+    .btn-ecommerce {
+      background: #059669;
+      color: white;
+      border-color: #059669;
+    }
+
+    .btn-ecommerce:hover:not(:disabled) {
+      background: #047857;
+    }
+
+    .btn-ecommerce:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .item-thumb {
       width: 40px;
       height: 40px;
@@ -441,10 +460,12 @@ import { environment } from '../../../../environments/environment';
 })
 export class ItemListPageComponent implements OnInit {
   private readonly itemService = inject(ItemService);
+  private readonly ecommerceService = inject(EcommerceService);
   private readonly baseUrl = environment.apiUrl.replace('/api', '');
 
   items = signal<ItemListItem[]>([]);
   loading = signal(false);
+  publishing = signal(false);
   currentPage = signal(1);
   totalPages = signal(1);
   totalCount = signal(0);
@@ -531,6 +552,21 @@ export class ItemListPageComponent implements OnInit {
       this.currentPage.set(page);
       this.loadItems();
     }
+  }
+
+  publishToEcommerce(item: ItemListItem): void {
+    this.publishing.set(true);
+    this.ecommerceService.publishItem(item.externalId).subscribe({
+      next: () => {
+        this.publishing.set(false);
+        alert(`"${item.name}" publicado no e-commerce com sucesso!`);
+      },
+      error: (err) => {
+        this.publishing.set(false);
+        const msg = err.error?.error || 'Erro ao publicar no e-commerce.';
+        alert(msg);
+      }
+    });
   }
 
   getStatusLabel(status: ItemStatus): string {

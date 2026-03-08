@@ -38,7 +38,7 @@ public static class SupplierReturnEndpoints
         var items = await db.Items
             .Where(i => i.SupplierId == supplier.Id
                         && !i.IsDeleted
-                        && (i.Status == ItemStatus.ToSell || i.Status == ItemStatus.Rejected))
+                        && (i.Status == ItemStatus.ToSell || i.Status == ItemStatus.AwaitingAcceptance || i.Status == ItemStatus.Rejected))
             .Include(i => i.Brand)
             .Include(i => i.Photos.Where(p => p.IsPrimary))
             .OrderBy(i => i.IdentificationNumber)
@@ -93,7 +93,7 @@ public static class SupplierReturnEndpoints
 
         // Validate all items are returnable
         var nonReturnable = items
-            .Where(i => i.Status != ItemStatus.ToSell && i.Status != ItemStatus.Rejected)
+            .Where(i => i.Status != ItemStatus.ToSell && i.Status != ItemStatus.AwaitingAcceptance && i.Status != ItemStatus.Rejected)
             .ToList();
 
         if (nonReturnable.Count > 0)

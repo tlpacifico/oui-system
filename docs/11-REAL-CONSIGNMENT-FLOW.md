@@ -46,19 +46,21 @@
 │                                                                     │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  ETAPA 3: COMUNICAÇÃO AO CLIENTE (email)                            │
+│  ETAPA 3: COMUNICAÇÃO E APROVAÇÃO DO CLIENTE                        │
 │  ─────────────────────────────────────────────────────────────────  │
 │                                                                     │
-│  1. Sistema gera lista de peças avaliadas com valores               │
-│  2. Funcionário envia EMAIL ao cliente com:                         │
+│  1. Ao concluir avaliação, sistema envia EMAIL automaticamente:     │
 │     • Lista de peças aceites e respetivos valores de venda          │
 │     • Peças recusadas (com defeito / sem condição) e motivo         │
-│     • Comissões aplicáveis (40% dinheiro / 50% crédito em loja)     │
-│  3. Cliente confirma (ou levanta objeções)                          │
+│     • Link de aprovação (válido por 7 dias, sem login)              │
+│  2. Peças ficam com status "Aguarda Aprovação"                      │
+│  3. Cliente pode:                                                   │
+│     a. Clicar no link → ver peças/preços → Aprovar ou Recusar      │
+│     b. Confirmar via WhatsApp/telefone (staff aprova manualmente)   │
+│  4. Após aprovação → peças passam a "À Venda"                      │
 │                                                                     │
-│  💡 Neste ponto as peças já poderiam ser publicadas online          │
-│     (e-commerce, Instagram, Vinted) para iniciar vendas antes       │
-│     mesmo da confirmação formal do cliente.                         │
+│  💡 O staff pode aprovar internamente sem aguardar pelo link,       │
+│     bastando ter a confirmação do fornecedor por outro canal.       │
 │                                                                     │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
@@ -114,14 +116,19 @@
 ### Lifecycle Atualizado
 
 ```
-Recebido ──► Avaliado ──► Consignado/DL ──► Vendido ──► Pago
-                │                              │
-                ▼                              ▼
-           Com Defeito                     Devolvido
+Recebido ──► Avaliado ──► Aguarda Aprovação ──► Consignado/DL ──► Vendido ──► Pago
+                │               │                                    │
+                ▼               ▼                                    ▼
+           Com Defeito     Devolvido                             Devolvido
                 │
                 ▼
            Devolvido
 ```
+
+> **Nota:** Após a avaliação, os itens ficam no estado "Aguarda Aprovação" (AwaitingAcceptance).
+> O fornecedor recebe um email com um link para aprovar os preços avaliados.
+> Alternativamente, o staff pode aprovar manualmente caso o fornecedor confirme por WhatsApp/telefone.
+> Só após a aprovação é que os itens passam a "À Venda" (ToSell).
 
 ---
 

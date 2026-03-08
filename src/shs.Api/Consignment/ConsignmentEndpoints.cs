@@ -420,6 +420,7 @@ public static class ConsignmentEndpoints
     /// </summary>
     private static async Task<IResult> CompleteEvaluation(
         Guid externalId,
+        HttpContext httpContext,
         [FromServices] ShsDbContext db,
         [FromServices] IEmailService emailService,
         [FromServices] ILogger<EmailService> logger,
@@ -444,10 +445,10 @@ public static class ConsignmentEndpoints
         if (evaluatedCount < reception.ItemCount)
             return Results.BadRequest(new { error = $"Faltam avaliar {reception.ItemCount - evaluatedCount} de {reception.ItemCount} itens." });
 
-        // Mark accepted items as ToSell
+        // Mark accepted items as AwaitingAcceptance (supplier must approve before ToSell)
         foreach (var item in reception.Items.Where(i => !i.IsRejected))
         {
-            item.Status = ItemStatus.ToSell;
+            item.Status = ItemStatus.AwaitingAcceptance;
         }
 
         reception.Status = ReceptionStatus.Evaluated;
@@ -456,13 +457,28 @@ public static class ConsignmentEndpoints
         reception.UpdatedOn = DateTime.UtcNow;
         reception.UpdatedBy = "system";
 
+        // Generate approval token
+        var approvalToken = new ReceptionApprovalTokenEntity
+        {
+            ExternalId = Guid.NewGuid(),
+            ReceptionId = reception.Id,
+            Token = Guid.NewGuid().ToString("N"),
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            IsUsed = false,
+            CreatedOn = DateTime.UtcNow,
+            CreatedBy = "system"
+        };
+        db.ReceptionApprovalTokens.Add(approvalToken);
+
         await db.SaveChangesAsync(ct);
 
         // Auto-send evaluation email (best-effort, don't fail the request)
         var emailSent = false;
         try
         {
-            var emailData = BuildEvaluationEmailData(reception);
+            var baseUrl = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}";
+            var approvalUrl = $"{baseUrl}/approval/{approvalToken.Token}";
+            var emailData = BuildEvaluationEmailData(reception, approvalUrl);
             await emailService.SendEvaluationEmailAsync(emailData, ct);
             emailSent = true;
         }
@@ -487,6 +503,7 @@ public static class ConsignmentEndpoints
     /// </summary>
     private static async Task<IResult> SendEvaluationEmail(
         Guid externalId,
+        HttpContext httpContext,
         [FromServices] ShsDbContext db,
         [FromServices] IEmailService emailService,
         CancellationToken ct)
@@ -503,9 +520,21 @@ public static class ConsignmentEndpoints
         if (reception.Status == ReceptionStatus.PendingEvaluation)
             return Results.BadRequest(new { error = "A avaliação ainda não foi concluída." });
 
+        // Find the latest active approval token for this reception
+        var latestToken = await db.ReceptionApprovalTokens
+            .Where(t => t.ReceptionId == reception.Id && !t.IsUsed)
+            .OrderByDescending(t => t.CreatedOn)
+            .FirstOrDefaultAsync(ct);
+
         try
         {
-            var emailData = BuildEvaluationEmailData(reception);
+            string? approvalUrl = null;
+            if (latestToken != null)
+            {
+                var baseUrl = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}";
+                approvalUrl = $"{baseUrl}/approval/{latestToken.Token}";
+            }
+            var emailData = BuildEvaluationEmailData(reception, approvalUrl);
             await emailService.SendEvaluationEmailAsync(emailData, ct);
 
             return Results.Ok(new
@@ -520,7 +549,7 @@ public static class ConsignmentEndpoints
         }
     }
 
-    private static EvaluationEmailData BuildEvaluationEmailData(ReceptionEntity reception)
+    private static EvaluationEmailData BuildEvaluationEmailData(ReceptionEntity reception, string? approvalUrl = null)
     {
         return new EvaluationEmailData
         {
@@ -528,6 +557,7 @@ public static class ConsignmentEndpoints
             SupplierEmail = reception.Supplier.Email,
             ReceptionDate = reception.ReceptionDate,
             ReceptionRef = reception.ExternalId.ToString()[..8].ToUpper(),
+            ApprovalUrl = approvalUrl,
             AcceptedItems = reception.Items
                 .Where(i => !i.IsRejected)
                 .Select(i => new EvaluationEmailItem

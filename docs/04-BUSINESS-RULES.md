@@ -84,7 +84,10 @@ The store operates with three acquisition channels:
 
 1. **Consignment** - Items received from clients under consignment agreement
    - Subject to commission rules (RN-CON-03)
-   - Tracked through the full status lifecycle (Recebido --> Pago)
+   - Tracked through the full status lifecycle (Recebido → Avaliado → Aguarda Aprovação → À Venda → Vendido → Pago)
+   - After evaluation, items enter "Awaiting Acceptance" status; supplier must approve prices before items go on sale
+   - Approval can be done via email link (token-based, no login) or by staff manually (when supplier confirms via WhatsApp/phone)
+   - Approval tokens expire after 7 days
    - Supplier receives payment upon settlement
 
 2. **Own Purchase** - Items bought directly by the store from external sources (e.g., Humana, Vinted, feiras, other suppliers)

@@ -28,9 +28,16 @@ public class ShsDbContext : DbContext
     public DbSet<ItemEntity> Items => Set<ItemEntity>();
     public DbSet<ItemPhotoEntity> ItemPhotos => Set<ItemPhotoEntity>();
     public DbSet<SupplierReturnEntity> SupplierReturns => Set<SupplierReturnEntity>();
+    public DbSet<ReceptionApprovalTokenEntity> ReceptionApprovalTokens => Set<ReceptionApprovalTokenEntity>();
 
     // System settings
     public DbSet<SystemSettingEntity> SystemSettings => Set<SystemSettingEntity>();
+
+    // Ecommerce entities
+    public DbSet<EcommerceProductEntity> EcommerceProducts => Set<EcommerceProductEntity>();
+    public DbSet<EcommerceProductPhotoEntity> EcommerceProductPhotos => Set<EcommerceProductPhotoEntity>();
+    public DbSet<EcommerceOrderEntity> EcommerceOrders => Set<EcommerceOrderEntity>();
+    public DbSet<EcommerceOrderItemEntity> EcommerceOrderItems => Set<EcommerceOrderItemEntity>();
 
     // Financial entities
     public DbSet<SettlementEntity> Settlements => Set<SettlementEntity>();
