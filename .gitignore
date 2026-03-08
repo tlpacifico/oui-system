@@ -35,6 +35,10 @@ dist/
 .angular/
 tmp/
 
+# Nuxt
+.nuxt/
+.output/
+
 # Environment
 .env
 .env.local
