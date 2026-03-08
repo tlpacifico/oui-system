@@ -21,21 +21,21 @@ useHead({ title: 'Sobre - Oui Circular' })
       <h2 class="text-xl font-bold text-gray-900 mt-8 mb-4">Como funciona a compra online</h2>
       <div class="space-y-4">
         <div class="flex gap-4 items-start">
-          <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 text-emerald-700 font-bold text-sm">1</div>
+          <div class="w-8 h-8 bg-olive-100 rounded-full flex items-center justify-center flex-shrink-0 text-olive-600 font-bold text-sm">1</div>
           <div>
             <h3 class="font-medium text-gray-900">Escolha</h3>
             <p class="text-sm text-gray-500">Navegue pelo nosso catálogo e adicione peças ao carrinho.</p>
           </div>
         </div>
         <div class="flex gap-4 items-start">
-          <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 text-emerald-700 font-bold text-sm">2</div>
+          <div class="w-8 h-8 bg-olive-100 rounded-full flex items-center justify-center flex-shrink-0 text-olive-600 font-bold text-sm">2</div>
           <div>
             <h3 class="font-medium text-gray-900">Reserve</h3>
             <p class="text-sm text-gray-500">Faça a sua encomenda online. Os artigos ficam reservados durante 48 horas.</p>
           </div>
         </div>
         <div class="flex gap-4 items-start">
-          <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 text-emerald-700 font-bold text-sm">3</div>
+          <div class="w-8 h-8 bg-olive-100 rounded-full flex items-center justify-center flex-shrink-0 text-olive-600 font-bold text-sm">3</div>
           <div>
             <h3 class="font-medium text-gray-900">Levante</h3>
             <p class="text-sm text-gray-500">Dirija-se à loja para experimentar, pagar e levar as suas peças.</p>
@@ -44,7 +44,7 @@ useHead({ title: 'Sobre - Oui Circular' })
       </div>
 
       <h2 class="text-xl font-bold text-gray-900 mt-8 mb-4">Visite-nos</h2>
-      <div class="bg-gray-50 rounded-lg p-6">
+      <div class="bg-cream-100 rounded-lg p-6">
         <p class="text-gray-600 mb-2"><strong>Morada:</strong> Lisboa, Portugal</p>
         <p class="text-gray-600 mb-2"><strong>Horário:</strong> Seg-Sex 10h-19h, Sáb 10h-14h</p>
         <p class="text-gray-600 mb-2"><strong>WhatsApp:</strong> +351 XXX XXX XXX</p>

@@ -81,7 +81,7 @@ const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Produtos</h1>
 
     <!-- Filters -->
-    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+    <div class="bg-white rounded-lg border border-cream-300 p-4 mb-6">
       <div class="flex flex-wrap gap-3 items-end">
         <div class="flex-1 min-w-[200px]">
           <label class="block text-xs font-medium text-gray-500 mb-1">Pesquisar</label>
@@ -89,14 +89,14 @@ const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
             v-model="search"
             type="text"
             placeholder="Nome ou marca..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-olive-400"
             @keyup.enter="applyFilters"
           />
         </div>
 
         <div class="w-40">
           <label class="block text-xs font-medium text-gray-500 mb-1">Marca</label>
-          <select v-model="brand" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" @change="applyFilters">
+          <select v-model="brand" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-olive-400" @change="applyFilters">
             <option value="">Todas</option>
             <option v-for="b in brands" :key="b" :value="b">{{ b }}</option>
           </select>
@@ -104,7 +104,7 @@ const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 
         <div class="w-40">
           <label class="block text-xs font-medium text-gray-500 mb-1">Categoria</label>
-          <select v-model="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" @change="applyFilters">
+          <select v-model="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-olive-400" @change="applyFilters">
             <option value="">Todas</option>
             <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
           </select>
@@ -112,7 +112,7 @@ const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 
         <div class="w-28">
           <label class="block text-xs font-medium text-gray-500 mb-1">Tamanho</label>
-          <select v-model="size" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" @change="applyFilters">
+          <select v-model="size" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-olive-400" @change="applyFilters">
             <option value="">Todos</option>
             <option v-for="s in sizes" :key="s" :value="s">{{ s }}</option>
           </select>
@@ -120,7 +120,7 @@ const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 
         <div class="w-36">
           <label class="block text-xs font-medium text-gray-500 mb-1">Ordenar</label>
-          <select v-model="sort" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" @change="applyFilters">
+          <select v-model="sort" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-olive-400" @change="applyFilters">
             <option value="newest">Mais recentes</option>
             <option value="oldest">Mais antigos</option>
             <option value="price_asc">Preço: menor</option>
@@ -129,7 +129,7 @@ const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
         </div>
 
         <button
-          class="px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 transition"
+          class="px-4 py-2 bg-olive-500 text-white text-sm rounded-lg hover:bg-olive-600 transition"
           @click="applyFilters"
         >
           Filtrar
@@ -157,23 +157,23 @@ const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
         v-for="product in products.items"
         :key="product.slug"
         :to="`/produtos/${product.slug}`"
-        class="group bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition"
+        class="group bg-white rounded-lg border border-cream-300 overflow-hidden hover:shadow-md transition"
       >
-        <div class="aspect-square bg-gray-100 overflow-hidden">
+        <div class="aspect-square bg-cream-100 overflow-hidden">
           <img
             v-if="product.primaryPhotoUrl"
             :src="photoUrl(product.primaryPhotoUrl)"
             :alt="product.title"
             class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
           />
-          <div v-else class="w-full h-full flex items-center justify-center text-gray-300">
+          <div v-else class="w-full h-full flex items-center justify-center text-cream-400">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
         </div>
         <div class="p-3">
-          <h3 class="text-sm font-medium text-gray-900 group-hover:text-emerald-700 transition truncate">{{ product.title }}</h3>
+          <h3 class="text-sm font-medium text-gray-900 group-hover:text-olive-600 transition truncate">{{ product.title }}</h3>
           <p class="text-xs text-gray-500 mt-0.5">{{ product.brandName }} <span v-if="product.size">&middot; {{ product.size }}</span></p>
           <p class="text-sm font-bold text-gray-900 mt-1">&euro;{{ product.price.toFixed(2) }}</p>
         </div>

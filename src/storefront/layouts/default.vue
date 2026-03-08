@@ -6,35 +6,36 @@ const menuOpen = ref(false)
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-gray-50">
+  <div class="min-h-screen flex flex-col bg-cream-50">
     <!-- Header -->
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header class="bg-white border-b border-cream-300 sticky top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
           <NuxtLink to="/" class="flex items-center gap-2">
-            <span class="text-xl font-bold text-emerald-700">Oui Circular</span>
+            <img src="/logo.svg" alt="Oui Circular" class="h-10 w-10 rounded-full" />
+            <span class="text-xl font-bold text-olive-600">Oui Circular</span>
           </NuxtLink>
 
           <!-- Desktop Nav -->
           <nav class="hidden md:flex items-center gap-8">
-            <NuxtLink to="/produtos" class="text-sm font-medium text-gray-600 hover:text-emerald-700 transition">
+            <NuxtLink to="/produtos" class="text-sm font-medium text-gray-600 hover:text-olive-600 transition">
               Produtos
             </NuxtLink>
-            <NuxtLink to="/sobre" class="text-sm font-medium text-gray-600 hover:text-emerald-700 transition">
+            <NuxtLink to="/sobre" class="text-sm font-medium text-gray-600 hover:text-olive-600 transition">
               Sobre
             </NuxtLink>
           </nav>
 
           <!-- Cart -->
           <div class="flex items-center gap-4">
-            <NuxtLink to="/carrinho" class="relative p-2 text-gray-600 hover:text-emerald-700 transition">
+            <NuxtLink to="/carrinho" class="relative p-2 text-gray-600 hover:text-olive-600 transition">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
               <span
                 v-if="cart.count > 0"
-                class="absolute -top-1 -right-1 bg-emerald-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold"
+                class="absolute -top-1 -right-1 bg-olive-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold"
               >
                 {{ cart.count }}
               </span>
@@ -50,7 +51,7 @@ const menuOpen = ref(false)
         </div>
 
         <!-- Mobile Nav -->
-        <div v-if="menuOpen" class="md:hidden pb-4 border-t border-gray-100 mt-2 pt-2">
+        <div v-if="menuOpen" class="md:hidden pb-4 border-t border-cream-200 mt-2 pt-2">
           <NuxtLink to="/produtos" class="block py-2 text-sm text-gray-600" @click="menuOpen = false">Produtos</NuxtLink>
           <NuxtLink to="/sobre" class="block py-2 text-sm text-gray-600" @click="menuOpen = false">Sobre</NuxtLink>
         </div>
@@ -63,12 +64,15 @@ const menuOpen = ref(false)
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 mt-auto">
+    <footer class="bg-white border-t border-cream-300 mt-auto">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wide">Oui Circular</h3>
-            <p class="mt-2 text-sm text-gray-500">Moda circular e sustentável em Portugal.</p>
+            <div class="flex items-center gap-2 mb-2">
+              <img src="/logo.svg" alt="Oui Circular" class="h-8 w-8 rounded-full" />
+              <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wide">Oui Circular</h3>
+            </div>
+            <p class="mt-1 text-sm text-gray-500">Moda circular e sustentável em Portugal.</p>
           </div>
           <div>
             <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wide">Contacto</h3>
@@ -81,7 +85,7 @@ const menuOpen = ref(false)
             <p class="text-sm text-gray-500">Sáb: 10h - 14h</p>
           </div>
         </div>
-        <div class="mt-8 pt-4 border-t border-gray-100 text-center text-xs text-gray-400">
+        <div class="mt-8 pt-4 border-t border-cream-200 text-center text-xs text-gray-400">
           &copy; {{ new Date().getFullYear() }} Oui Circular. Todos os direitos reservados.
         </div>
       </div>

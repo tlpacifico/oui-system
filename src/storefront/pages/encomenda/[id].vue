@@ -38,14 +38,14 @@ useHead({ title: order.value ? `Encomenda ${order.value.orderNumber} - Oui Circu
   <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div v-if="error" class="text-center py-20">
       <p class="text-lg text-gray-500 mb-4">Encomenda não encontrada.</p>
-      <NuxtLink to="/produtos" class="text-emerald-700 hover:underline">Ver produtos</NuxtLink>
+      <NuxtLink to="/produtos" class="text-olive-600 hover:underline">Ver produtos</NuxtLink>
     </div>
 
     <div v-else-if="order">
       <!-- Success header -->
       <div class="text-center mb-8">
-        <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="w-16 h-16 bg-olive-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-olive-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -54,7 +54,7 @@ useHead({ title: order.value ? `Encomenda ${order.value.orderNumber} - Oui Circu
       </div>
 
       <!-- Status -->
-      <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+      <div class="bg-white border border-cream-300 rounded-lg p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
           <span class="text-sm text-gray-500">Estado</span>
           <span class="px-3 py-1 rounded-full text-xs font-semibold" :class="statusColors[order.status] || 'bg-gray-100 text-gray-800'">
@@ -91,22 +91,22 @@ useHead({ title: order.value ? `Encomenda ${order.value.orderNumber} - Oui Circu
       </div>
 
       <!-- Items -->
-      <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+      <div class="bg-white border border-cream-300 rounded-lg p-6 mb-6">
         <h2 class="text-sm font-bold text-gray-900 mb-3">Artigos</h2>
-        <div v-for="item in order.items" :key="item.productTitle" class="flex justify-between text-sm py-2 border-b border-gray-50 last:border-0">
+        <div v-for="item in order.items" :key="item.productTitle" class="flex justify-between text-sm py-2 border-b border-cream-100 last:border-0">
           <span class="text-gray-600">{{ item.productTitle }}</span>
           <span class="font-medium text-gray-900">&euro;{{ item.price.toFixed(2) }}</span>
         </div>
-        <div class="border-t border-gray-200 mt-2 pt-3 flex justify-between">
+        <div class="border-t border-cream-300 mt-2 pt-3 flex justify-between">
           <span class="font-bold text-gray-900">Total</span>
           <span class="font-bold text-gray-900 text-lg">&euro;{{ order.totalAmount.toFixed(2) }}</span>
         </div>
       </div>
 
       <!-- Info -->
-      <div class="bg-emerald-50 rounded-lg p-4 text-sm text-emerald-800">
+      <div class="bg-olive-50 rounded-lg p-4 text-sm text-olive-800">
         <p class="font-medium mb-2">Próximos passos:</p>
-        <ul class="space-y-1 text-emerald-700">
+        <ul class="space-y-1 text-olive-700">
           <li>1. A equipa da loja irá confirmar a sua reserva.</li>
           <li>2. Dirija-se à loja dentro de 48 horas.</li>
           <li>3. Apresente o número da encomenda no balcão.</li>
@@ -114,7 +114,7 @@ useHead({ title: order.value ? `Encomenda ${order.value.orderNumber} - Oui Circu
       </div>
 
       <div class="text-center mt-8">
-        <NuxtLink to="/produtos" class="text-emerald-700 hover:underline text-sm">Continuar a explorar</NuxtLink>
+        <NuxtLink to="/produtos" class="text-olive-600 hover:underline text-sm">Continuar a explorar</NuxtLink>
       </div>
     </div>
   </div>
