@@ -1,13 +1,8 @@
 using ClosedXML.Excel;
-using shs.Import.Models;
+using shs.Infrastructure.Services.Import.Models;
 
-namespace shs.Import.Services;
+namespace shs.Infrastructure.Services.Import;
 
-/// <summary>
-/// Lê o arquivo Itens Consignados_to_import.xlsx
-/// Layout: sheet única "Planilha1", cabeçalho na linha 1, dados a partir da linha 2.
-/// Colunas: Cliente | COD | Descriçao da peça | data de recepção | valor avaliado | situação | Crédito em dinheiro (40%) | Crédito em loja (50%)
-/// </summary>
 public class ExcelConsignadosReader
 {
     private static readonly string[] ClienteNames = ["Cliente", "cliente", "Nome"];
@@ -19,15 +14,11 @@ public class ExcelConsignadosReader
     private static readonly string[] CreditoDinheiroNames = ["Crédito em dinheiro (40%)", "Credito em dinheiro (40%)", "Crédito dinheiro", "Crédito \nem dinheiro (40%)"];
     private static readonly string[] CreditoLojaNames = ["Crédito em loja (50%)", "Credito em loja (50%)", "Crédito loja"];
 
-    public IReadOnlyList<ConsignadoRow> Read(string filePath)
+    public IReadOnlyList<ConsignadoRow> Read(Stream stream)
     {
-        if (!File.Exists(filePath))
-            throw new FileNotFoundException("Arquivo de consignados não encontrado.", filePath);
-
         var rows = new List<ConsignadoRow>();
-        using var workbook = new XLWorkbook(filePath);
+        using var workbook = new XLWorkbook(stream);
 
-        // Nova estrutura: sheet única com coluna "Cliente"
         var sheet = workbook.Worksheet(1);
         if (sheet == null)
             throw new InvalidOperationException("Nenhuma sheet encontrada no arquivo.");
@@ -45,7 +36,6 @@ public class ExcelConsignadosReader
         {
             var row = sheet.Row(r);
 
-            // A coluna Cliente pode estar vazia para linhas do mesmo cliente
             var clienteCell = colMap.TryGetValue("Cliente", out var clienteCol) ? GetCellString(row.Cell(clienteCol)) : null;
             if (!string.IsNullOrWhiteSpace(clienteCell))
                 currentCliente = clienteCell.Trim();
@@ -70,7 +60,6 @@ public class ExcelConsignadosReader
             var rawValue = GetCellString(cell)?.Trim() ?? "";
             if (string.IsNullOrEmpty(rawValue)) continue;
 
-            // Normalizar quebras de linha no cabeçalho (ex: "Crédito \nem dinheiro (40%)")
             var value = rawValue.Replace("\n", " ").Replace("\r", " ").Trim();
             while (value.Contains("  "))
                 value = value.Replace("  ", " ");

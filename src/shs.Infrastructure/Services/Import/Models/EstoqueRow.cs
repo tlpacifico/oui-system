@@ -1,8 +1,5 @@
-namespace shs.Import.Models;
+namespace shs.Infrastructure.Services.Import.Models;
 
-/// <summary>
-/// DTO para uma linha do arquivo Personal_items_to_import.xlsx
-/// </summary>
 public record EstoqueRow
 {
     public string? RefPeca { get; init; }

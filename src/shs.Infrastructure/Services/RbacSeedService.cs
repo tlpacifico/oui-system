@@ -17,7 +17,10 @@ public class RbacSeedService
     {
         // Check if permissions already exist
         if (await _db.Permissions.AnyAsync())
+        {
+            await EnsureNewPermissionsAsync();
             return;
+        }
 
         var now = DateTime.UtcNow;
 
@@ -35,6 +38,7 @@ public class RbacSeedService
             new() { ExternalId = Guid.NewGuid(), Name = "admin.users.manage-roles", Category = "admin", Description = "Assign/revoke user roles", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "admin.settings.view", Category = "admin", Description = "View system settings", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "admin.settings.update", Category = "admin", Description = "Update system settings", CreatedOn = now },
+            new() { ExternalId = Guid.NewGuid(), Name = "admin.import.execute", Category = "admin", Description = "Execute data import from Excel", CreatedOn = now },
 
             // Inventory Category
             new() { ExternalId = Guid.NewGuid(), Name = "inventory.items.view", Category = "inventory", Description = "View items", CreatedOn = now },
@@ -182,6 +186,48 @@ public class RbacSeedService
         _db.RolePermissions.AddRange(managerPermissions);
         _db.RolePermissions.AddRange(cashierPermissions);
         _db.RolePermissions.AddRange(inventoryClerkPermissions);
+        await _db.SaveChangesAsync();
+    }
+
+    private async Task EnsureNewPermissionsAsync()
+    {
+        var now = DateTime.UtcNow;
+        var newPermissions = new Dictionary<string, string>
+        {
+            ["admin.import.execute"] = "Execute data import from Excel"
+        };
+
+        var existingNames = await _db.Permissions.Select(p => p.Name).ToListAsync();
+        var missing = newPermissions.Where(kv => !existingNames.Contains(kv.Key)).ToList();
+        if (missing.Count == 0) return;
+
+        var adminRole = await _db.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
+
+        foreach (var (name, description) in missing)
+        {
+            var permission = new PermissionEntity
+            {
+                ExternalId = Guid.NewGuid(),
+                Name = name,
+                Category = name.Split('.')[0],
+                Description = description,
+                CreatedOn = now
+            };
+            _db.Permissions.Add(permission);
+            await _db.SaveChangesAsync();
+
+            if (adminRole != null)
+            {
+                _db.RolePermissions.Add(new RolePermissionEntity
+                {
+                    RoleId = adminRole.Id,
+                    PermissionId = permission.Id,
+                    GrantedOn = now,
+                    GrantedBy = "system"
+                });
+            }
+        }
+
         await _db.SaveChangesAsync();
     }
 }

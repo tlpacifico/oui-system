@@ -122,6 +122,7 @@ app.MapSettlementEndpoints();
 app.MapStoreCreditEndpoints();
 app.MapCashRedemptionEndpoints();
 app.MapSystemSettingEndpoints();
+app.MapImportEndpoints();
 app.MapFallbackToFile("index.html");
 
 app.Run();

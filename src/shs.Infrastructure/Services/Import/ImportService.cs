@@ -2,28 +2,21 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
-using shs.Import.Models;
 using shs.Infrastructure.Database;
+using shs.Infrastructure.Services.Import.Models;
 
-namespace shs.Import.Services;
+namespace shs.Infrastructure.Services.Import;
 
-/// <summary>
-/// Serviço de importação de dados dos arquivos Excel para a base de dados.
-/// Ordem: Brands → Suppliers → Receptions (opcional) → Items
-/// </summary>
 public class ImportService
 {
     private const string DefaultBrandName = "Geral";
-    private const int BatchSize = 100;
 
-    // Origens que indicam compra própria (não consignação)
     private static readonly string[] OwnPurchaseOrigins =
     [
         "Ac. pessoal", "Ac. Pessoal", "Ac pessoal", "Ac.pessoal",
         "Acp", "Acp Lilly", "acp", "ac. pessoal", "AC", "ACP"
     ];
 
-    // Origens que mapeiam para ItemOrigin específico
     private static readonly string[] HumanaOrigins = ["Humana", "humana"];
     private static readonly string[] VintedOrigins = ["Vinted", "vinted", "VT"];
     private static readonly string[] HmOrigins = ["HM", "H&M"];
@@ -53,33 +46,19 @@ public class ImportService
         _consignadosReader = consignadosReader;
     }
 
-    public async Task<ImportResult> ImportAsync(string estoquePath, string consignadosPath, CancellationToken ct = default)
+    public async Task<ImportResult> ImportPersonalItemsAsync(Stream excelStream, CancellationToken ct = default)
     {
         var result = new ImportResult();
-        _brandCache.Clear();
-        _supplierCache.Clear();
-        _receptionCache.Clear();
-        _existingIdentificationNumbers = (await _db.Items.IgnoreQueryFilters()
-            .Select(x => x.IdentificationNumber)
-            .ToListAsync(ct))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        _usedSupplierInitials = (await _db.Suppliers.IgnoreQueryFilters()
-            .Select(x => x.Initial)
-            .ToListAsync(ct))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        await InitializeCachesAsync(ct);
 
+        await using var transaction = await _db.Database.BeginTransactionAsync(ct);
         try
         {
-            // 1. Ler dados dos Excel
-            _logger.LogInformation("Lendo arquivo de itens pessoais: {Path}", estoquePath);
-            var estoqueRows = _estoqueReader.Read(estoquePath);
+            _logger.LogInformation("Lendo arquivo de itens pessoais...");
+            var estoqueRows = _estoqueReader.Read(excelStream);
             result.EstoqueRowsRead = estoqueRows.Count;
 
-            _logger.LogInformation("Lendo arquivo de consignados: {Path}", consignadosPath);
-            var consignadoRows = _consignadosReader.Read(consignadosPath);
-            result.ConsignadoRowsRead = consignadoRows.Count;
-
-            // 2. Importar Marcas (do estoque)
+            // Import brands
             var marcas = estoqueRows
                 .Select(r => NormalizeBrand(r.Marca))
                 .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -92,18 +71,7 @@ public class ImportService
                 if (created) result.BrandsCreated++;
             }
 
-            // 3. Importar Fornecedores (dos consignados + origens consignação do estoque)
-            var supplierNamesFromConsignados = consignadoRows
-                .Select(r => r.SupplierName)
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            foreach (var name in supplierNamesFromConsignados)
-            {
-                var created = await EnsureSupplierAsync(name, ct);
-                if (created) result.SuppliersCreated++;
-            }
-
+            // Import suppliers from consignment origins
             var supplierNamesFromEstoque = estoqueRows
                 .Select(r => r.Origem)
                 .Where(x => !string.IsNullOrWhiteSpace(x) && IsConsignmentOrigin(x!))
@@ -115,24 +83,70 @@ public class ImportService
                 if (created) result.SuppliersCreated++;
             }
 
-            // 4. Importar Itens do Estoque (itens pessoais)
+            // Import items
             foreach (var row in estoqueRows)
             {
                 try
                 {
                     var (created, skipped) = await ImportEstoqueItemAsync(row, ct);
                     if (created) result.ItemsFromEstoque++;
-                    else if (skipped) result.Errors++;
+                    else if (skipped)
+                    {
+                        result.Errors++;
+                        result.ErrorDetails.Add($"Linha ignorada: Ref={row.RefPeca}");
+                    }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Erro ao importar linha estoque: Ref={Ref}", row.RefPeca);
                     result.Errors++;
+                    result.ErrorDetails.Add($"Erro na linha Ref={row.RefPeca}: {ex.Message}");
                 }
             }
             await _db.SaveChangesAsync(ct);
 
-            // 5. Importar Itens dos Consignados
+            await transaction.CommitAsync(ct);
+            _logger.LogInformation("Importação de itens pessoais concluída. Marcas: {Brands}, Fornecedores: {Suppliers}, Itens: {Items}, Erros: {Errors}",
+                result.BrandsCreated, result.SuppliersCreated, result.ItemsFromEstoque, result.Errors);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync(ct);
+            _logger.LogError(ex, "Falha na importação de itens pessoais");
+            throw;
+        }
+
+        return result;
+    }
+
+    public async Task<ImportResult> ImportConsignmentItemsAsync(Stream excelStream, CancellationToken ct = default)
+    {
+        var result = new ImportResult();
+        await InitializeCachesAsync(ct);
+
+        // Ensure default brand exists
+        await EnsureBrandAsync(DefaultBrandName, ct);
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            _logger.LogInformation("Lendo arquivo de consignados...");
+            var consignadoRows = _consignadosReader.Read(excelStream);
+            result.ConsignadoRowsRead = consignadoRows.Count;
+
+            // Import suppliers
+            var supplierNames = consignadoRows
+                .Select(r => r.SupplierName)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            foreach (var name in supplierNames)
+            {
+                var created = await EnsureSupplierAsync(name, ct);
+                if (created) result.SuppliersCreated++;
+            }
+
+            // Import items
             var consignadoRowsBySupplier = consignadoRows.GroupBy(r => r.SupplierName, StringComparer.OrdinalIgnoreCase);
             foreach (var group in consignadoRowsBySupplier)
             {
@@ -150,30 +164,50 @@ public class ImportService
                     {
                         var (created, skipped) = await ImportConsignadoItemAsync(row, supplierId.Value, rowIndex++, ct);
                         if (created) result.ItemsFromConsignados++;
-                        else if (skipped) result.Errors++;
+                        else if (skipped)
+                        {
+                            result.Errors++;
+                            result.ErrorDetails.Add($"Linha ignorada: Supplier={row.SupplierName}, Cod={row.Cod}");
+                        }
                     }
                     catch (Exception ex)
                     {
                         _logger.LogWarning(ex, "Erro ao importar linha consignado: Supplier={Supplier}, Cod={Cod}",
                             row.SupplierName, row.Cod);
                         result.Errors++;
+                        result.ErrorDetails.Add($"Erro: Supplier={row.SupplierName}, Cod={row.Cod}: {ex.Message}");
                     }
                 }
             }
             await _db.SaveChangesAsync(ct);
 
-            _logger.LogInformation("Importação concluída. Marcas: {Brands}, Fornecedores: {Suppliers}, " +
-                "Itens Pessoais: {Estoque}, Itens Consignados: {Consignados}, Erros: {Erros}",
-                result.BrandsCreated, result.SuppliersCreated, result.ItemsFromEstoque,
-                result.ItemsFromConsignados, result.Errors);
+            await transaction.CommitAsync(ct);
+            _logger.LogInformation("Importação de consignados concluída. Fornecedores: {Suppliers}, Itens: {Items}, Erros: {Errors}",
+                result.SuppliersCreated, result.ItemsFromConsignados, result.Errors);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Falha na importação");
+            await transaction.RollbackAsync(ct);
+            _logger.LogError(ex, "Falha na importação de consignados");
             throw;
         }
 
         return result;
+    }
+
+    private async Task InitializeCachesAsync(CancellationToken ct)
+    {
+        _brandCache.Clear();
+        _supplierCache.Clear();
+        _receptionCache.Clear();
+        _existingIdentificationNumbers = (await _db.Items.IgnoreQueryFilters()
+            .Select(x => x.IdentificationNumber)
+            .ToListAsync(ct))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        _usedSupplierInitials = (await _db.Suppliers.IgnoreQueryFilters()
+            .Select(x => x.Initial)
+            .ToListAsync(ct))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
     private static string NormalizeBrand(string? value)
@@ -223,14 +257,13 @@ public class ImportService
             || o.Equals("Brasil", StringComparison.OrdinalIgnoreCase))
             return ItemOrigin.Other;
 
-        // Nomes de pessoas = consignação (ex: "C/ Gi", "Carol", "Cris", "Rita", etc.)
         return ItemOrigin.Consignment;
     }
 
     private async Task<bool> EnsureBrandAsync(string name, CancellationToken ct)
     {
         var key = name.Trim();
-        if (_brandCache.TryGetValue(key, out var id))
+        if (_brandCache.TryGetValue(key, out _))
             return false;
 
         var existing = await _db.Brands.IgnoreQueryFilters()
@@ -257,7 +290,7 @@ public class ImportService
     {
         var key = name.Trim();
         if (string.IsNullOrEmpty(key)) return false;
-        if (_supplierCache.TryGetValue(key, out var id))
+        if (_supplierCache.TryGetValue(key, out _))
             return false;
 
         var existing = await _db.Suppliers.IgnoreQueryFilters()
@@ -287,7 +320,6 @@ public class ImportService
 
     private static string? ExtractPhoneFromName(string name)
     {
-        // Alguns nomes incluem telefone: "Carina Mocho(910 222 714)"
         var match = System.Text.RegularExpressions.Regex.Match(name, @"\(?\s*(\d{3})\s*(\d{3})\s*(\d{3})\s*\)?");
         if (match.Success)
             return $"+351{match.Groups[1].Value}{match.Groups[2].Value}{match.Groups[3].Value}";
@@ -296,7 +328,6 @@ public class ImportService
 
     private string GenerateUniqueInitial(string name)
     {
-        // Remover telefone do nome para gerar iniciais
         var cleanName = System.Text.RegularExpressions.Regex.Replace(name, @"\(.*?\)", "").Trim();
         var words = cleanName.Split([' ', '(', ')', '-'], StringSplitOptions.RemoveEmptyEntries);
         var initial = words.Length >= 2
@@ -470,21 +501,16 @@ public class ImportService
 
         var o = origem.Trim();
 
-        // Compra própria: sem fornecedor
         if (IsOwnPurchaseOrigin(o))
             return (AcquisitionType.OwnPurchase, null);
 
-        // Origens externas sem fornecedor (Humana, Vinted, HM, Doação, etc.)
         if (IsNonSupplierOrigin(o))
             return (AcquisitionType.OwnPurchase, null);
 
-        // Consignação: nome de pessoa = fornecedor
-        // Nomes como "C/ Gi" → procurar "Gi", "Carol", "Cris", etc.
         var supplierName = NormalizeSupplierOriginName(o);
         var supplierId = await GetSupplierIdAsync(supplierName, ct);
         if (supplierId == null)
         {
-            // Tentar com o nome original
             supplierId = await GetSupplierIdAsync(o, ct);
         }
         return (AcquisitionType.Consignment, supplierId);
@@ -493,17 +519,12 @@ public class ImportService
     private static string NormalizeSupplierOriginName(string origem)
     {
         var o = origem.Trim();
-        // "C/ Gi" → "Gi", "c/ Gi" → "Gi"
         if (o.StartsWith("C/ ", StringComparison.OrdinalIgnoreCase) ||
             o.StartsWith("c/ ", StringComparison.OrdinalIgnoreCase))
             return o[3..].Trim();
         return o;
     }
 
-    /// <summary>
-    /// Mapeia situação do arquivo de itens pessoais (Personal_items_to_import.xlsx).
-    /// Valores encontrados: CS, DL, DV, Devolvido, Disponivel, Disponível, VD, Vendida, Vendido, Vendido_VAL, Vendido/Cris, Vendido/Gi, Gisele, dispon
-    /// </summary>
     private static ItemStatus MapSituacaoEstoque(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return ItemStatus.ToSell;
@@ -517,56 +538,38 @@ public class ImportService
         if (v is "DV" || v.StartsWith("DEVOLVID"))
             return ItemStatus.Returned;
 
-        // "Gisele" e outros nomes usados como situação → provavelmente consignado/vendido a alguém
-        _= v; // fallback
         return ItemStatus.ToSell;
     }
 
-    /// <summary>
-    /// Mapeia situação do arquivo de consignados (Itens Consignados_to_import.xlsx).
-    /// Valores: DL, VD, VENDIDO, DV, Devolvido, Devolver, PG, Pago, CS, AV, CD, DOAÇÃO, defeito, com defeito,
-    ///          Disponível em loja, crédito resgatado, e variantes com datas (PG 28.02, DV em 10.07)
-    /// </summary>
     private static ItemStatus MapSituacaoConsignados(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return ItemStatus.ToSell;
         var v = value.Trim().ToUpperInvariant();
 
-        // Disponível / à venda
         if (v is "DL" || v.StartsWith("DISPONÍVEL") || v.StartsWith("DISPONIVEL"))
             return ItemStatus.ToSell;
 
-        // Vendido
         if (v is "VD" || v.StartsWith("VENDID") || v == "VD ")
             return ItemStatus.Sold;
 
-        // Devolvido (incluindo variantes com data: "DV em 10.07", "Devolvido em 03.10", "Devolver")
         if (v is "DV" || v.StartsWith("DV ") || v.StartsWith("DEVOLVID") || v.StartsWith("DEVOLVER"))
             return ItemStatus.Returned;
 
-        // Pago (incluindo "PG 28.02", "PG em 06.03", "Pago", "Pago em 10.07")
         if (v is "PG" || v.StartsWith("PG ") || v.StartsWith("PAGO"))
             return ItemStatus.Paid;
 
-        // Avaliado
         if (v is "AV") return ItemStatus.Evaluated;
-
-        // Em consignação / aguardando
         if (v is "CS") return ItemStatus.Evaluated;
 
-        // Crédito já resgatado → considerar como pago
         if (v is "CD" || v.Contains("CRÉDITO") || v.Contains("CREDITO") || v.Contains("RESGATADO"))
             return ItemStatus.Paid;
 
-        // Doação
         if (v.Contains("DOAÇ") || v.Contains("DOACAO"))
             return ItemStatus.Returned;
 
-        // Defeito → item com problema, tratar como devolvido
         if (v.Contains("DEFEITO"))
             return ItemStatus.Returned;
 
-        // Números avulsos (ex: "6", "8", "12", "13") → provavelmente valores, não status → default
         return ItemStatus.ToSell;
     }
 
@@ -604,18 +607,7 @@ public class ImportService
     }
 }
 
-public class ImportResult
-{
-    public int EstoqueRowsRead { get; set; }
-    public int ConsignadoRowsRead { get; set; }
-    public int BrandsCreated { get; set; }
-    public int SuppliersCreated { get; set; }
-    public int ItemsFromEstoque { get; set; }
-    public int ItemsFromConsignados { get; set; }
-    public int Errors { get; set; }
-}
-
-file static class StringExtensions
+internal static class StringExtensions
 {
     public static string? Truncate(this string? value, int maxLength)
     {

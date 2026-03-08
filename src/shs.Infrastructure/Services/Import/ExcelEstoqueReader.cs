@@ -1,12 +1,8 @@
 using ClosedXML.Excel;
-using shs.Import.Models;
+using shs.Infrastructure.Services.Import.Models;
 
-namespace shs.Import.Services;
+namespace shs.Infrastructure.Services.Import;
 
-/// <summary>
-/// Lê o arquivo Personal_items_to_import.xlsx (sheet "Página1")
-/// Colunas: Ref Peça | Localização | Origem | Situação | Descrição | Marca | Condição | Tam | Cor | Composição | Data da aquisição | Publicado em: | Valor de referência | Valor de Compra | Valor sugerido | Valor venda
-/// </summary>
 public class ExcelEstoqueReader
 {
     private static readonly string[] RefPecaNames = ["Ref Peça", "Ref Peca", "RefPeça", "RefPeca"];
@@ -34,13 +30,10 @@ public class ExcelEstoqueReader
         ValorSugeridoNames, ValorVendaNames
     ];
 
-    public IReadOnlyList<EstoqueRow> Read(string filePath)
+    public IReadOnlyList<EstoqueRow> Read(Stream stream)
     {
-        if (!File.Exists(filePath))
-            throw new FileNotFoundException("Arquivo de itens pessoais não encontrado.", filePath);
-
         var rows = new List<EstoqueRow>();
-        using var workbook = new XLWorkbook(filePath);
+        using var workbook = new XLWorkbook(stream);
 
         var sheet = workbook.TryGetWorksheet("Página1", out var ws) ? ws : workbook.Worksheet(1);
         if (sheet == null)

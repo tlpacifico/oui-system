@@ -5,6 +5,7 @@ using shs.Domain.Notifications;
 using shs.Infrastructure.Database;
 using shs.Infrastructure.Notifications;
 using shs.Infrastructure.Services;
+using shs.Infrastructure.Services.Import;
 
 namespace shs.Infrastructure;
 
@@ -32,6 +33,11 @@ public static class InfrastructureServiceCollection
         // Notification infrastructure
         services.AddScoped<ISaleNotificationHandler, AutoSettlementHandler>();
         services.AddScoped<ISaleNotificationDispatcher, SaleNotificationDispatcher>();
+
+        // Import services
+        services.AddScoped<ExcelEstoqueReader>();
+        services.AddScoped<ExcelConsignadosReader>();
+        services.AddScoped<ImportService>();
 
         return services;
     }

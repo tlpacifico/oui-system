@@ -144,61 +144,61 @@ Criar uma **Console Application** ou **endpoint de import** que:
 
 ## 5. Guia de Implementação Técnica
 
-### 5.1 Opção A: Console App (Recomendado)
-```
-src/
-  shs.Import/
-    Program.cs
-    Services/
-      ExcelEstoqueReader.cs
-      ExcelConsignadosReader.cs
-      ImportService.cs
-```
-- Referenciar `shs.Infrastructure`, `shs.Domain`
-- Usar `ClosedXML` ou `EPPlus` para ler Excel em .NET
-- Connection string via `appsettings.json` ou variável de ambiente
+### 5.1 API Endpoints (Implementado)
 
-### 5.2 Opção B: Endpoint de Admin
-- `POST /api/admin/import/estoque`
-- `POST /api/admin/import/consignados`
-- Upload do arquivo ou caminho configurável
-- Proteger com permissão `admin.import`
+A importação é feita via endpoints da API, protegidos pela permissão `admin.import.execute`:
 
-### 5.3 Pacotes NuGet Sugeridos
-- `ClosedXML` - leitura de Excel (MIT, sem dependências do Excel)
-- `Npgsql` - já usado pelo projeto
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `POST` | `/api/admin/import/personal-items` | Upload de Excel com itens pessoais (estoque) |
+| `POST` | `/api/admin/import/consignment-items` | Upload de Excel com itens consignados |
 
-### 5.4 Exemplo de Código (Pseudocódigo)
-```csharp
-// 1. Ler marcas únicas
-var marcas = estoqueRows
-    .Select(r => NormalizeBrand(r["Marca"]))
-    .Where(x => !string.IsNullOrWhiteSpace(x))
-    .Distinct();
-foreach (var m in marcas)
-    await db.Brands.AddAsync(new BrandEntity { Name = m, ... });
+**Validação do arquivo:**
+- Extensão: `.xlsx`
+- MIME type: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+- Tamanho máximo: 20 MB
 
-// 2. Criar suppliers dos sheets
-foreach (var sheetName in consignadosWorkbook.Worksheets)
+**Resposta (JSON):**
+```json
 {
-    var supplier = new SupplierEntity
-    {
-        Name = sheetName.Name,
-        Initial = GenerateInitial(sheetName.Name),
-        Email = $"{initial}@consignado.placeholder",
-        PhoneNumber = "+351000000000"
-    };
-    await db.Suppliers.AddAsync(supplier);
-}
-
-// 3. Importar items em batches
-foreach (var row in estoqueRows)
-{
-    var item = MapToItem(row, brandCache, supplierCache);
-    await db.Items.AddAsync(item);
-    if (batchCount++ >= 100) { await db.SaveChangesAsync(); batchCount = 0; }
+  "rowsRead": 150,
+  "brandsCreated": 12,
+  "suppliersCreated": 5,
+  "itemsImported": 148,
+  "errors": 2,
+  "errorDetails": ["Erro na linha Ref=ABC: ..."]
 }
 ```
+
+### 5.2 Exemplos de Uso
+
+```bash
+# Importar itens pessoais
+curl -X POST https://localhost:5001/api/admin/import/personal-items \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@Personal_items_to_import.xlsx"
+
+# Importar itens consignados
+curl -X POST https://localhost:5001/api/admin/import/consignment-items \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@Itens_Consignados_to_import.xlsx"
+```
+
+### 5.3 Arquitetura Interna
+
+```
+shs.Infrastructure/Services/Import/
+  Models/
+    EstoqueRow.cs          -- DTO para linhas do Excel de estoque
+    ConsignadoRow.cs       -- DTO para linhas do Excel de consignados
+  ExcelEstoqueReader.cs    -- Leitura do Excel de itens pessoais (Stream)
+  ExcelConsignadosReader.cs -- Leitura do Excel de consignados (Stream)
+  ImportService.cs         -- Orquestração da importação com EF Core
+  ImportResult.cs          -- Resultado da importação
+```
+
+### 5.4 Pacotes NuGet
+- `ClosedXML` (v0.105.0) - leitura de Excel em `shs.Infrastructure`
 
 ---
 
@@ -230,32 +230,25 @@ foreach (var row in estoqueRows)
 1. ~~Criar projeto `shs.Import` (Console App)~~ ✅
 2. ~~Implementar `ExcelEstoqueReader` e `ExcelConsignadosReader`~~ ✅
 3. ~~Implementar `ImportService` com mapeamentos~~ ✅
-4. Executar import em ambiente de teste
-5. Ajustar mapeamentos conforme resultados
-6. Documentar decisões de merge/deduplicação tomadas
+4. ~~Migrar para API endpoints~~ ✅
+5. Executar import em ambiente de teste
+6. Ajustar mapeamentos conforme resultados
+7. Documentar decisões de merge/deduplicação tomadas
 
 ---
 
-## 9. Uso do Console App (shs.Import)
-
-### Execução
-
-```bash
-# Com confirmação interativa
-dotnet run --project src/shs.Import/shs.Import.csproj
-
-# Sem confirmação (útil para CI/scripts)
-dotnet run --project src/shs.Import/shs.Import.csproj -- --yes
-```
-
-### Configuração
-
-- **Connection string:** `appsettings.json` ou variável de ambiente
-- **Caminhos dos arquivos:** `appsettings.json` → `Import:EstoquePath` e `Import:ConsignadosPath`
-- Por padrão, os arquivos são buscados em `docs/` na raiz do repositório
+## 9. Uso via API
 
 ### Pré-requisitos
 
-1. PostgreSQL em execução com a base `oui_system`
-2. Migrations aplicadas (`dotnet ef database update` ou via API)
-3. Backup da base de dados antes da primeira importação
+1. API em execução (`dotnet run --project src/shs.Api`)
+2. PostgreSQL com a base `oui_system` e migrations aplicadas
+3. Utilizador com role Admin (permissão `admin.import.execute`)
+4. Backup da base de dados antes da primeira importação
+
+### Endpoints
+
+- `POST /api/admin/import/personal-items` - Upload de arquivo `.xlsx` com itens pessoais
+- `POST /api/admin/import/consignment-items` - Upload de arquivo `.xlsx` com itens consignados
+
+Cada importação é executada dentro de uma transação de base de dados. Em caso de erro fatal, a transação é revertida automaticamente.

@@ -1,9 +1,5 @@
-namespace shs.Import.Models;
+namespace shs.Infrastructure.Services.Import.Models;
 
-/// <summary>
-/// DTO para uma linha do arquivo Itens Consignados_to_import.xlsx
-/// Sheet única com coluna "Cliente" identificando o fornecedor.
-/// </summary>
 public record ConsignadoRow
 {
     public string SupplierName { get; init; } = string.Empty;
