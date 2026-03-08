@@ -9,7 +9,7 @@
 
 set -euo pipefail
 
-DEPLOY_USER="deploy"
+DEPLOY_USER="root"
 APP_DIR="/opt/oui-system"
 GITHUB_USER="tlpacifico"   # ← substituir pelo teu utilizador GitHub
 
