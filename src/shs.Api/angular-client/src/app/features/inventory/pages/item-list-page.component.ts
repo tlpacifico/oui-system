@@ -105,7 +105,10 @@ import { environment } from '../../../../environments/environment';
                   <td class="cell-actions">
                     <button class="btn btn-outline btn-sm" [routerLink]="['/inventory/items', item.externalId]">Ver</button>
                     <button class="btn btn-outline btn-sm" [routerLink]="['/inventory/items', item.externalId, 'edit']">Editar</button>
-                    @if (item.status === 'ToSell') {
+                    @if (item.ecommerceProductExternalId) {
+                      <a class="btn btn-ecommerce-view btn-sm" [href]="getStorefrontUrl(item.ecommerceProductSlug)" target="_blank">Ver Loja</a>
+                      <button class="btn btn-ecommerce-remove btn-sm" (click)="unpublishFromEcommerce(item)" [disabled]="publishing()">Remover</button>
+                    } @else if (item.status === 'ToSell') {
                       <button class="btn btn-ecommerce btn-sm" (click)="publishToEcommerce(item)" [disabled]="publishing()">Publicar</button>
                     }
                   </td>
@@ -339,6 +342,32 @@ import { environment } from '../../../../environments/environment';
       cursor: not-allowed;
     }
 
+    .btn-ecommerce-view {
+      background: #2563eb;
+      color: white;
+      border-color: #2563eb;
+      text-decoration: none;
+    }
+
+    .btn-ecommerce-view:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-ecommerce-remove {
+      background: white;
+      color: #dc2626;
+      border-color: #dc2626;
+    }
+
+    .btn-ecommerce-remove:hover:not(:disabled) {
+      background: #fef2f2;
+    }
+
+    .btn-ecommerce-remove:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .item-thumb {
       width: 40px;
       height: 40px;
@@ -559,7 +588,7 @@ export class ItemListPageComponent implements OnInit {
     this.ecommerceService.publishItem(item.externalId).subscribe({
       next: () => {
         this.publishing.set(false);
-        alert(`"${item.name}" publicado no e-commerce com sucesso!`);
+        this.loadItems();
       },
       error: (err) => {
         this.publishing.set(false);
@@ -567,6 +596,29 @@ export class ItemListPageComponent implements OnInit {
         alert(msg);
       }
     });
+  }
+
+  unpublishFromEcommerce(item: ItemListItem): void {
+    if (!item.ecommerceProductExternalId) return;
+    if (!confirm(`Remover "${item.name}" do e-commerce?`)) return;
+
+    this.publishing.set(true);
+    this.ecommerceService.unpublishProduct(item.ecommerceProductExternalId).subscribe({
+      next: () => {
+        this.publishing.set(false);
+        this.loadItems();
+      },
+      error: (err) => {
+        this.publishing.set(false);
+        const msg = err.error?.error || 'Erro ao remover do e-commerce.';
+        alert(msg);
+      }
+    });
+  }
+
+  getStorefrontUrl(slug?: string): string {
+    if (!slug) return '#';
+    return `http://localhost:3000/produtos/${slug}`;
   }
 
   getStatusLabel(status: ItemStatus): string {

@@ -276,7 +276,19 @@ public static class InventoryEndpoints
                 i.EvaluatedPrice,
                 i.Status.ToString(),
                 i.Photos.OrderBy(p => p.DisplayOrder).Select(p => p.ThumbnailPath ?? p.FilePath).FirstOrDefault(),
-                i.CreatedOn
+                i.CreatedOn,
+                db.EcommerceProducts
+                    .Where(ep => ep.ItemId == i.Id && ep.Status != EcommerceProductStatus.Unpublished && ep.Status != EcommerceProductStatus.Sold)
+                    .Select(ep => (Guid?)ep.ExternalId)
+                    .FirstOrDefault(),
+                db.EcommerceProducts
+                    .Where(ep => ep.ItemId == i.Id && ep.Status != EcommerceProductStatus.Unpublished && ep.Status != EcommerceProductStatus.Sold)
+                    .Select(ep => ep.Slug)
+                    .FirstOrDefault(),
+                db.EcommerceProducts
+                    .Where(ep => ep.ItemId == i.Id && ep.Status != EcommerceProductStatus.Unpublished && ep.Status != EcommerceProductStatus.Sold)
+                    .Select(ep => ep.Status.ToString())
+                    .FirstOrDefault()
             ))
             .ToListAsync(ct);
 
@@ -730,7 +742,10 @@ public record ItemListItemResponse(
     decimal EvaluatedPrice,
     string Status,
     string? PrimaryPhotoUrl,
-    DateTime CreatedOn
+    DateTime CreatedOn,
+    Guid? EcommerceProductExternalId,
+    string? EcommerceProductSlug,
+    string? EcommerceProductStatus
 );
 
 public record ItemDetailResponse(

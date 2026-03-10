@@ -85,6 +85,9 @@ export interface ItemListItem {
   supplier?: string;
   condition?: string;
   createdOn: Date;
+  ecommerceProductExternalId?: string;
+  ecommerceProductSlug?: string;
+  ecommerceProductStatus?: string;
 }
 
 export interface PagedResult<T> {
