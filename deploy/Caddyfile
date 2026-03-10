@@ -1,3 +1,3 @@
-admin.ouicircular.com {
+:80 {
     reverse_proxy localhost:8080
 }
