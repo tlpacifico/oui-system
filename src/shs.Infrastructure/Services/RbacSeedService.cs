@@ -206,6 +206,9 @@ public class RbacSeedService
         var newPermissions = new Dictionary<string, string>
         {
             ["admin.import.execute"] = "Execute data import from Excel",
+            ["admin.permissions.create"] = "Create permissions",
+            ["admin.permissions.update"] = "Update permissions",
+            ["admin.permissions.delete"] = "Delete permissions",
             ["consignment.receptions.approve"] = "Approve reception evaluations",
             ["ecommerce.products.view"] = "View ecommerce products",
             ["ecommerce.products.publish"] = "Publish items to ecommerce",

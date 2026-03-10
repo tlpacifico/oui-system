@@ -23,6 +23,8 @@ import { PosSalesListPageComponent } from './features/pos/pos-sales-list-page.co
 import { RoleListPageComponent } from './features/admin/pages/role-list-page.component';
 import { RoleDetailPageComponent } from './features/admin/pages/role-detail-page.component';
 import { PermissionListPageComponent } from './features/admin/pages/permission-list-page.component';
+import { UserListPageComponent } from './features/admin/pages/user-list-page.component';
+import { UserDetailPageComponent } from './features/admin/pages/user-detail-page.component';
 import { SystemSettingsPageComponent } from './features/admin/pages/system-settings-page.component';
 import { SettlementListPageComponent } from './features/finance/pages/settlement-list-page.component';
 import { SettlementNewPageComponent } from './features/finance/pages/settlement-new-page.component';
@@ -169,6 +171,16 @@ export const routes: Routes = [
     component: PermissionListPageComponent,
     canMatch: [authGuard],
     //canMatch: [authGuard, permissionGuard('admin.permissions.view')],
+  },
+  {
+    path: 'admin/users',
+    component: UserListPageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'admin/users/:id',
+    component: UserDetailPageComponent,
+    canMatch: [authGuard],
   },
   {
     path: 'admin/settings',

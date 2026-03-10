@@ -122,6 +122,7 @@ app.MapRoleEndpoints();
 app.MapPermissionEndpoints();
 app.MapRolePermissionEndpoints();
 app.MapUserRoleEndpoints();
+app.MapUserEndpoints();
 app.MapMeEndpoints();
 app.MapDashboardEndpoints();
 app.MapReportsEndpoints();

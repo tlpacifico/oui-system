@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
-import { Permission, PermissionsByCategory } from '../../../core/models/permission.model';
+import { Permission, PermissionsByCategory, CreatePermissionRequest, UpdatePermissionRequest } from '../../../core/models/permission.model';
 
 @Injectable({
   providedIn: 'root'
@@ -36,5 +36,17 @@ export class PermissionService {
         return grouped;
       })
     );
+  }
+
+  create(request: CreatePermissionRequest): Observable<{ externalId: string }> {
+    return this.http.post<{ externalId: string }>(this.apiUrl, request);
+  }
+
+  update(externalId: string, request: UpdatePermissionRequest): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(`${this.apiUrl}/${externalId}`, request);
+  }
+
+  delete(externalId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/${externalId}`);
   }
 }

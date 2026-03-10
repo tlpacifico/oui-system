@@ -8,3 +8,13 @@ export interface Permission {
 export interface PermissionsByCategory {
   [category: string]: Permission[];
 }
+
+export interface CreatePermissionRequest {
+  name: string;
+  description: string | null;
+}
+
+export interface UpdatePermissionRequest {
+  name: string;
+  description: string | null;
+}
