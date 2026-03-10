@@ -70,7 +70,7 @@
         <span class="icon">📈</span> Relatórios
       </a>
 
-      <div class="sidebar-section" *hasPermission="['admin.roles.view', 'admin.permissions.view', 'admin.users.view', 'admin.settings.view']">
+      <div class="sidebar-section" *hasPermission="['admin.roles.view', 'admin.permissions.view', 'admin.users.view', 'admin.settings.view', 'admin.import.execute']">
         Administração
       </div>
       <a class="sidebar-item" routerLink="/admin/users" routerLinkActive="active" *hasPermission="'admin.users.view'">
@@ -84,6 +84,9 @@
       </a>
       <a class="sidebar-item" routerLink="/admin/settings" routerLinkActive="active" *hasPermission="'admin.permissions.view'">
         <span class="icon">⚙️</span> Configurações
+      </a>
+      <a class="sidebar-item" routerLink="/admin/import" routerLinkActive="active" *hasPermission="'admin.import.execute'">
+        <span class="icon">📥</span> Importação
       </a>
     </aside>
 
