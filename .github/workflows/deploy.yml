@@ -109,7 +109,7 @@ jobs:
           script: |
             echo "A aplicar migrations..."
             docker run --rm \
-              --add-host=host.docker.internal:host-gateway \
+              --network host \
               -e ConnectionStrings__DefaultConnection="${{ secrets.DB_CONNECTION_STRING }}" \
               -e Firebase__ProjectId="${{ secrets.FIREBASE_PROJECT_ID }}" \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \

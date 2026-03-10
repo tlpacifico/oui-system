@@ -3,31 +3,23 @@ services:
     image: caddy:2-alpine
     container_name: oui-caddy
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"   # HTTP/3
+    network_mode: host
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
-    depends_on:
-      - oui-system
 
   oui-system:
     image: ghcr.io/tlpacifico/oui-system:latest
     container_name: oui-system
     restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    expose:
-      - "8080"
+    network_mode: host
 
     environment:
       ASPNETCORE_URLS: "http://+:8080"
       ASPNETCORE_ENVIRONMENT: "Production"
 
-      # Connection string — PostgreSQL na VPS (via host.docker.internal)
+      # Connection string — PostgreSQL instalado na VPS (localhost)
       ConnectionStrings__DefaultConnection: "${DB_CONNECTION_STRING}"
 
       # Firebase

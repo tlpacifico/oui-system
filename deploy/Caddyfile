@@ -1,3 +1,3 @@
 admin.oui-circular.com {
-    reverse_proxy oui-system:8080
+    reverse_proxy localhost:8080
 }
