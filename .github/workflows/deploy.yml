@@ -86,6 +86,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copiar Caddyfile para VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "deploy/Caddyfile"
+          target: "/opt/oui-system"
+          strip_components: 1
+
       - name: Aplicar migrations EF Core
         if: ${{ inputs.run_migrations == true }}
         uses: appleboy/ssh-action@v1
@@ -96,7 +109,7 @@ jobs:
           script: |
             echo "A aplicar migrations..."
             docker run --rm \
-              --network host \
+              --add-host=host.docker.internal:host-gateway \
               -e ConnectionStrings__DefaultConnection="${{ secrets.DB_CONNECTION_STRING }}" \
               -e Firebase__ProjectId="${{ secrets.FIREBASE_PROJECT_ID }}" \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
@@ -127,10 +140,10 @@ jobs:
             # Pull nova imagem
             docker compose pull
 
-            # Reiniciar container com zero-downtime (recria só o serviço da app)
-            docker compose up -d --no-deps oui-system
+            # Reiniciar containers (Caddy + oui-system)
+            docker compose up -d
 
-            # Remover imagens antigas (manter as 3 últimas)
+            # Remover imagens antigas
             docker image prune -f
 
             echo "Deploy concluído: ${{ needs.build.outputs.short_sha }}"
@@ -150,7 +163,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            sleep 5
+            sleep 10
             STATUS=$(docker inspect --format='{{.State.Health.Status}}' oui-system 2>/dev/null || echo "running")
             echo "Container status: $STATUS"
             docker compose -f /opt/oui-system/docker-compose.yml ps

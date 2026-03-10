@@ -1,19 +1,40 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: oui-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - oui-system
+
   oui-system:
     image: ghcr.io/tlpacifico/oui-system:latest
     container_name: oui-system
     restart: unless-stopped
-    network_mode: host          # acede ao PostgreSQL em localhost:5432
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    expose:
+      - "8080"
 
     environment:
       ASPNETCORE_URLS: "http://+:8080"
       ASPNETCORE_ENVIRONMENT: "Production"
 
-      # Connection string — PostgreSQL instalado na VPS (localhost)
+      # Connection string — PostgreSQL na VPS (via host.docker.internal)
       ConnectionStrings__DefaultConnection: "${DB_CONNECTION_STRING}"
 
       # Firebase
       Firebase__ProjectId: "${FIREBASE_PROJECT_ID}"
+
+      # CORS — storefront domain
+      Cors__AllowedOrigins: "https://www.oui-circular.com"
 
       # Email (MailKit)
       Email__Host: "${EMAIL_HOST}"
@@ -37,3 +58,5 @@ services:
 volumes:
   oui-uploads:
     driver: local
+  caddy-data:
+  caddy-config:
