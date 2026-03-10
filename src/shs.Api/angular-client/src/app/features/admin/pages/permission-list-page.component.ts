@@ -56,30 +56,46 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
       </div>
     } @else {
       @for (categoryGroup of permissionsByCategory(); track categoryGroup.name) {
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">
-              {{ categoryGroup.name }}
+        <div class="card category-card">
+          <div class="category-header">
+            <div class="category-title-row">
+              <span class="category-icon">{{ getCategoryIcon(categoryGroup.name) }}</span>
+              <h2 class="category-name">{{ categoryGroup.name }}</h2>
               <span class="badge badge-gray">{{ categoryGroup.permissions.length }}</span>
-            </h2>
-          </div>
-          <div class="card-body">
-            <div class="permission-grid">
-              @for (permission of categoryGroup.permissions; track permission.externalId) {
-                <div class="permission-card">
-                  <div class="permission-card-header">
-                    <div class="permission-name">{{ permission.name }}</div>
-                    <div class="permission-actions" (click)="$event.stopPropagation()">
-                      <button class="btn-icon" (click)="openEdit(permission)" title="Editar" *hasPermission="'admin.permissions.update'">✏️</button>
-                      <button class="btn-icon" (click)="confirmDelete(permission)" title="Eliminar" *hasPermission="'admin.permissions.delete'">🗑️</button>
-                    </div>
-                  </div>
-                  @if (permission.description) {
-                    <div class="permission-description">{{ permission.description }}</div>
-                  }
-                </div>
-              }
             </div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Permissão</th>
+                  <th>Descrição</th>
+                  <th class="cell-actions-header">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (permission of categoryGroup.permissions; track permission.externalId) {
+                  <tr>
+                    <td>
+                      <code class="permission-code">{{ permission.name }}</code>
+                    </td>
+                    <td class="cell-description">{{ permission.description || '—' }}</td>
+                    <td class="cell-actions" (click)="$event.stopPropagation()">
+                      <button class="btn btn-outline btn-sm" (click)="openEdit(permission)" *hasPermission="'admin.permissions.update'">
+                        Editar
+                      </button>
+                      <button
+                        class="btn btn-outline btn-sm btn-danger-outline"
+                        (click)="confirmDelete(permission)"
+                        *hasPermission="'admin.permissions.delete'"
+                      >
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </div>
       }
@@ -152,48 +168,405 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
     }
   `,
   styles: [`
-    .permission-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1rem;
-    }
-    .permission-card {
-      padding: 1rem;
-      background: #f9fafb;
-      border-radius: 6px;
-      border: 1px solid #e5e7eb;
-    }
-    .permission-card-header {
+    :host { display: block; }
+
+    /* ── Page header ── */
+    .page-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
+      margin-bottom: 20px;
     }
-    .permission-name {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #111827;
-      font-family: 'Courier New', monospace;
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 4px;
+      color: #1e293b;
     }
-    .permission-description {
-      font-size: 0.75rem;
-      color: #6b7280;
-      margin-top: 0.5rem;
+
+    .page-subtitle {
+      font-size: 14px;
+      color: #64748b;
+      margin: 0;
     }
-    .permission-actions {
+
+    .page-header-actions {
       display: flex;
-      gap: 0.25rem;
+      gap: 8px;
     }
-    .btn-icon {
+
+    /* ── Cards ── */
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .filters-card {
+      margin-bottom: 20px;
+      padding: 16px;
+    }
+
+    .category-card {
+      margin-bottom: 16px;
+    }
+
+    .category-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .category-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .category-icon {
+      font-size: 18px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      border-radius: 8px;
+    }
+
+    .category-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+      text-transform: capitalize;
+      margin: 0;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: #6366f1;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #4f46e5;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-outline {
+      background: white;
+      color: #1e293b;
+      border-color: #e2e8f0;
+    }
+
+    .btn-outline:hover {
+      background: #f8fafc;
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      border-color: #ef4444;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-danger:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-danger-outline {
+      color: #ef4444;
+      border-color: #fecaca;
+    }
+
+    .btn-danger-outline:hover {
+      background: #fef2f2;
+      border-color: #ef4444;
+    }
+
+    /* ── Filters ── */
+    .filters-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-input,
+    .filter-select {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+      background: white;
+      outline: none;
+      color: #1e293b;
+    }
+
+    .filter-input:focus,
+    .filter-select:focus {
+      border-color: #6366f1;
+    }
+
+    .filter-search {
+      width: 260px;
+    }
+
+    /* ── Table ── */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8fafc;
+      padding: 10px 20px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    td {
+      padding: 10px 20px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: #f8fafc;
+    }
+
+    .permission-code {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: #6366f1;
+      background: #eef2ff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .cell-description {
+      color: #64748b;
+      font-size: 13px;
+      max-width: 300px;
+    }
+
+    .cell-actions-header {
+      text-align: right;
+    }
+
+    .cell-actions {
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .cell-actions .btn {
+      margin-left: 4px;
+    }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-gray { background: #f1f5f9; color: #475569; }
+
+    /* ── States ── */
+    .state-message {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #64748b;
+      font-size: 15px;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 100;
+    }
+
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      z-index: 101;
+      width: 480px;
+      max-width: 90vw;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-sm {
+      width: 400px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .modal-header h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0;
+    }
+
+    .modal-close {
       background: none;
       border: none;
+      font-size: 22px;
+      color: #94a3b8;
       cursor: pointer;
-      padding: 0.25rem;
-      font-size: 0.75rem;
-      opacity: 0.6;
-      transition: opacity 0.2s;
+      padding: 4px;
+      line-height: 1;
     }
-    .btn-icon:hover {
-      opacity: 1;
+
+    .modal-close:hover {
+      color: #1e293b;
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 16px 24px 20px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    /* ── Form ── */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      color: #1e293b;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+
+    .form-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-input.error {
+      border-color: #ef4444;
+    }
+
+    .form-error {
+      display: block;
+      color: #ef4444;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    textarea.form-input {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .alert-danger {
+      background: #fef2f2;
+      color: #991b1b;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      border: 1px solid #fecaca;
+      margin-top: 8px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .filters-bar {
+        flex-direction: column;
+      }
+
+      .filter-search {
+        width: 100%;
+      }
     }
   `]
 })
@@ -219,6 +592,16 @@ export class PermissionListPageComponent implements OnInit {
   readonly deleting = signal(false);
   readonly permissionToDelete = signal<Permission | null>(null);
 
+  private readonly categoryIcons: Record<string, string> = {
+    admin: '🛡️',
+    inventory: '📦',
+    consignment: '🤝',
+    pos: '💰',
+    dashboard: '📊',
+    reports: '📈',
+    ecommerce: '🛒',
+  };
+
   readonly permissionsByCategory = computed(() => {
     const perms = this.permissions();
     const grouped: Array<{ name: string; permissions: Permission[] }> = [];
@@ -241,6 +624,10 @@ export class PermissionListPageComponent implements OnInit {
   ngOnInit() {
     this.loadCategories();
     this.loadPermissions();
+  }
+
+  getCategoryIcon(category: string): string {
+    return this.categoryIcons[category] || '🔑';
   }
 
   loadCategories() {
