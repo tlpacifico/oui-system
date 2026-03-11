@@ -1,0 +1,78 @@
+// ── Tables ──
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th {
+  background: #f8fafc;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background: #f8fafc;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover td {
+  background: #f8fafc;
+}
+
+.cell-actions {
+  white-space: nowrap;
+}
+
+.cell-actions .btn {
+  margin-right: 4px;
+}
+
+.cell-actions .btn:last-child {
+  margin-right: 0;
+}
+
+.cell-center {
+  text-align: center;
+}
+
+.cell-right {
+  text-align: right;
+}
+
+.cell-bold {
+  font-weight: 700;
+}
+
+.cell-mono {
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.cell-muted {
+  color: #94a3b8;
+}

@@ -1,0 +1,28 @@
+// ── Filters ──
+
+.filters-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-input,
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  background: white;
+  outline: none;
+  color: #1e293b;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  border-color: #6366f1;
+}
+
+.filter-search {
+  width: 260px;
+}

@@ -184,27 +184,8 @@ type TabId = 'pending' | 'processed' | 'all';
 
     .page { max-width: 1200px; margin: 0 auto; }
 
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .page-title {
-      font-size: 22px;
-      font-weight: 700;
-      margin: 0 0 4px;
-      color: #1e293b;
-    }
-
-    .page-subtitle {
-      font-size: 14px;
-      color: #64748b;
-      margin: 0;
-    }
-
-    .page-header-actions { display: flex; gap: 8px; }
+    td { border-bottom: 1px solid #e2e8f0; }
+    tr:hover td { background: #f1f5f9; }
 
     .tabs-bar {
       display: flex;
@@ -231,42 +212,6 @@ type TabId = 'pending' | 'processed' | 'all';
     .tab-btn:hover { background: #e2e8f0; color: #1e293b; }
     .tab-btn.active { background: #6366f1; color: white; }
 
-    .card {
-      background: #ffffff;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-    }
-
-    .table-card { padding: 0; }
-
-    .table-wrapper { overflow-x: auto; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    th {
-      background: #f8fafc;
-      padding: 10px 14px;
-      text-align: left;
-      font-weight: 600;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #64748b;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    td {
-      padding: 12px 14px;
-      border-bottom: 1px solid #e2e8f0;
-      vertical-align: middle;
-    }
-
-    tr:hover td { background: #f1f5f9; }
-
     .initial-badge {
       display: inline-flex;
       align-items: center;
@@ -284,21 +229,6 @@ type TabId = 'pending' | 'processed' | 'all';
     .link-name { color: #6366f1; text-decoration: none; font-weight: 600; }
     .link-name:hover { text-decoration: underline; }
 
-    .cell-center { text-align: center; }
-    .cell-right { text-align: right; }
-    .cell-bold { font-weight: 600; }
-    .cell-muted { color: #94a3b8; }
-    .cell-mono { font-family: monospace; font-size: 12px; }
-
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
     .badge-pending { background: #fef3c7; color: #92400e; }
     .badge-paid { background: #dcfce7; color: #166534; }
     .badge-cancelled { background: #fee2e2; color: #991b1b; }
@@ -311,87 +241,6 @@ type TabId = 'pending' | 'processed' | 'all';
     .empty-icon { font-size: 48px; display: block; margin-bottom: 16px; opacity: 0.5; }
     .empty-state h3 { margin: 0 0 8px; font-size: 18px; color: #1e293b; }
     .empty-state p { color: #64748b; margin: 0; }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.15s;
-      text-decoration: none;
-    }
-
-    .btn-primary { background: #6366f1; color: white; }
-    .btn-primary:hover { background: #4f46e5; }
-
-    .btn-outline {
-      background: white;
-      color: #1e293b;
-      border-color: #e2e8f0;
-    }
-
-    .btn-outline:hover { background: #f8fafc; }
-
-    .btn-sm { padding: 5px 10px; font-size: 12px; }
-
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 20px;
-      font-size: 13px;
-      color: #64748b;
-    }
-
-    .pagination-btns {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-    }
-
-    .pagination-btns button {
-      width: 32px;
-      height: 32px;
-      border: 1px solid #e2e8f0;
-      background: white;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      color: #1e293b;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s;
-    }
-
-    .pagination-btns button:hover:not(:disabled):not(.active) { background: #f1f5f9; }
-    .pagination-btns button.active { background: #6366f1; color: white; border-color: #6366f1; }
-    .pagination-btns button:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    .pagination-ellipsis {
-      width: 32px;
-      text-align: center;
-      color: #94a3b8;
-    }
-
-    .state-message {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #64748b;
-      font-size: 15px;
-      background: white;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-    }
-
-    @media (max-width: 768px) {
-      .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-    }
   `],
 })
 export class SettlementListPageComponent implements OnInit {

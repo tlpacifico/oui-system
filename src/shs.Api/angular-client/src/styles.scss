@@ -2,6 +2,19 @@
    Global styles
    ================================================================ */
 
+@use 'styles/variables';
+@use 'styles/page-layout';
+@use 'styles/buttons';
+@use 'styles/cards';
+@use 'styles/tables';
+@use 'styles/filters';
+@use 'styles/badges';
+@use 'styles/modals';
+@use 'styles/forms';
+@use 'styles/states';
+@use 'styles/pagination';
+@use 'styles/responsive';
+
 * {
   margin: 0;
   padding: 0;

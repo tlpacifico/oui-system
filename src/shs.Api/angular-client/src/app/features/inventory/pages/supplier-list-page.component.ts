@@ -281,168 +281,10 @@ import { SupplierListItem, CreateSupplierRequest, UpdateSupplierRequest } from '
   styles: [`
     :host { display: block; }
 
-    /* ── Page header ── */
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
+    .filter-search { width: 300px; }
 
-    .page-title {
-      font-size: 22px;
-      font-weight: 700;
-      margin: 0 0 4px;
-      color: #1e293b;
-    }
-
-    .page-subtitle {
-      font-size: 14px;
-      color: #64748b;
-      margin: 0;
-    }
-
-    .page-header-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    /* ── Cards ── */
-    .card {
-      background: #ffffff;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-      padding: 20px;
-    }
-
-    .filters-card {
-      margin-bottom: 20px;
-      padding: 16px;
-    }
-
-    .table-card {
-      padding: 0;
-    }
-
-    /* ── Buttons ── */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.15s;
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .btn-primary {
-      background: #6366f1;
-      color: white;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: #4f46e5;
-    }
-
-    .btn-outline {
-      background: white;
-      color: #1e293b;
-      border-color: #e2e8f0;
-    }
-
-    .btn-outline:hover:not(:disabled) {
-      background: #f8fafc;
-    }
-
-    .btn-sm {
-      padding: 5px 10px;
-      font-size: 12px;
-    }
-
-    .btn-danger {
-      background: #ef4444;
-      color: white;
-    }
-
-    .btn-danger:hover:not(:disabled) {
-      background: #dc2626;
-    }
-
-    .btn-danger-outline {
-      color: #ef4444;
-      border-color: #fecaca;
-    }
-
-    .btn-danger-outline:hover:not(:disabled) {
-      background: #fef2f2;
-    }
-
-    /* ── Filters ── */
-    .filters-bar {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .filter-input {
-      padding: 8px 12px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      font-size: 13px;
-      background: white;
-      outline: none;
-      color: #1e293b;
-    }
-
-    .filter-input:focus {
-      border-color: #6366f1;
-    }
-
-    .filter-search {
-      width: 300px;
-    }
-
-    /* ── Table ── */
-    .table-wrapper {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    th {
-      background: #f8fafc;
-      padding: 10px 14px;
-      text-align: left;
-      font-weight: 600;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #64748b;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    td {
-      padding: 12px 14px;
-      border-bottom: 1px solid #e2e8f0;
-      vertical-align: middle;
-    }
-
-    tr:hover td {
-      background: #f1f5f9;
-    }
+    td { border-bottom: 1px solid #e2e8f0; }
+    tr:hover td { background: #f1f5f9; }
 
     .initial-badge {
       display: inline-flex;
@@ -464,9 +306,7 @@ import { SupplierListItem, CreateSupplierRequest, UpdateSupplierRequest } from '
       transition: color 0.15s;
     }
 
-    .link-name:hover {
-      color: #6366f1;
-    }
+    .link-name:hover { color: #6366f1; }
 
     .cell-email {
       color: #64748b;
@@ -476,72 +316,30 @@ import { SupplierListItem, CreateSupplierRequest, UpdateSupplierRequest } from '
       text-overflow: ellipsis;
     }
 
-    .cell-actions {
-      white-space: nowrap;
-    }
-
-    .cell-actions .btn {
-      margin-right: 4px;
-    }
-
-    .cell-actions .btn:last-child {
-      margin-right: 0;
-    }
-
-    /* ── Badges ── */
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .badge-gray { background: #f1f5f9; color: #475569; }
-
-    /* ── Modal ── */
+    /* ── Supplier modal (flex-centered overlay) ── */
     .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
+      background: rgba(0, 0, 0, 0.5);
       z-index: 1000;
       padding: 20px;
     }
 
     .modal {
-      background: white;
+      position: static;
+      transform: none;
       border-radius: 16px;
       width: 100%;
       max-width: 580px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
       animation: modalIn 0.2s ease-out;
     }
 
-    .modal-sm {
-      max-width: 420px;
-    }
+    .modal-sm { max-width: 420px; }
 
     @keyframes modalIn {
-      from {
-        opacity: 0;
-        transform: translateY(-10px) scale(0.98);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 24px;
-      border-bottom: 1px solid #e2e8f0;
+      from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .modal-title {
@@ -551,40 +349,11 @@ import { SupplierListItem, CreateSupplierRequest, UpdateSupplierRequest } from '
       margin: 0;
     }
 
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 24px;
-      color: #94a3b8;
-      cursor: pointer;
-      padding: 0;
-      line-height: 1;
-    }
+    .modal-header { padding: 20px 24px; }
+    .modal-body { padding: 24px; }
+    .modal-footer { padding: 16px 24px; }
 
-    .modal-close:hover {
-      color: #1e293b;
-    }
-
-    .modal-body {
-      padding: 24px;
-    }
-
-    .modal-footer {
-      padding: 16px 24px;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    /* ── Form ── */
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-group:last-child {
-      margin-bottom: 0;
-    }
+    .form-group:last-child { margin-bottom: 0; }
 
     .form-group label {
       display: block;
@@ -599,9 +368,7 @@ import { SupplierListItem, CreateSupplierRequest, UpdateSupplierRequest } from '
       gap: 12px;
     }
 
-    .form-group-grow {
-      flex: 1;
-    }
+    .form-group-grow { flex: 1; }
 
     .form-group-small {
       width: 100px;
@@ -609,36 +376,13 @@ import { SupplierListItem, CreateSupplierRequest, UpdateSupplierRequest } from '
     }
 
     .form-input {
-      width: 100%;
       padding: 10px 12px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      font-size: 14px;
-      outline: none;
-      color: #1e293b;
-      font-family: inherit;
-      transition: border-color 0.15s;
-    }
-
-    .form-input:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }
-
-    .form-input.input-error {
-      border-color: #ef4444;
+      border-color: #e2e8f0;
     }
 
     .form-textarea {
       resize: vertical;
       min-height: 80px;
-    }
-
-    .field-error {
-      display: block;
-      font-size: 12px;
-      color: #ef4444;
-      margin-top: 4px;
     }
 
     .form-hint {
@@ -648,7 +392,6 @@ import { SupplierListItem, CreateSupplierRequest, UpdateSupplierRequest } from '
       margin-top: 4px;
     }
 
-    /* ── Alert ── */
     .alert {
       padding: 10px 14px;
       border-radius: 8px;
@@ -668,37 +411,13 @@ import { SupplierListItem, CreateSupplierRequest, UpdateSupplierRequest } from '
       margin-top: 8px;
     }
 
-    /* ── States ── */
-    .state-message {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #64748b;
-      font-size: 15px;
-      background: white;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-    }
-
-    /* ── Responsive ── */
     @media (max-width: 768px) {
-      .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-      }
-
-      .filter-search {
-        width: 100%;
-      }
-
       .form-row {
         flex-direction: column;
         gap: 0;
       }
 
-      .form-group-small {
-        width: 100%;
-      }
+      .form-group-small { width: 100%; }
     }
   `]
 })

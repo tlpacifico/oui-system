@@ -234,12 +234,11 @@ import { PosService, TodaySalesResponse, SaleListItem, SaleDetail } from './pos.
     .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
     .stat-revenue { border-color: #6366f1; background: #eef2ff; }
 
-    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+    .card { padding: 24px; margin-bottom: 20px; }
     .card-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 16px; }
     .card-title-bar { padding: 16px 16px 8px; }
     .table-card { padding: 0; overflow: hidden; }
 
-    .method-card { }
     .method-grid { display: flex; flex-wrap: wrap; gap: 12px; }
     .method-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f8fafc; border-radius: 8px; flex: 1; min-width: 200px; }
     .method-icon { font-size: 24px; }
@@ -248,19 +247,13 @@ import { PosService, TodaySalesResponse, SaleListItem, SaleDetail } from './pos.
     .method-count { font-size: 11px; color: #64748b; }
     .method-total { font-size: 16px; font-weight: 700; color: #1e293b; }
 
-    .table-wrapper { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { text-align: left; padding: 10px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
-    td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; }
-    .cell-mono { font-family: monospace; font-size: 12px; color: #6366f1; font-weight: 600; }
-    .cell-center { text-align: center; }
-    .cell-right { text-align: right; }
-    .cell-bold { font-weight: 700; }
+    th { border-bottom: 2px solid #e2e8f0; white-space: nowrap; padding: 10px 16px; }
+    td { padding: 12px 16px; }
+    .cell-mono { color: #6366f1; font-weight: 600; }
     tbody tr { transition: background 0.15s; }
     tbody tr:hover { background: #f8fafc; }
     .row-clickable { cursor: pointer; }
 
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
     .badge-active { background: #f0fdf4; color: #16a34a; }
     .badge-voided { background: #fef2f2; color: #dc2626; }
 
@@ -269,17 +262,11 @@ import { PosService, TodaySalesResponse, SaleListItem, SaleDetail } from './pos.
     .empty h3 { font-size: 16px; margin: 16px 0 8px; }
     .empty p { font-size: 13px; color: #64748b; margin: 0 0 20px; }
 
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; background: #fff; color: #374151; text-decoration: none; transition: all 0.15s; }
-    .btn:hover { background: #f8fafc; }
-    .btn-primary { background: #6366f1; color: #fff; border-color: #6366f1; }
-    .btn-primary:hover { background: #4f46e5; }
-    .btn-outline { background: transparent; }
-
     /* Modal */
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal { background: #fff; border-radius: 16px; width: 90%; max-width: 860px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #e2e8f0; }
-    .modal-header h2 { font-size: 18px; font-weight: 700; margin: 0; }
+    .modal { position: static; transform: none; border-radius: 16px; width: 90%; max-width: 860px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+    .modal-header { padding: 20px 24px; }
+    .modal-header h2 { font-size: 18px; }
     .btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; padding: 0 4px; line-height: 1; }
     .btn-close:hover { color: #1e293b; }
     .modal-body { padding: 24px; overflow-y: auto; }

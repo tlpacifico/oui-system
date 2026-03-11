@@ -221,39 +221,10 @@ type ImportType = 'personal' | 'consignment';
   styles: [`
     :host { display: block; }
 
-    /* ── Page header ── */
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .page-title {
-      font-size: 22px;
-      font-weight: 700;
-      margin: 0 0 4px;
-      color: #1e293b;
-    }
-
-    .page-subtitle {
-      font-size: 14px;
-      color: #64748b;
-      margin: 0;
-    }
-
-    /* ── Import Grid ── */
     .import-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
-    }
-
-    /* ── Cards ── */
-    .card {
-      background: #ffffff;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
     }
 
     .import-card {
@@ -302,7 +273,6 @@ type ImportType = 'personal' | 'consignment';
       gap: 16px;
     }
 
-    /* ── File format info ── */
     .file-format-info {
       display: flex;
       align-items: center;
@@ -314,7 +284,6 @@ type ImportType = 'personal' | 'consignment';
       color: #94a3b8;
     }
 
-    /* ── Upload zone ── */
     .upload-zone {
       border: 2px dashed #e2e8f0;
       border-radius: 10px;
@@ -339,20 +308,10 @@ type ImportType = 'personal' | 'consignment';
       background: #eef2ff;
     }
 
-    .file-input-hidden {
-      display: none;
-    }
+    .file-input-hidden { display: none; }
+    .upload-icon { font-size: 24px; }
+    .upload-text { font-size: 13px; color: #64748b; }
 
-    .upload-icon {
-      font-size: 24px;
-    }
-
-    .upload-text {
-      font-size: 13px;
-      color: #64748b;
-    }
-
-    /* ── File info ── */
     .file-info {
       display: flex;
       align-items: center;
@@ -360,9 +319,7 @@ type ImportType = 'personal' | 'consignment';
       width: 100%;
     }
 
-    .file-icon {
-      font-size: 20px;
-    }
+    .file-icon { font-size: 20px; }
 
     .file-name {
       display: block;
@@ -389,52 +346,7 @@ type ImportType = 'personal' | 'consignment';
       line-height: 1;
     }
 
-    .btn-remove:hover {
-      color: #ef4444;
-    }
-
-    /* ── Buttons ── */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.15s;
-    }
-
-    .btn-primary {
-      background: #6366f1;
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: #4f46e5;
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .btn-outline {
-      background: white;
-      color: #1e293b;
-      border-color: #e2e8f0;
-    }
-
-    .btn-outline:hover {
-      background: #f8fafc;
-    }
-
-    .btn-sm {
-      padding: 5px 10px;
-      font-size: 12px;
-    }
+    .btn-remove:hover { color: #ef4444; }
 
     .btn-upload {
       width: 100%;
@@ -442,19 +354,8 @@ type ImportType = 'personal' | 'consignment';
       padding: 10px 16px;
     }
 
-    /* ── Badges ── */
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
     .badge-blue { background: #eef2ff; color: #6366f1; }
 
-    /* ── Result card ── */
     .result-card {
       background: #f0fdf4;
       border: 1px solid #bbf7d0;
@@ -480,9 +381,7 @@ type ImportType = 'personal' | 'consignment';
       gap: 12px;
     }
 
-    .stat {
-      text-align: center;
-    }
+    .stat { text-align: center; }
 
     .stat-value {
       display: block;
@@ -498,11 +397,8 @@ type ImportType = 'personal' | 'consignment';
       margin-top: 2px;
     }
 
-    .stat-error .stat-value {
-      color: #ef4444;
-    }
+    .stat-error .stat-value { color: #ef4444; }
 
-    /* ── Error details ── */
     .error-details {
       margin-top: 12px;
       padding-top: 12px;
@@ -518,43 +414,12 @@ type ImportType = 'personal' | 'consignment';
       overflow-y: auto;
     }
 
-    .error-list li {
-      margin-bottom: 4px;
-    }
+    .error-list li { margin-bottom: 4px; }
 
-    /* ── Alert ── */
-    .alert-danger {
-      background: #fef2f2;
-      color: #991b1b;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      border: 1px solid #fecaca;
-      margin-top: 16px;
-    }
+    .alert-danger { margin-top: 16px; }
 
-    /* ── States ── */
-    .state-message {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #64748b;
-      font-size: 15px;
-      background: white;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-    }
-
-    /* ── Responsive ── */
     @media (max-width: 768px) {
-      .import-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-      }
+      .import-grid { grid-template-columns: 1fr; }
     }
   `]
 })
