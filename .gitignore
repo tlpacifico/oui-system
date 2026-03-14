@@ -65,3 +65,6 @@ docs/_Oui estoque atual.xlsx
 docs/Consignados - Clientes.xlsx
 deploy/setup-vps.sh
 /deploy/setup-vps.sh
+
+# Reference sample projects
+docs/source-sample/
