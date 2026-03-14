@@ -101,7 +101,6 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
-app.UseHttpsRedirection();
 app.UseCors();
 app.UseStaticFiles(); // Serve wwwroot/uploads (item photos)
 app.UseAuthentication();
@@ -136,3 +135,6 @@ app.MapEcommercePublicEndpoints();
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+// Make Program class accessible to integration tests (WebApplicationFactory<Program>)
+public partial class Program { }
