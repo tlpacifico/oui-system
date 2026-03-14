@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using shs.Infrastructure.Database;
+using Oui.Modules.Inventory.Infrastructure;
 
 namespace shs.Infrastructure.Services;
 
@@ -10,9 +10,9 @@ public interface IItemIdGeneratorService
 
 public class ItemIdGeneratorService : IItemIdGeneratorService
 {
-    private readonly ShsDbContext _db;
+    private readonly InventoryDbContext _db;
 
-    public ItemIdGeneratorService(ShsDbContext db)
+    public ItemIdGeneratorService(InventoryDbContext db)
     {
         _db = db;
     }

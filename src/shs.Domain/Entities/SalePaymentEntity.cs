@@ -14,7 +14,6 @@ public class SalePaymentEntity
     /// When PaymentMethod is StoreCredit, identifies which supplier's credit was used
     /// </summary>
     public long? SupplierId { get; set; }
-    public SupplierEntity? Supplier { get; set; }
 
     /// <summary>
     /// Store credit used (when PaymentMethod is StoreCredit)

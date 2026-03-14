@@ -58,7 +58,6 @@ public class ItemEntity : EntityWithIdAuditable<long>, IHaveSoftDelete
     public CategoryEntity? Category { get; set; }
     public SupplierEntity? Supplier { get; set; }
     public ReceptionEntity? Reception { get; set; }
-    public SaleEntity? Sale { get; set; }
     public SupplierReturnEntity? SupplierReturn { get; set; }
     public ICollection<TagEntity> Tags { get; set; } = new List<TagEntity>();
     public ICollection<ItemPhotoEntity> Photos { get; set; } = new List<ItemPhotoEntity>();

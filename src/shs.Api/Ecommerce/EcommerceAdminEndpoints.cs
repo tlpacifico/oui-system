@@ -6,7 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Ecommerce.Infrastructure;
+using Oui.Modules.Inventory.Infrastructure;
 
 namespace shs.Api.Ecommerce;
 
@@ -32,10 +33,11 @@ public static class EcommerceAdminEndpoints
 
     private static async Task<IResult> PublishItem(
         [FromBody] PublishItemRequest request,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext ecommerceDb,
+        [FromServices] InventoryDbContext inventoryDb,
         CancellationToken ct)
     {
-        var item = await db.Items
+        var item = await inventoryDb.Items
             .Include(i => i.Brand)
             .Include(i => i.Category)
             .Include(i => i.Photos)
@@ -48,7 +50,7 @@ public static class EcommerceAdminEndpoints
             return Results.BadRequest(new { error = "Item deve estar com status 'À Venda' para ser publicado." });
 
         // Check if already published
-        var alreadyPublished = await db.EcommerceProducts
+        var alreadyPublished = await ecommerceDb.EcommerceProducts
             .AnyAsync(p => p.ItemId == item.Id &&
                 (p.Status == EcommerceProductStatus.Published || p.Status == EcommerceProductStatus.Draft), ct);
 
@@ -56,8 +58,8 @@ public static class EcommerceAdminEndpoints
             return Results.Conflict(new { error = "Este item já está publicado no e-commerce." });
 
         var product = CreateProductFromItem(item);
-        db.EcommerceProducts.Add(product);
-        await db.SaveChangesAsync(ct);
+        ecommerceDb.EcommerceProducts.Add(product);
+        await ecommerceDb.SaveChangesAsync(ct);
 
         return Results.Created($"/api/ecommerce/admin/products/{product.ExternalId}", new
         {
@@ -71,20 +73,21 @@ public static class EcommerceAdminEndpoints
 
     private static async Task<IResult> PublishBatch(
         [FromBody] PublishBatchRequest request,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext ecommerceDb,
+        [FromServices] InventoryDbContext inventoryDb,
         CancellationToken ct)
     {
         if (request.ItemExternalIds is null || request.ItemExternalIds.Count == 0)
             return Results.BadRequest(new { error = "Nenhum item fornecido." });
 
-        var items = await db.Items
+        var items = await inventoryDb.Items
             .Include(i => i.Brand)
             .Include(i => i.Category)
             .Include(i => i.Photos)
             .Where(i => request.ItemExternalIds.Contains(i.ExternalId))
             .ToListAsync(ct);
 
-        var existingItemIds = await db.EcommerceProducts
+        var existingItemIds = await ecommerceDb.EcommerceProducts
             .Where(p => p.Status == EcommerceProductStatus.Published || p.Status == EcommerceProductStatus.Draft)
             .Select(p => p.ItemId)
             .ToListAsync(ct);
@@ -107,17 +110,17 @@ public static class EcommerceAdminEndpoints
             }
 
             var product = CreateProductFromItem(item);
-            db.EcommerceProducts.Add(product);
+            ecommerceDb.EcommerceProducts.Add(product);
             published.Add(new { item.ExternalId, product.Slug, product.Title });
         }
 
-        await db.SaveChangesAsync(ct);
+        await ecommerceDb.SaveChangesAsync(ct);
 
         return Results.Ok(new { published, errors, totalPublished = published.Count, totalErrors = errors.Count });
     }
 
     private static async Task<IResult> GetProducts(
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         [FromQuery] string? status,
         [FromQuery] string? search,
         [FromQuery] int page = 1,
@@ -162,7 +165,7 @@ public static class EcommerceAdminEndpoints
 
     private static async Task<IResult> GetProductById(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         CancellationToken ct)
     {
         var product = await db.EcommerceProducts
@@ -202,7 +205,7 @@ public static class EcommerceAdminEndpoints
     private static async Task<IResult> UpdateProduct(
         Guid externalId,
         [FromBody] UpdateProductRequest request,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         CancellationToken ct)
     {
         var product = await db.EcommerceProducts
@@ -244,7 +247,7 @@ public static class EcommerceAdminEndpoints
 
     private static async Task<IResult> UnpublishProduct(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         CancellationToken ct)
     {
         var product = await db.EcommerceProducts
@@ -264,7 +267,7 @@ public static class EcommerceAdminEndpoints
     }
 
     private static async Task<IResult> GetOrders(
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         [FromQuery] string? status,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -303,7 +306,7 @@ public static class EcommerceAdminEndpoints
 
     private static async Task<IResult> GetOrderById(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         CancellationToken ct)
     {
         var order = await db.EcommerceOrders
@@ -340,7 +343,7 @@ public static class EcommerceAdminEndpoints
 
     private static async Task<IResult> ConfirmOrder(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         CancellationToken ct)
     {
         var order = await db.EcommerceOrders
@@ -362,7 +365,7 @@ public static class EcommerceAdminEndpoints
     private static async Task<IResult> CancelOrder(
         Guid externalId,
         [FromBody] CancelOrderRequest? request,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         CancellationToken ct)
     {
         var order = await db.EcommerceOrders
@@ -396,7 +399,7 @@ public static class EcommerceAdminEndpoints
     private static async Task<IResult> UploadProductPhotos(
         Guid externalId,
         [FromForm] IFormFileCollection files,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         [FromServices] IWebHostEnvironment env,
         CancellationToken ct)
     {
@@ -481,7 +484,7 @@ public static class EcommerceAdminEndpoints
     private static async Task<IResult> DeleteProductPhoto(
         Guid externalId,
         Guid photoExternalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         [FromServices] IWebHostEnvironment env,
         CancellationToken ct)
     {

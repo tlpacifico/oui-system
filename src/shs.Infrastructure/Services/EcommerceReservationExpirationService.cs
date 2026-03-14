@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Ecommerce.Infrastructure;
 
 namespace shs.Infrastructure.Services;
 
@@ -41,7 +41,7 @@ public class EcommerceReservationExpirationService : BackgroundService
     private async Task ProcessExpiredReservationsAsync(CancellationToken ct)
     {
         using var scope = _serviceProvider.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ShsDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<EcommerceDbContext>();
 
         var now = DateTime.UtcNow;
 

@@ -10,7 +10,6 @@ public class SupplierCashBalanceTransactionEntity
     public Guid ExternalId { get; set; }
 
     public long SupplierId { get; set; }
-    public SupplierEntity Supplier { get; set; } = null!;
 
     /// <summary>
     /// Positive = credit from settlement, Negative = cash redemption

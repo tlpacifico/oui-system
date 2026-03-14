@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
-using shs.Infrastructure.Database;
+using Oui.Modules.Auth.Infrastructure;
 
 namespace shs.Api.Admin;
 
@@ -18,7 +18,7 @@ public static class MeEndpoints
 
     private static async Task<IResult> GetMyRoles(
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var email = httpContext.User.GetUserEmail();
@@ -37,7 +37,7 @@ public static class MeEndpoints
 
     private static async Task<IResult> GetMyPermissions(
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var email = httpContext.User.GetUserEmail();

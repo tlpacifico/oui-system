@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
-using shs.Infrastructure.Database;
+using Oui.Modules.Auth.Infrastructure;
 
 namespace shs.Api.Admin;
 
@@ -20,7 +20,7 @@ public static class UserRoleEndpoints
 
     private static async Task<IResult> GetUserRoles(
         [FromRoute] Guid userExternalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.ExternalId == userExternalId, ct);
@@ -47,7 +47,7 @@ public static class UserRoleEndpoints
         [FromRoute] Guid userExternalId,
         [FromBody] AssignRoleRequest request,
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.ExternalId == userExternalId, ct);
@@ -81,7 +81,7 @@ public static class UserRoleEndpoints
         [FromRoute] Guid userExternalId,
         [FromBody] AssignBulkRolesRequest request,
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var user = await db.Users
@@ -122,7 +122,7 @@ public static class UserRoleEndpoints
     private static async Task<IResult> RevokeRole(
         [FromRoute] Guid userExternalId,
         [FromRoute] Guid roleExternalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.ExternalId == userExternalId, ct);

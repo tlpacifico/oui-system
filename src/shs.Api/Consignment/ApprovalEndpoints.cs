@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Inventory.Infrastructure;
 
 namespace shs.Api.Consignment;
 
@@ -26,7 +26,7 @@ public static class ApprovalEndpoints
     /// </summary>
     private static async Task<IResult> GetApprovalDetails(
         string token,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var approvalToken = await db.ReceptionApprovalTokens
@@ -76,7 +76,7 @@ public static class ApprovalEndpoints
     /// </summary>
     private static async Task<IResult> ApproveByToken(
         string token,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var approvalToken = await db.ReceptionApprovalTokens
@@ -123,7 +123,7 @@ public static class ApprovalEndpoints
     private static async Task<IResult> RejectByToken(
         string token,
         [FromBody] ApprovalRejectRequest req,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var approvalToken = await db.ReceptionApprovalTokens
@@ -157,7 +157,7 @@ public static class ApprovalEndpoints
     /// </summary>
     private static async Task<IResult> StaffApprove(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var reception = await db.Receptions

@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using shs.Domain.Entities;
-using shs.Infrastructure.Database;
+using Oui.Modules.Auth.Infrastructure;
 
 namespace shs.Infrastructure.Services;
 
 public class RbacSeedService
 {
-    private readonly ShsDbContext _db;
+    private readonly AuthDbContext _db;
 
-    public RbacSeedService(ShsDbContext db)
+    public RbacSeedService(AuthDbContext db)
     {
         _db = db;
     }

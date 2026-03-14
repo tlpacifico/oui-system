@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using shs.Domain.Entities;
-using shs.Infrastructure.Database;
+using Oui.Modules.Auth.Infrastructure;
 
 namespace shs.Api;
 
@@ -11,7 +11,7 @@ namespace shs.Api;
 public static class AssignAdminRole
 {
     public static async Task AssignAdminToUserAsync(
-        ShsDbContext db,
+        AuthDbContext db,
         string email,
         string? firebaseUserId = null)
     {

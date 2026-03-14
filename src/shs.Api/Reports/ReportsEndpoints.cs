@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Sales.Infrastructure;
+using Oui.Modules.Inventory.Infrastructure;
 
 namespace shs.Api.Reports;
 
@@ -20,7 +21,8 @@ public static class ReportsEndpoints
     }
 
     private static async Task<IResult> GetSalesReport(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         [FromQuery] DateTime? startDate,
         [FromQuery] DateTime? endDate,
         [FromQuery] long? brandId,
@@ -31,23 +33,43 @@ public static class ReportsEndpoints
         var start = startDate ?? now.Date.AddMonths(-1);
         var end = (endDate ?? now.Date).AddDays(1);
 
-        var salesQuery = db.Sales
+        // Load sales with payments and sale items (same module)
+        var sales = await salesDb.Sales
             .Include(s => s.Items)
-                .ThenInclude(si => si.Item)
-                    .ThenInclude(i => i!.Brand)
-            .Include(s => s.Items)
-                .ThenInclude(si => si.Item)
-                    .ThenInclude(i => i!.Category)
             .Include(s => s.Payments)
-            .Where(s => !s.IsDeleted && s.Status == SaleStatus.Active && s.SaleDate >= start && s.SaleDate < end);
+            .Where(s => !s.IsDeleted && s.Status == SaleStatus.Active && s.SaleDate >= start && s.SaleDate < end)
+            .ToListAsync(ct);
 
-        var sales = await salesQuery.ToListAsync(ct);
+        // Collect all item IDs from sale items to query inventory module
+        var allItemIds = sales.SelectMany(s => s.Items).Select(si => si.ItemId).Distinct().ToList();
 
+        // Load item details from inventory module
+        var itemDetails = await inventoryDb.Items
+            .Where(i => allItemIds.Contains(i.Id))
+            .Include(i => i.Brand)
+            .Include(i => i.Category)
+            .Select(i => new
+            {
+                i.Id,
+                i.BrandId,
+                BrandName = i.Brand!.Name,
+                i.CategoryId,
+                CategoryName = i.Category != null ? i.Category.Name : (string?)null,
+                i.AcquisitionType,
+                i.CommissionAmount
+            })
+            .ToListAsync(ct);
+
+        var itemDetailsById = itemDetails.ToDictionary(i => i.Id);
+
+        // Filter by brand/category using in-memory join
         var filteredSales = sales.AsEnumerable();
         if (brandId.HasValue)
-            filteredSales = filteredSales.Where(s => s.Items.Any(si => si.Item.BrandId == brandId.Value));
+            filteredSales = filteredSales.Where(s => s.Items.Any(si =>
+                itemDetailsById.TryGetValue(si.ItemId, out var item) && item.BrandId == brandId.Value));
         if (categoryId.HasValue)
-            filteredSales = filteredSales.Where(s => s.Items.Any(si => si.Item.CategoryId == categoryId.Value));
+            filteredSales = filteredSales.Where(s => s.Items.Any(si =>
+                itemDetailsById.TryGetValue(si.ItemId, out var item) && item.CategoryId == categoryId.Value));
 
         var salesList = filteredSales.ToList();
         var revenue = salesList.Sum(s => s.TotalAmount);
@@ -67,7 +89,8 @@ public static class ReportsEndpoints
 
         var topBrands = salesList
             .SelectMany(s => s.Items)
-            .GroupBy(si => new { si.Item.BrandId, BrandName = si.Item.Brand!.Name })
+            .Where(si => itemDetailsById.ContainsKey(si.ItemId))
+            .GroupBy(si => new { itemDetailsById[si.ItemId].BrandId, itemDetailsById[si.ItemId].BrandName })
             .Select(g => new { g.Key.BrandName, revenue = g.Sum(si => si.FinalPrice), count = g.Count() })
             .OrderByDescending(x => x.revenue)
             .Take(10)
@@ -75,8 +98,8 @@ public static class ReportsEndpoints
 
         var topCategories = salesList
             .SelectMany(s => s.Items)
-            .Where(si => si.Item.CategoryId != null)
-            .GroupBy(si => new { si.Item.CategoryId, CategoryName = si.Item.Category!.Name })
+            .Where(si => itemDetailsById.TryGetValue(si.ItemId, out var item) && item.CategoryId != null)
+            .GroupBy(si => new { itemDetailsById[si.ItemId].CategoryId, itemDetailsById[si.ItemId].CategoryName })
             .Select(g => new { g.Key!.CategoryName, revenue = g.Sum(si => si.FinalPrice), count = g.Count() })
             .OrderByDescending(x => x.revenue)
             .Take(10)
@@ -85,7 +108,7 @@ public static class ReportsEndpoints
         var periodDays = (end - start).Days;
         var prevStart = start.AddDays(-periodDays);
         var prevEnd = start;
-        var prevRevenue = await db.Sales
+        var prevRevenue = await salesDb.Sales
             .Where(s => !s.IsDeleted && s.Status == SaleStatus.Active && s.SaleDate >= prevStart && s.SaleDate < prevEnd)
             .SumAsync(s => s.TotalAmount, ct);
         var prevPeriodComparison = prevRevenue > 0
@@ -106,7 +129,7 @@ public static class ReportsEndpoints
     }
 
     private static async Task<IResult> GetInventoryReport(
-        ShsDbContext db,
+        InventoryDbContext db,
         CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
@@ -197,7 +220,8 @@ public static class ReportsEndpoints
     }
 
     private static async Task<IResult> GetSuppliersReport(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         [FromQuery] DateTime? startDate,
         [FromQuery] DateTime? endDate,
         CancellationToken ct = default)
@@ -206,27 +230,34 @@ public static class ReportsEndpoints
         var start = startDate ?? now.Date.AddMonths(-1);
         var end = (endDate ?? now.Date).AddDays(1);
 
-        var suppliers = await db.Suppliers
+        var suppliers = await inventoryDb.Suppliers
             .Where(s => !s.IsDeleted)
             .Select(s => new { s.Id, s.ExternalId, s.Name, s.Initial })
             .ToListAsync(ct);
 
-        var soldItemsInPeriod = await db.Items
+        var soldItemsInPeriod = await inventoryDb.Items
             .Where(i => !i.IsDeleted && i.Status == ItemStatus.Sold && i.SupplierId != null &&
                         i.SoldAt >= start && i.SoldAt < end)
             .Select(i => new { i.SupplierId, i.FinalSalePrice, i.SoldAt, i.CreatedOn, i.Id })
             .ToListAsync(ct);
 
-        var returnedItems = await db.Items
+        var returnedItems = await inventoryDb.Items
             .Where(i => !i.IsDeleted && i.Status == ItemStatus.Returned && i.SupplierId != null &&
                         i.ReturnedAt >= start && i.ReturnedAt < end)
             .GroupBy(i => i.SupplierId)
             .Select(g => new { SupplierId = g.Key, Count = g.Count() })
             .ToListAsync(ct);
 
-        var pendingBySupplier = await db.Items
+        // Cross-module: get settled item IDs from sales module
+        var settledItemIds = await salesDb.SaleItems
+            .Where(si => si.SettlementId != null)
+            .Select(si => si.ItemId)
+            .Distinct()
+            .ToListAsync(ct);
+
+        var pendingBySupplier = await inventoryDb.Items
             .Where(i => !i.IsDeleted && i.Status == ItemStatus.Sold && i.AcquisitionType == AcquisitionType.Consignment && i.SupplierId != null)
-            .Where(i => !db.SaleItems.Any(si => si.ItemId == i.Id && si.SettlementId != null))
+            .Where(i => !settledItemIds.Contains(i.Id))
             .GroupBy(i => i.SupplierId)
             .Select(g => new { SupplierId = g.Key, PendingAmount = g.Sum(i => i.FinalSalePrice ?? 0) })
             .ToListAsync(ct);
@@ -273,7 +304,8 @@ public static class ReportsEndpoints
     }
 
     private static async Task<IResult> GetFinanceReport(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         [FromQuery] DateTime? startDate,
         [FromQuery] DateTime? endDate,
         CancellationToken ct = default)
@@ -282,26 +314,41 @@ public static class ReportsEndpoints
         var start = startDate ?? now.Date.AddMonths(-1);
         var end = (endDate ?? now.Date).AddDays(1);
 
-        var salesInPeriod = await db.Sales
+        // Load sales with sale items (same module)
+        var salesInPeriod = await salesDb.Sales
             .Where(s => !s.IsDeleted && s.Status == SaleStatus.Active && s.SaleDate >= start && s.SaleDate < end)
             .Include(s => s.Items)
-                .ThenInclude(si => si.Item)
             .ToListAsync(ct);
 
         var grossRevenue = salesInPeriod.Sum(s => s.TotalAmount);
 
+        // Cross-module: get item details from inventory to calculate commission
+        var allItemIds = salesInPeriod.SelectMany(s => s.Items).Select(si => si.ItemId).Distinct().ToList();
+        var itemDetails = await inventoryDb.Items
+            .Where(i => allItemIds.Contains(i.Id))
+            .Select(i => new { i.Id, i.AcquisitionType, i.CommissionAmount })
+            .ToListAsync(ct);
+        var itemDetailsById = itemDetails.ToDictionary(i => i.Id);
+
         var commissionRevenue = salesInPeriod
             .SelectMany(s => s.Items)
-            .Where(si => si.Item.AcquisitionType == AcquisitionType.Consignment)
-            .Sum(si => si.Item.CommissionAmount ?? 0);
+            .Where(si => itemDetailsById.TryGetValue(si.ItemId, out var item) && item.AcquisitionType == AcquisitionType.Consignment)
+            .Sum(si => itemDetailsById.TryGetValue(si.ItemId, out var item) ? item.CommissionAmount ?? 0 : 0);
 
-        var pendingSettlements = await db.Items
+        // Cross-module: pending settlements
+        var settledItemIds = await salesDb.SaleItems
+            .Where(si => si.SettlementId != null)
+            .Select(si => si.ItemId)
+            .Distinct()
+            .ToListAsync(ct);
+
+        var pendingSettlements = await inventoryDb.Items
             .Where(i => !i.IsDeleted && i.Status == ItemStatus.Sold &&
                        i.AcquisitionType == AcquisitionType.Consignment && i.SupplierId != null)
-            .Where(i => !db.SaleItems.Any(si => si.ItemId == i.Id && si.SettlementId != null))
+            .Where(i => !settledItemIds.Contains(i.Id))
             .SumAsync(i => i.FinalSalePrice ?? 0, ct);
 
-        var paidSettlements = await db.Settlements
+        var paidSettlements = await salesDb.Settlements
             .Where(s => !s.IsDeleted && s.Status == SettlementStatus.Paid && s.PaidOn >= start && s.PaidOn < end)
             .SumAsync(s => s.NetAmountToSupplier, ct);
 

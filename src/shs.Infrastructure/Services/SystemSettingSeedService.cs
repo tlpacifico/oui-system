@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using shs.Domain.Entities;
-using shs.Infrastructure.Database;
+using Oui.Modules.System.Infrastructure;
 
 namespace shs.Infrastructure.Services;
 
 public class SystemSettingSeedService
 {
-    private readonly ShsDbContext _db;
+    private readonly SystemDbContext _db;
 
-    public SystemSettingSeedService(ShsDbContext db)
+    public SystemSettingSeedService(SystemDbContext db)
     {
         _db = db;
     }

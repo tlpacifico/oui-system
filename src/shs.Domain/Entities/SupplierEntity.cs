@@ -20,10 +20,7 @@ public class SupplierEntity : EntityWithIdAuditable<long>, IHaveSoftDelete
     public string? DeletedBy { get; set; }
     public DateTime? DeletedOn { get; set; }
 
-    // Navigation
+    // Navigation (intra-module: Inventory)
     public ICollection<ReceptionEntity> Receptions { get; set; } = new List<ReceptionEntity>();
     public ICollection<ItemEntity> Items { get; set; } = new List<ItemEntity>();
-    public ICollection<SettlementEntity> Settlements { get; set; } = new List<SettlementEntity>();
-    public ICollection<StoreCreditEntity> StoreCredits { get; set; } = new List<StoreCreditEntity>();
-    public ICollection<SupplierCashBalanceTransactionEntity> CashBalanceTransactions { get; set; } = new List<SupplierCashBalanceTransactionEntity>();
 }

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
-using shs.Infrastructure.Database;
+using Oui.Modules.Auth.Infrastructure;
 
 namespace shs.Api.Admin;
 
@@ -21,7 +21,7 @@ public static class RolePermissionEndpoints
         [FromRoute] Guid roleExternalId,
         [FromBody] AssignPermissionRequest request,
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var role = await db.Roles.FirstOrDefaultAsync(r => r.ExternalId == roleExternalId, ct);
@@ -55,7 +55,7 @@ public static class RolePermissionEndpoints
         [FromRoute] Guid roleExternalId,
         [FromBody] AssignBulkPermissionsRequest request,
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var role = await db.Roles
@@ -96,7 +96,7 @@ public static class RolePermissionEndpoints
     private static async Task<IResult> RevokePermission(
         [FromRoute] Guid roleExternalId,
         [FromRoute] Guid permissionExternalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var role = await db.Roles.FirstOrDefaultAsync(r => r.ExternalId == roleExternalId, ct);

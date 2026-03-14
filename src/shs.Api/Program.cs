@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using shs.Api;
 using shs.Api.Admin;
 using shs.Api.Auth;
@@ -16,8 +15,12 @@ using shs.Api.Financial;
 using shs.Api.Inventory;
 using shs.Api.Pos;
 using shs.Infrastructure;
-using shs.Infrastructure.Database;
 using shs.Infrastructure.Services;
+using Oui.Modules.Auth.Infrastructure;
+using Oui.Modules.Inventory.Infrastructure;
+using Oui.Modules.Sales.Infrastructure;
+using Oui.Modules.Ecommerce.Infrastructure;
+using Oui.Modules.System.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +37,14 @@ builder.Services.AddCors(options =>
 });
 builder.Services.AddOpenApi();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddInfrastructure(builder.Configuration);
+
+// Register per-module DbContexts and services
+builder.Services.AddAuthModule(builder.Configuration);
+builder.Services.AddInventoryModule(builder.Configuration);
+builder.Services.AddSalesModule(builder.Configuration);
+builder.Services.AddEcommerceModule(builder.Configuration);
+builder.Services.AddSystemModule(builder.Configuration);
+builder.Services.AddSharedInfrastructure(builder.Configuration);
 
 var firebaseConfig = builder.Configuration.GetSection("Firebase");
 var projectId = firebaseConfig["ProjectId"];
@@ -73,11 +83,14 @@ if (builder.Environment.IsProduction())
 
 var app = builder.Build();
 
-// Apply migrations and auto-seed RBAC on startup
+// Apply migrations for all module DbContexts and auto-seed on startup
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ShsDbContext>();
-    await db.Database.MigrateAsync();
+    await scope.ServiceProvider.GetRequiredService<AuthDbContext>().Database.MigrateAsync();
+    await scope.ServiceProvider.GetRequiredService<InventoryDbContext>().Database.MigrateAsync();
+    await scope.ServiceProvider.GetRequiredService<SalesDbContext>().Database.MigrateAsync();
+    await scope.ServiceProvider.GetRequiredService<EcommerceDbContext>().Database.MigrateAsync();
+    await scope.ServiceProvider.GetRequiredService<SystemDbContext>().Database.MigrateAsync();
 
     var seedService = scope.ServiceProvider.GetRequiredService<RbacSeedService>();
     await seedService.SeedAsync();
@@ -86,8 +99,9 @@ using (var scope = app.Services.CreateScope())
     await settingSeedService.SeedAsync();
 
     // Assign Admin role to initial user
+    var authDb = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
     await AssignAdminRole.AssignAdminToUserAsync(
-        db,
+        authDb,
         email: "thacio.pacifico@gmail.com"
     );
 }

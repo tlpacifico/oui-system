@@ -24,8 +24,7 @@ public class EcommerceProductEntity : EntityWithIdAuditable<long>, IHaveSoftDele
     public string? DeletedBy { get; set; }
     public DateTime? DeletedOn { get; set; }
 
-    // Navigation properties
-    public ItemEntity Item { get; set; } = null!;
+    // Navigation properties (intra-module: Ecommerce)
     public ICollection<EcommerceProductPhotoEntity> Photos { get; set; } = new List<EcommerceProductPhotoEntity>();
     public ICollection<EcommerceOrderItemEntity> OrderItems { get; set; } = new List<EcommerceOrderItemEntity>();
 }

@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
-using shs.Infrastructure.Database;
+using Oui.Modules.Sales.Infrastructure;
+using Oui.Modules.Inventory.Infrastructure;
 
 namespace shs.Api.Financial;
 
@@ -42,13 +43,12 @@ public static class StoreCreditEndpoints
 
     // Get all store credits for a supplier
     private static async Task<IResult> GetSupplierStoreCredits(
-        ShsDbContext db,
+        SalesDbContext salesDb,
         long supplierId,
         [FromQuery] StoreCreditStatus? status,
         CancellationToken ct)
     {
-        var query = db.StoreCredits
-            .Include(sc => sc.Supplier)
+        var query = salesDb.StoreCredits
             .Where(sc => !sc.IsDeleted && sc.SupplierId == supplierId);
 
         if (status.HasValue)
@@ -93,15 +93,16 @@ public static class StoreCreditEndpoints
     /// Get the current store credit balance for a supplier (for POS - when operator identifies supplier for Crédito em Loja).
     /// </summary>
     private static async Task<IResult> GetSupplierStoreCreditBalance(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         long supplierId,
         CancellationToken ct)
     {
-        var exists = await db.Suppliers.AnyAsync(s => s.Id == supplierId && !s.IsDeleted, ct);
+        var exists = await inventoryDb.Suppliers.AnyAsync(s => s.Id == supplierId && !s.IsDeleted, ct);
         if (!exists)
             return Results.NotFound(new { error = "Fornecedor não encontrado." });
 
-        var totalBalance = await db.StoreCredits
+        var totalBalance = await salesDb.StoreCredits
             .Where(sc => !sc.IsDeleted && sc.SupplierId == supplierId && sc.Status == StoreCreditStatus.Active)
             .Where(sc => sc.ExpiresOn == null || sc.ExpiresOn > DateTime.UtcNow)
             .SumAsync(sc => sc.CurrentBalance, ct);
@@ -115,62 +116,69 @@ public static class StoreCreditEndpoints
 
     // Get store credit details by ID
     private static async Task<IResult> GetStoreCreditById(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         Guid externalId,
         CancellationToken ct)
     {
-        var credit = await db.StoreCredits
-            .Include(sc => sc.Supplier)
+        var creditData = await salesDb.StoreCredits
             .Include(sc => sc.SourceSettlement)
             .Include(sc => sc.Transactions)
             .Where(sc => !sc.IsDeleted && sc.ExternalId == externalId)
-            .Select(sc => new
-            {
-                sc.ExternalId,
-                sc.SupplierId,
-                SupplierName = sc.Supplier.Name,
-                sc.OriginalAmount,
-                sc.CurrentBalance,
-                sc.Status,
-                sc.IssuedOn,
-                sc.IssuedBy,
-                sc.ExpiresOn,
-                sc.Notes,
-                SourceSettlement = sc.SourceSettlement != null ? new
-                {
-                    sc.SourceSettlement.ExternalId,
-                    sc.SourceSettlement.TotalSalesAmount,
-                    sc.SourceSettlement.PeriodStart,
-                    sc.SourceSettlement.PeriodEnd
-                } : null,
-                TransactionCount = sc.Transactions.Count,
-                LastTransaction = sc.Transactions
-                    .OrderByDescending(t => t.TransactionDate)
-                    .Select(t => new
-                    {
-                        t.TransactionDate,
-                        t.Amount,
-                        t.TransactionType
-                    })
-                    .FirstOrDefault()
-            })
             .FirstOrDefaultAsync(ct);
 
-        if (credit == null)
+        if (creditData == null)
         {
             return Results.NotFound(new { error = "Store credit not found." });
         }
+
+        // Load supplier from inventory module
+        var supplier = await inventoryDb.Suppliers
+            .Where(s => s.Id == creditData.SupplierId)
+            .Select(s => new { s.Name })
+            .FirstOrDefaultAsync(ct);
+
+        var credit = new
+        {
+            creditData.ExternalId,
+            creditData.SupplierId,
+            SupplierName = supplier?.Name ?? "",
+            creditData.OriginalAmount,
+            creditData.CurrentBalance,
+            creditData.Status,
+            creditData.IssuedOn,
+            creditData.IssuedBy,
+            creditData.ExpiresOn,
+            creditData.Notes,
+            SourceSettlement = creditData.SourceSettlement != null ? new
+            {
+                creditData.SourceSettlement.ExternalId,
+                creditData.SourceSettlement.TotalSalesAmount,
+                creditData.SourceSettlement.PeriodStart,
+                creditData.SourceSettlement.PeriodEnd
+            } : null,
+            TransactionCount = creditData.Transactions.Count,
+            LastTransaction = creditData.Transactions
+                .OrderByDescending(t => t.TransactionDate)
+                .Select(t => new
+                {
+                    t.TransactionDate,
+                    t.Amount,
+                    t.TransactionType
+                })
+                .FirstOrDefault()
+        };
 
         return Results.Ok(credit);
     }
 
     // Get transaction history for a store credit
     private static async Task<IResult> GetStoreCreditTransactions(
-        ShsDbContext db,
+        SalesDbContext salesDb,
         Guid externalId,
         CancellationToken ct)
     {
-        var credit = await db.StoreCredits
+        var credit = await salesDb.StoreCredits
             .FirstOrDefaultAsync(sc => !sc.IsDeleted && sc.ExternalId == externalId, ct);
 
         if (credit == null)
@@ -178,7 +186,7 @@ public static class StoreCreditEndpoints
             return Results.NotFound(new { error = "Store credit not found." });
         }
 
-        var transactions = await db.StoreCreditTransactions
+        var transactions = await salesDb.StoreCreditTransactions
             .Include(t => t.Sale)
             .Where(t => t.StoreCreditId == credit.Id)
             .OrderByDescending(t => t.TransactionDate)
@@ -210,14 +218,15 @@ public static class StoreCreditEndpoints
 
     // Manually issue store credit (not from settlement)
     private static async Task<IResult> IssueStoreCredit(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         HttpContext httpContext,
         [FromBody] IssueStoreCreditRequest req,
         CancellationToken ct)
     {
         var userEmail = httpContext.User.GetUserEmail();
 
-        var supplier = await db.Suppliers.FindAsync([req.SupplierId], ct);
+        var supplier = await inventoryDb.Suppliers.FindAsync([req.SupplierId], ct);
         if (supplier == null)
         {
             return Results.BadRequest(new { error = "Supplier not found." });
@@ -245,8 +254,8 @@ public static class StoreCreditEndpoints
             CreatedBy = userEmail
         };
 
-        db.StoreCredits.Add(storeCredit);
-        await db.SaveChangesAsync(ct);
+        salesDb.StoreCredits.Add(storeCredit);
+        await salesDb.SaveChangesAsync(ct);
 
         // Create initial transaction
         var transaction = new StoreCreditTransactionEntity
@@ -263,8 +272,8 @@ public static class StoreCreditEndpoints
             CreatedBy = userEmail
         };
 
-        db.StoreCreditTransactions.Add(transaction);
-        await db.SaveChangesAsync(ct);
+        salesDb.StoreCreditTransactions.Add(transaction);
+        await salesDb.SaveChangesAsync(ct);
 
         return Results.Created($"/api/store-credits/{storeCredit.ExternalId}", new
         {
@@ -281,18 +290,19 @@ public static class StoreCreditEndpoints
 
     // Use store credit by supplier (for POS - deducts from supplier's credits, oldest first)
     private static async Task<IResult> UseStoreCreditBySupplier(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         HttpContext httpContext,
         [FromBody] UseStoreCreditBySupplierRequest req,
         CancellationToken ct)
     {
         var userEmail = httpContext.User.GetUserEmail();
 
-        var supplier = await db.Suppliers.FindAsync([req.SupplierId], ct);
+        var supplier = await inventoryDb.Suppliers.FindAsync([req.SupplierId], ct);
         if (supplier == null)
             return Results.NotFound(new { error = "Supplier not found." });
 
-        var credits = await db.StoreCredits
+        var credits = await salesDb.StoreCredits
             .Where(sc => !sc.IsDeleted && sc.SupplierId == req.SupplierId && sc.Status == StoreCreditStatus.Active)
             .Where(sc => sc.ExpiresOn == null || sc.ExpiresOn > DateTime.UtcNow)
             .OrderBy(sc => sc.IssuedOn)
@@ -335,13 +345,13 @@ public static class StoreCreditEndpoints
                 CreatedOn = now,
                 CreatedBy = userEmail
             };
-            db.StoreCreditTransactions.Add(transaction);
+            salesDb.StoreCreditTransactions.Add(transaction);
 
             usedCredits.Add(new { credit.ExternalId, AmountUsed = useAmount, RemainingBalance = credit.CurrentBalance });
             remainingToUse -= useAmount;
         }
 
-        await db.SaveChangesAsync(ct);
+        await salesDb.SaveChangesAsync(ct);
 
         return Results.Ok(new
         {
@@ -354,7 +364,7 @@ public static class StoreCreditEndpoints
 
     // Use store credit (deduct from balance)
     private static async Task<IResult> UseStoreCredit(
-        ShsDbContext db,
+        SalesDbContext salesDb,
         HttpContext httpContext,
         Guid externalId,
         [FromBody] UseStoreCreditRequest req,
@@ -362,7 +372,7 @@ public static class StoreCreditEndpoints
     {
         var userEmail = httpContext.User.GetUserEmail();
 
-        var credit = await db.StoreCredits
+        var credit = await salesDb.StoreCredits
             .FirstOrDefaultAsync(sc => !sc.IsDeleted && sc.ExternalId == externalId, ct);
 
         if (credit == null)
@@ -419,8 +429,8 @@ public static class StoreCreditEndpoints
             CreatedBy = userEmail
         };
 
-        db.StoreCreditTransactions.Add(transaction);
-        await db.SaveChangesAsync(ct);
+        salesDb.StoreCreditTransactions.Add(transaction);
+        await salesDb.SaveChangesAsync(ct);
 
         return Results.Ok(new
         {
@@ -433,7 +443,7 @@ public static class StoreCreditEndpoints
 
     // Manually adjust store credit balance
     private static async Task<IResult> AdjustStoreCredit(
-        ShsDbContext db,
+        SalesDbContext salesDb,
         HttpContext httpContext,
         Guid externalId,
         [FromBody] AdjustStoreCreditRequest req,
@@ -441,7 +451,7 @@ public static class StoreCreditEndpoints
     {
         var userEmail = httpContext.User.GetUserEmail();
 
-        var credit = await db.StoreCredits
+        var credit = await salesDb.StoreCredits
             .FirstOrDefaultAsync(sc => !sc.IsDeleted && sc.ExternalId == externalId, ct);
 
         if (credit == null)
@@ -489,8 +499,8 @@ public static class StoreCreditEndpoints
             CreatedBy = userEmail
         };
 
-        db.StoreCreditTransactions.Add(transaction);
-        await db.SaveChangesAsync(ct);
+        salesDb.StoreCreditTransactions.Add(transaction);
+        await salesDb.SaveChangesAsync(ct);
 
         return Results.Ok(new
         {
@@ -505,7 +515,7 @@ public static class StoreCreditEndpoints
 
     // Cancel/void a store credit
     private static async Task<IResult> CancelStoreCredit(
-        ShsDbContext db,
+        SalesDbContext salesDb,
         HttpContext httpContext,
         Guid externalId,
         [FromQuery] string? reason,
@@ -513,7 +523,7 @@ public static class StoreCreditEndpoints
     {
         var userEmail = httpContext.User.GetUserEmail();
 
-        var credit = await db.StoreCredits
+        var credit = await salesDb.StoreCredits
             .FirstOrDefaultAsync(sc => !sc.IsDeleted && sc.ExternalId == externalId, ct);
 
         if (credit == null)
@@ -552,10 +562,10 @@ public static class StoreCreditEndpoints
                 CreatedBy = userEmail
             };
 
-            db.StoreCreditTransactions.Add(transaction);
+            salesDb.StoreCreditTransactions.Add(transaction);
         }
 
-        await db.SaveChangesAsync(ct);
+        await salesDb.SaveChangesAsync(ct);
 
         return Results.Ok(new
         {

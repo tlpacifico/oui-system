@@ -13,7 +13,6 @@ public class StoreCreditEntity
     /// Supplier who owns this store credit
     /// </summary>
     public long SupplierId { get; set; }
-    public SupplierEntity Supplier { get; set; } = null!;
 
     /// <summary>
     /// Settlement that generated this credit (if applicable)

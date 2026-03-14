@@ -3,23 +3,27 @@ using Microsoft.Extensions.Logging;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
 using shs.Domain.Notifications;
-using shs.Infrastructure.Database;
 using shs.Infrastructure.Services;
+using Oui.Modules.Inventory.Infrastructure;
+using Oui.Modules.Sales.Infrastructure;
 
 namespace shs.Infrastructure.Notifications;
 
 public class AutoSettlementHandler : ISaleNotificationHandler
 {
-    private readonly ShsDbContext _db;
+    private readonly SalesDbContext _salesDb;
+    private readonly InventoryDbContext _inventoryDb;
     private readonly SystemSettingService _settings;
     private readonly ILogger<AutoSettlementHandler> _logger;
 
     public AutoSettlementHandler(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         SystemSettingService settings,
         ILogger<AutoSettlementHandler> logger)
     {
-        _db = db;
+        _salesDb = salesDb;
+        _inventoryDb = inventoryDb;
         _settings = settings;
         _logger = logger;
     }
@@ -30,8 +34,8 @@ public class AutoSettlementHandler : ISaleNotificationHandler
         if (!autoCreate)
             return;
 
-        // Load sold consignment items with supplier info
-        var soldItems = await _db.Items
+        // Load sold consignment items from Inventory module
+        var soldItems = await _inventoryDb.Items
             .Include(i => i.Supplier)
             .Where(i => notification.SoldItemIds.Contains(i.Id)
                         && i.AcquisitionType == AcquisitionType.Consignment
@@ -41,9 +45,9 @@ public class AutoSettlementHandler : ISaleNotificationHandler
         if (soldItems.Count == 0)
             return;
 
-        // Filter out items already linked to a settlement
+        // Filter out items already linked to a settlement (from Sales module)
         var soldItemIds = soldItems.Select(i => i.Id).ToList();
-        var alreadySettledItemIds = await _db.SaleItems
+        var alreadySettledItemIds = await _salesDb.SaleItems
             .Where(si => soldItemIds.Contains(si.ItemId) && si.SettlementId != null)
             .Select(si => si.ItemId)
             .ToListAsync(ct);
@@ -96,11 +100,11 @@ public class AutoSettlementHandler : ISaleNotificationHandler
                 CreatedBy = "system"
             };
 
-            _db.Settlements.Add(settlement);
-            await _db.SaveChangesAsync(ct);
+            _salesDb.Settlements.Add(settlement);
+            await _salesDb.SaveChangesAsync(ct);
 
             // Link sale items to this settlement
-            var saleItems = await _db.SaleItems
+            var saleItems = await _salesDb.SaleItems
                 .Where(si => itemIds.Contains(si.ItemId) && si.SettlementId == null)
                 .ToListAsync(ct);
 
@@ -109,7 +113,7 @@ public class AutoSettlementHandler : ISaleNotificationHandler
                 saleItem.SettlementId = settlement.Id;
             }
 
-            await _db.SaveChangesAsync(ct);
+            await _salesDb.SaveChangesAsync(ct);
 
             _logger.LogInformation(
                 "Auto-settlement created for supplier {SupplierName} (ID: {SupplierId}), " +

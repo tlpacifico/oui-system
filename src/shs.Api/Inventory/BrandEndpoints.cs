@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
-using shs.Infrastructure.Database;
+using Oui.Modules.Inventory.Infrastructure;
 
 namespace shs.Api.Inventory;
 
@@ -20,7 +20,7 @@ public static class BrandEndpoints
     }
 
     private static async Task<IResult> GetAll(
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromQuery] string? search,
         CancellationToken ct)
     {
@@ -49,7 +49,7 @@ public static class BrandEndpoints
 
     private static async Task<IResult> GetById(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var brand = await db.Brands
@@ -75,7 +75,7 @@ public static class BrandEndpoints
     private static async Task<IResult> Create(
         [FromBody] CreateBrandRequest req,
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(req.Name))
@@ -124,7 +124,7 @@ public static class BrandEndpoints
         Guid externalId,
         [FromBody] UpdateBrandRequest req,
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var brand = await db.Brands
@@ -171,7 +171,7 @@ public static class BrandEndpoints
 
     private static async Task<IResult> Delete(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var brand = await db.Brands

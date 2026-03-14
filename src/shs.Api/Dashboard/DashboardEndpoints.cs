@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Sales.Infrastructure;
+using Oui.Modules.Inventory.Infrastructure;
 
 namespace shs.Api.Dashboard;
 
@@ -17,7 +18,8 @@ public static class DashboardEndpoints
     }
 
     private static async Task<IResult> GetDashboard(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         [FromQuery] string period = "today",
         CancellationToken ct = default)
     {
@@ -26,7 +28,7 @@ public static class DashboardEndpoints
         var tomorrow = today.AddDays(1);
 
         // ── Sales Today ──
-        var todaySales = await db.Sales
+        var todaySales = await salesDb.Sales
             .Where(s => s.SaleDate >= today && s.SaleDate < tomorrow && s.Status == SaleStatus.Active)
             .Include(s => s.Payments)
             .Include(s => s.Items)
@@ -45,11 +47,11 @@ public static class DashboardEndpoints
         var lastMonthStart = monthStart.AddMonths(-1);
         var lastMonthEnd = monthStart;
 
-        var monthSales = await db.Sales
+        var monthSales = await salesDb.Sales
             .Where(s => s.SaleDate >= monthStart && s.SaleDate < monthEnd && s.Status == SaleStatus.Active)
             .ToListAsync(ct);
 
-        var lastMonthSales = await db.Sales
+        var lastMonthSales = await salesDb.Sales
             .Where(s => s.SaleDate >= lastMonthStart && s.SaleDate < lastMonthEnd && s.Status == SaleStatus.Active)
             .ToListAsync(ct);
 
@@ -68,7 +70,7 @@ public static class DashboardEndpoints
         };
 
         // ── Inventory ──
-        var toSellItems = await db.Items
+        var toSellItems = await inventoryDb.Items
             .Where(i => !i.IsDeleted && i.Status == ItemStatus.ToSell)
             .Select(i => new { i.EvaluatedPrice, i.DaysInStock, i.CreatedOn })
             .ToListAsync(ct);
@@ -89,12 +91,20 @@ public static class DashboardEndpoints
         };
 
         // ── Pending Settlements ──
-        var pendingGroups = await db.Items
+        // Cross-module: Items from inventoryDb, SaleItems from salesDb
+        // Get settled item IDs from sales module first
+        var settledItemIds = await salesDb.SaleItems
+            .Where(si => si.SettlementId != null)
+            .Select(si => si.ItemId)
+            .Distinct()
+            .ToListAsync(ct);
+
+        var pendingGroups = await inventoryDb.Items
             .Where(i => !i.IsDeleted &&
                        i.Status == ItemStatus.Sold &&
                        i.AcquisitionType == AcquisitionType.Consignment &&
                        i.SupplierId != null)
-            .Where(i => !db.SaleItems.Any(si => si.ItemId == i.Id && si.SettlementId != null))
+            .Where(i => !settledItemIds.Contains(i.Id))
             .GroupBy(i => i.SupplierId)
             .Select(g => new
             {
@@ -110,27 +120,44 @@ public static class DashboardEndpoints
         };
 
         // ── Top Selling Items (this week) ──
+        // Cross-module: SaleItems+Sales from salesDb, Items+Brands from inventoryDb
         var weekStart = today.AddDays(-(int)today.DayOfWeek);
         if (today.DayOfWeek == DayOfWeek.Sunday) weekStart = weekStart.AddDays(-7);
         var weekEnd = weekStart.AddDays(7);
 
-        var topSellingItems = await db.SaleItems
+        var topSaleItems = await salesDb.SaleItems
             .Where(si => si.Sale != null &&
                         si.Sale.SaleDate >= weekStart &&
                         si.Sale.SaleDate < weekEnd &&
                         si.Sale.Status == SaleStatus.Active)
-            .Include(si => si.Item)
-                .ThenInclude(i => i!.Brand)
             .OrderByDescending(si => si.Sale!.SaleDate)
             .Take(5)
             .Select(si => new
             {
-                si.Item!.Name,
-                Brand = si.Item.Brand!.Name,
+                si.ItemId,
                 si.FinalPrice,
                 SoldDate = si.Sale!.SaleDate
             })
             .ToListAsync(ct);
+
+        var topItemIds = topSaleItems.Select(si => si.ItemId).ToList();
+        var topItemDetails = await inventoryDb.Items
+            .Where(i => topItemIds.Contains(i.Id))
+            .Include(i => i.Brand)
+            .Select(i => new { i.Id, i.Name, BrandName = i.Brand!.Name })
+            .ToListAsync(ct);
+
+        var topSellingItems = topSaleItems.Select(si =>
+        {
+            var item = topItemDetails.FirstOrDefault(i => i.Id == si.ItemId);
+            return new
+            {
+                Name = item?.Name ?? "Unknown",
+                Brand = item?.BrandName ?? "Unknown",
+                si.FinalPrice,
+                si.SoldDate
+            };
+        }).ToList();
 
         // ── Alerts ──
         var stagnant30 = toSellItems.Count(i =>
@@ -152,11 +179,11 @@ public static class DashboardEndpoints
         var consignmentPeriodDays = 60;
         var expiryStart = today.AddDays(-consignmentPeriodDays);
         var expiryEnd = today.AddDays(-consignmentPeriodDays + 7);
-        var expiringConsignments = await db.Items
+        var expiringConsignments = await inventoryDb.Items
             .Where(i => !i.IsDeleted &&
                        (i.Status == ItemStatus.ToSell || i.Status == ItemStatus.Evaluated || i.Status == ItemStatus.AwaitingAcceptance) &&
                        i.ReceptionId != null)
-            .Join(db.Receptions,
+            .Join(inventoryDb.Receptions,
                 i => i.ReceptionId,
                 r => r.Id,
                 (i, r) => new { Item = i, Reception = r })
@@ -165,7 +192,7 @@ public static class DashboardEndpoints
                         x.Reception.ReceptionDate.Date < expiryEnd)
             .CountAsync(ct);
 
-        var openRegisters = await db.CashRegisters
+        var openRegisters = await salesDb.CashRegisters
             .Where(r => r.Status == CashRegisterStatus.Open)
             .Include(r => r.Sales.Where(s => !s.IsDeleted && s.Status == SaleStatus.Active))
             .Select(r => new
@@ -189,7 +216,7 @@ public static class DashboardEndpoints
         var chartDays = period == "month" ? 30 : 7;
         var chartStart = today.AddDays(-chartDays);
 
-        var salesByDate = await db.Sales
+        var salesByDate = await salesDb.Sales
             .Where(s => s.SaleDate >= chartStart && s.SaleDate < tomorrow && s.Status == SaleStatus.Active)
             .GroupBy(s => s.SaleDate.Date)
             .Select(g => new

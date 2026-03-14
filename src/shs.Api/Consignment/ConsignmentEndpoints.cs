@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Inventory.Infrastructure;
 using shs.Infrastructure.Services;
 
 namespace shs.Api.Consignment;
@@ -37,7 +37,7 @@ public static class ConsignmentEndpoints
     /// </summary>
     private static async Task<IResult> CreateReception(
         [FromBody] CreateReceptionRequest req,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         // Validate supplier
@@ -96,7 +96,7 @@ public static class ConsignmentEndpoints
     /// List all receptions with optional filtering by status or supplier.
     /// </summary>
     private static async Task<IResult> GetReceptions(
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromQuery] string? status,
         [FromQuery] Guid? supplierExternalId,
         [FromQuery] string? search,
@@ -164,7 +164,7 @@ public static class ConsignmentEndpoints
     /// </summary>
     private static async Task<IResult> GetReceptionById(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var reception = await db.Receptions
@@ -200,7 +200,7 @@ public static class ConsignmentEndpoints
     /// </summary>
     private static async Task<IResult> GetReceptionReceipt(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var reception = await db.Receptions
@@ -224,7 +224,7 @@ public static class ConsignmentEndpoints
     private static async Task<IResult> AddEvaluationItem(
         Guid externalId,
         [FromBody] AddEvaluationItemRequest req,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromServices] IItemIdGeneratorService idGenerator,
         CancellationToken ct)
     {
@@ -342,7 +342,7 @@ public static class ConsignmentEndpoints
     /// </summary>
     private static async Task<IResult> GetReceptionItems(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var reception = await db.Receptions
@@ -383,7 +383,7 @@ public static class ConsignmentEndpoints
     private static async Task<IResult> RemoveEvaluationItem(
         Guid receptionExternalId,
         Guid itemExternalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var reception = await db.Receptions
@@ -421,7 +421,7 @@ public static class ConsignmentEndpoints
     private static async Task<IResult> CompleteEvaluation(
         Guid externalId,
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromServices] IEmailService emailService,
         [FromServices] ILogger<EmailService> logger,
         CancellationToken ct)
@@ -504,7 +504,7 @@ public static class ConsignmentEndpoints
     private static async Task<IResult> SendEvaluationEmail(
         Guid externalId,
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromServices] IEmailService emailService,
         CancellationToken ct)
     {

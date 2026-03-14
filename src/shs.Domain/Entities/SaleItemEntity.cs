@@ -16,5 +16,4 @@ public class SaleItemEntity
     public SettlementEntity? Settlement { get; set; }
 
     public SaleEntity Sale { get; set; } = null!;
-    public ItemEntity Item { get; set; } = null!;
 }

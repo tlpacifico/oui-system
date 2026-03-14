@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Sales.Infrastructure;
+using Oui.Modules.Inventory.Infrastructure;
 
 namespace shs.Api.Financial;
 
@@ -37,13 +38,14 @@ public static class SettlementEndpoints
 
     // Get items pending settlement grouped by supplier
     private static async Task<IResult> GetPendingSettlementItems(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         [FromQuery] long? supplierId,
         [FromQuery] DateTime? startDate,
         [FromQuery] DateTime? endDate,
         CancellationToken ct)
     {
-        var query = db.Items
+        var query = inventoryDb.Items
             .Include(i => i.Supplier)
             .Include(i => i.Brand)
             .Where(i => !i.IsDeleted &&
@@ -68,8 +70,16 @@ public static class SettlementEndpoints
             query = query.Where(i => i.UpdatedOn < ToUtc(endDate.Value).AddDays(1));
         }
 
-        // Get items with their sale information
+        // Get settled item IDs from sales module
+        var allItemIds = await query.Select(i => i.Id).ToListAsync(ct);
+        var settledItemIds = await salesDb.SaleItems
+            .Where(si => allItemIds.Contains(si.ItemId) && si.SettlementId != null)
+            .Select(si => si.ItemId)
+            .ToListAsync(ct);
+
+        // Get items with their sale information, excluding already settled
         var items = await query
+            .Where(i => !settledItemIds.Contains(i.Id))
             .Select(i => new
             {
                 ItemId = i.Id,
@@ -84,10 +94,8 @@ public static class SettlementEndpoints
                 i.SupplierId,
                 SupplierName = i.Supplier!.Name,
                 SupplierInitial = i.Supplier.Initial,
-                i.UpdatedOn, // Sale date (when item was updated to Sold)
-                IsSettled = db.SaleItems.Any(si => si.ItemId == i.Id && si.SettlementId != null)
+                i.UpdatedOn // Sale date (when item was updated to Sold)
             })
-            .Where(i => !i.IsSettled) // Only unsettled items
             .ToListAsync(ct);
 
         // Group by supplier
@@ -110,18 +118,19 @@ public static class SettlementEndpoints
 
     // Calculate settlement amounts before creating (uses supplier's PorcInLoja and PorcInDinheiro)
     private static async Task<IResult> CalculateSettlement(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         [FromBody] CalculateSettlementRequest req,
         CancellationToken ct)
     {
-        var supplier = await db.Suppliers.FindAsync([req.SupplierId], ct);
+        var supplier = await inventoryDb.Suppliers.FindAsync([req.SupplierId], ct);
         if (supplier == null)
             return Results.BadRequest(new { error = "Supplier not found." });
 
         var periodStart = ToUtc(req.PeriodStart);
         var periodEnd = ToUtc(req.PeriodEnd).AddDays(1);
 
-        var items = await db.Items
+        var candidateItems = await inventoryDb.Items
             .Where(i => !i.IsDeleted &&
                        i.Status == ItemStatus.Sold &&
                        i.AcquisitionType == AcquisitionType.Consignment &&
@@ -131,11 +140,17 @@ public static class SettlementEndpoints
             .Select(i => new
             {
                 i.Id,
-                i.FinalSalePrice,
-                IsSettled = db.SaleItems.Any(si => si.ItemId == i.Id && si.SettlementId != null)
+                i.FinalSalePrice
             })
-            .Where(i => !i.IsSettled)
             .ToListAsync(ct);
+
+        var candidateItemIds = candidateItems.Select(i => i.Id).ToList();
+        var settledItemIds = await salesDb.SaleItems
+            .Where(si => candidateItemIds.Contains(si.ItemId) && si.SettlementId != null)
+            .Select(si => si.ItemId)
+            .ToListAsync(ct);
+
+        var items = candidateItems.Where(i => !settledItemIds.Contains(i.Id)).ToList();
 
         if (items.Count == 0)
             return Results.BadRequest(new { error = "No items found for settlement in this period." });
@@ -168,7 +183,8 @@ public static class SettlementEndpoints
 
     // Create a settlement
     private static async Task<IResult> CreateSettlement(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         HttpContext httpContext,
         [FromBody] CreateSettlementRequest req,
         CancellationToken ct)
@@ -176,7 +192,7 @@ public static class SettlementEndpoints
         var userEmail = httpContext.User.GetUserEmail();
 
         // Validate supplier exists
-        var supplier = await db.Suppliers.FindAsync([req.SupplierId], ct);
+        var supplier = await inventoryDb.Suppliers.FindAsync([req.SupplierId], ct);
         if (supplier == null)
         {
             return Results.BadRequest(new { error = "Supplier not found." });
@@ -186,7 +202,7 @@ public static class SettlementEndpoints
         var periodEnd = ToUtc(req.PeriodEnd).AddDays(1);
 
         // Get items to settle (sold, consignment, not yet settled)
-        var items = await db.Items
+        var items = await inventoryDb.Items
             .Where(i => !i.IsDeleted &&
                        i.Status == ItemStatus.Sold &&
                        i.AcquisitionType == AcquisitionType.Consignment &&
@@ -198,7 +214,7 @@ public static class SettlementEndpoints
 
         // Filter out already settled items
         var itemIds = items.Select(i => i.Id).ToList();
-        var alreadySettledIds = await db.SaleItems
+        var alreadySettledIds = await salesDb.SaleItems
             .Where(si => itemIds.Contains(si.ItemId) && si.SettlementId != null)
             .Select(si => si.ItemId)
             .ToListAsync(ct);
@@ -239,11 +255,11 @@ public static class SettlementEndpoints
             CreatedBy = userEmail
         };
 
-        db.Settlements.Add(settlement);
-        await db.SaveChangesAsync(ct);
+        salesDb.Settlements.Add(settlement);
+        await salesDb.SaveChangesAsync(ct);
 
         // Link sale items to this settlement
-        var saleItems = await db.SaleItems
+        var saleItems = await salesDb.SaleItems
             .Where(si => itemIds.Contains(si.ItemId))
             .ToListAsync(ct);
 
@@ -252,7 +268,7 @@ public static class SettlementEndpoints
             saleItem.SettlementId = settlement.Id;
         }
 
-        await db.SaveChangesAsync(ct);
+        await salesDb.SaveChangesAsync(ct);
 
         return Results.Created($"/api/settlements/{settlement.ExternalId}", new
         {
@@ -278,15 +294,15 @@ public static class SettlementEndpoints
 
     // Get all settlements with filters
     private static async Task<IResult> GetSettlements(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         [FromQuery] long? supplierId,
         [FromQuery] SettlementStatus? status,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken ct = default)
     {
-        var query = db.Settlements
-            .Include(s => s.Supplier)
+        var query = salesDb.Settlements
             .Where(s => !s.IsDeleted);
 
         if (supplierId.HasValue)
@@ -301,7 +317,7 @@ public static class SettlementEndpoints
 
         var total = await query.CountAsync(ct);
 
-        var settlements = await query
+        var settlementsRaw = await query
             .OrderByDescending(s => s.CreatedOn)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -309,8 +325,6 @@ public static class SettlementEndpoints
             {
                 s.ExternalId,
                 s.SupplierId,
-                SupplierName = s.Supplier.Name,
-                SupplierInitial = s.Supplier.Initial,
                 s.PeriodStart,
                 s.PeriodEnd,
                 s.TotalSalesAmount,
@@ -329,6 +343,36 @@ public static class SettlementEndpoints
             })
             .ToListAsync(ct);
 
+        // Load supplier info from inventory module
+        var supplierIds = settlementsRaw.Select(s => s.SupplierId).Distinct().ToList();
+        var suppliers = await inventoryDb.Suppliers
+            .Where(s => supplierIds.Contains(s.Id))
+            .Select(s => new { s.Id, s.Name, s.Initial })
+            .ToDictionaryAsync(s => s.Id, ct);
+
+        var settlements = settlementsRaw.Select(s => new
+        {
+            s.ExternalId,
+            s.SupplierId,
+            SupplierName = suppliers.GetValueOrDefault(s.SupplierId)?.Name ?? "",
+            SupplierInitial = suppliers.GetValueOrDefault(s.SupplierId)?.Initial ?? "",
+            s.PeriodStart,
+            s.PeriodEnd,
+            s.TotalSalesAmount,
+            s.CreditPercentageInStore,
+            s.CashRedemptionPercentage,
+            s.StoreCreditAmount,
+            s.CashRedemptionAmount,
+            s.StoreCommissionAmount,
+            s.NetAmountToSupplier,
+            s.Status,
+            s.ItemCount,
+            s.PaidOn,
+            s.PaidBy,
+            s.CreatedOn,
+            s.CreatedBy
+        }).ToList();
+
         return Results.Ok(new
         {
             Total = total,
@@ -340,79 +384,95 @@ public static class SettlementEndpoints
 
     // Get settlement by ID with details
     private static async Task<IResult> GetSettlementById(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         Guid externalId,
         CancellationToken ct)
     {
-        var settlement = await db.Settlements
-            .Include(s => s.Supplier)
+        var settlementData = await salesDb.Settlements
             .Include(s => s.SaleItems)
-                .ThenInclude(si => si.Item)
-                    .ThenInclude(i => i.Brand)
             .Include(s => s.StoreCredit)
             .Where(s => !s.IsDeleted && s.ExternalId == externalId)
-            .Select(s => new
-            {
-                s.ExternalId,
-                s.SupplierId,
-                SupplierName = s.Supplier.Name,
-                SupplierEmail = s.Supplier.Email,
-                SupplierPhone = s.Supplier.PhoneNumber,
-                s.PeriodStart,
-                s.PeriodEnd,
-                s.TotalSalesAmount,
-                s.CreditPercentageInStore,
-                s.CashRedemptionPercentage,
-                s.StoreCreditAmount,
-                s.CashRedemptionAmount,
-                s.StoreCommissionAmount,
-                s.NetAmountToSupplier,
-                s.Status,
-                s.PaidOn,
-                s.PaidBy,
-                s.Notes,
-                s.CreatedOn,
-                s.CreatedBy,
-                StoreCredit = s.StoreCredit != null ? new
-                {
-                    s.StoreCredit.ExternalId,
-                    s.StoreCredit.OriginalAmount,
-                    s.StoreCredit.CurrentBalance,
-                    s.StoreCredit.Status,
-                    s.StoreCredit.IssuedOn
-                } : null,
-                Items = s.SaleItems.Select(si => new
-                {
-                    si.Item.ExternalId,
-                    si.Item.IdentificationNumber,
-                    si.Item.Name,
-                    BrandName = si.Item.Brand!.Name,
-                    si.Item.EvaluatedPrice,
-                    si.FinalPrice,
-                    SaleDate = si.Item.UpdatedOn
-                }).ToList()
-            })
             .FirstOrDefaultAsync(ct);
 
-        if (settlement == null)
+        if (settlementData == null)
         {
             return Results.NotFound(new { error = "Settlement not found." });
         }
 
-        return Results.Ok(settlement);
+        // Load supplier from inventory module
+        var supplier = await inventoryDb.Suppliers
+            .Where(s => s.Id == settlementData.SupplierId)
+            .Select(s => new { s.Name, s.Email, s.PhoneNumber })
+            .FirstOrDefaultAsync(ct);
+
+        // Load items from inventory module for sale items
+        var itemIds = settlementData.SaleItems.Select(si => si.ItemId).ToList();
+        var inventoryItems = await inventoryDb.Items
+            .Include(i => i.Brand)
+            .Where(i => itemIds.Contains(i.Id))
+            .ToDictionaryAsync(i => i.Id, ct);
+
+        var result = new
+        {
+            settlementData.ExternalId,
+            settlementData.SupplierId,
+            SupplierName = supplier?.Name ?? "",
+            SupplierEmail = supplier?.Email,
+            SupplierPhone = supplier?.PhoneNumber,
+            settlementData.PeriodStart,
+            settlementData.PeriodEnd,
+            settlementData.TotalSalesAmount,
+            settlementData.CreditPercentageInStore,
+            settlementData.CashRedemptionPercentage,
+            settlementData.StoreCreditAmount,
+            settlementData.CashRedemptionAmount,
+            settlementData.StoreCommissionAmount,
+            settlementData.NetAmountToSupplier,
+            settlementData.Status,
+            settlementData.PaidOn,
+            settlementData.PaidBy,
+            settlementData.Notes,
+            settlementData.CreatedOn,
+            settlementData.CreatedBy,
+            StoreCredit = settlementData.StoreCredit != null ? new
+            {
+                settlementData.StoreCredit.ExternalId,
+                settlementData.StoreCredit.OriginalAmount,
+                settlementData.StoreCredit.CurrentBalance,
+                settlementData.StoreCredit.Status,
+                settlementData.StoreCredit.IssuedOn
+            } : null,
+            Items = settlementData.SaleItems.Select(si =>
+            {
+                var item = inventoryItems.GetValueOrDefault(si.ItemId);
+                return new
+                {
+                    ExternalId = item?.ExternalId ?? Guid.Empty,
+                    IdentificationNumber = item?.IdentificationNumber ?? "",
+                    Name = item?.Name ?? "",
+                    BrandName = item?.Brand?.Name ?? "",
+                    EvaluatedPrice = item?.EvaluatedPrice ?? 0m,
+                    si.FinalPrice,
+                    SaleDate = item?.UpdatedOn
+                };
+            }).ToList()
+        };
+
+        return Results.Ok(result);
     }
 
     // Process payment for a settlement
     private static async Task<IResult> ProcessPayment(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         HttpContext httpContext,
         Guid externalId,
         CancellationToken ct)
     {
         var userEmail = httpContext.User.GetUserEmail();
 
-        var settlement = await db.Settlements
-            .Include(s => s.Supplier)
+        var settlement = await salesDb.Settlements
             .FirstOrDefaultAsync(s => !s.IsDeleted && s.ExternalId == externalId, ct);
 
         if (settlement == null)
@@ -449,8 +509,8 @@ public static class SettlementEndpoints
                 CreatedBy = userEmail
             };
 
-            db.StoreCredits.Add(storeCredit);
-            await db.SaveChangesAsync(ct);
+            salesDb.StoreCredits.Add(storeCredit);
+            await salesDb.SaveChangesAsync(ct);
 
             var transaction = new StoreCreditTransactionEntity
             {
@@ -466,7 +526,7 @@ public static class SettlementEndpoints
                 CreatedBy = userEmail
             };
 
-            db.StoreCreditTransactions.Add(transaction);
+            salesDb.StoreCreditTransactions.Add(transaction);
             settlement.StoreCreditId = storeCredit.Id;
         }
 
@@ -487,7 +547,7 @@ public static class SettlementEndpoints
                 CreatedBy = userEmail
             };
 
-            db.SupplierCashBalanceTransactions.Add(cashTransaction);
+            salesDb.SupplierCashBalanceTransactions.Add(cashTransaction);
         }
 
         // Update settlement status
@@ -498,12 +558,12 @@ public static class SettlementEndpoints
         settlement.UpdatedBy = userEmail;
 
         // Update all items in settlement to Paid status
-        var itemIds = await db.SaleItems
+        var itemIds = await salesDb.SaleItems
             .Where(si => si.SettlementId == settlement.Id)
             .Select(si => si.ItemId)
             .ToListAsync(ct);
 
-        var items = await db.Items
+        var items = await inventoryDb.Items
             .Where(i => itemIds.Contains(i.Id))
             .ToListAsync(ct);
 
@@ -514,7 +574,8 @@ public static class SettlementEndpoints
             item.UpdatedBy = userEmail;
         }
 
-        await db.SaveChangesAsync(ct);
+        await salesDb.SaveChangesAsync(ct);
+        await inventoryDb.SaveChangesAsync(ct);
 
         var messages = new List<string>();
         if (settlement.StoreCreditAmount > 0)
@@ -534,14 +595,14 @@ public static class SettlementEndpoints
 
     // Cancel a settlement
     private static async Task<IResult> CancelSettlement(
-        ShsDbContext db,
+        SalesDbContext salesDb,
         HttpContext httpContext,
         Guid externalId,
         CancellationToken ct)
     {
         var userEmail = httpContext.User.GetUserEmail();
 
-        var settlement = await db.Settlements
+        var settlement = await salesDb.Settlements
             .FirstOrDefaultAsync(s => !s.IsDeleted && s.ExternalId == externalId, ct);
 
         if (settlement == null)
@@ -557,7 +618,7 @@ public static class SettlementEndpoints
         var now = DateTime.UtcNow;
 
         // Unlink sale items from this settlement
-        var saleItems = await db.SaleItems
+        var saleItems = await salesDb.SaleItems
             .Where(si => si.SettlementId == settlement.Id)
             .ToListAsync(ct);
 
@@ -571,7 +632,7 @@ public static class SettlementEndpoints
         settlement.UpdatedOn = now;
         settlement.UpdatedBy = userEmail;
 
-        await db.SaveChangesAsync(ct);
+        await salesDb.SaveChangesAsync(ct);
 
         return Results.Ok(new
         {

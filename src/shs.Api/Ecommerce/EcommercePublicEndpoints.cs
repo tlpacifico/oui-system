@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Ecommerce.Infrastructure;
 
 namespace shs.Api.Ecommerce;
 
@@ -21,7 +21,7 @@ public static class EcommercePublicEndpoints
     }
 
     private static async Task<IResult> GetProducts(
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         [FromQuery] string? search,
         [FromQuery] string? brand,
         [FromQuery] string? category,
@@ -104,7 +104,7 @@ public static class EcommercePublicEndpoints
 
     private static async Task<IResult> GetProductBySlug(
         string slug,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         CancellationToken ct)
     {
         var product = await db.EcommerceProducts
@@ -137,7 +137,7 @@ public static class EcommercePublicEndpoints
     }
 
     private static async Task<IResult> GetBrands(
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         CancellationToken ct)
     {
         var brands = await db.EcommerceProducts
@@ -151,7 +151,7 @@ public static class EcommercePublicEndpoints
     }
 
     private static async Task<IResult> GetCategories(
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         CancellationToken ct)
     {
         var categories = await db.EcommerceProducts
@@ -166,7 +166,7 @@ public static class EcommercePublicEndpoints
 
     private static async Task<IResult> CreateOrder(
         [FromBody] CreateOrderRequest request,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(request.CustomerName))
@@ -259,7 +259,7 @@ public static class EcommercePublicEndpoints
 
     private static async Task<IResult> GetOrderStatus(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] EcommerceDbContext db,
         CancellationToken ct)
     {
         var order = await db.EcommerceOrders

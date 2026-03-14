@@ -13,7 +13,6 @@ public class SettlementEntity
     /// Supplier being paid
     /// </summary>
     public long SupplierId { get; set; }
-    public SupplierEntity Supplier { get; set; } = null!;
 
     /// <summary>
     /// Settlement period (inclusive)

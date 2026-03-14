@@ -1,7 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using Oui.Modules.Auth.Infrastructure;
+using Oui.Modules.Inventory.Infrastructure;
+using Oui.Modules.Sales.Infrastructure;
+using Oui.Modules.Ecommerce.Infrastructure;
+using Oui.Modules.System.Infrastructure;
 using Respawn;
-using shs.Infrastructure.Database;
 using Xunit;
 
 namespace shs.Api.IntegrationTests.Infrastructure;
@@ -31,15 +35,20 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         _respawner = await Respawner.CreateAsync(connection, new RespawnerOptions
         {
             DbAdapter = DbAdapter.Postgres,
+            SchemasToInclude = ["auth", "inventory", "sales", "ecommerce", "system"],
             TablesToIgnore =
             [
-                new Respawn.Graph.Table("Roles"),
-                new Respawn.Graph.Table("Permissions"),
-                new Respawn.Graph.Table("RolePermissions"),
-                new Respawn.Graph.Table("Users"),
-                new Respawn.Graph.Table("UserRoles"),
-                new Respawn.Graph.Table("SystemSettings"),
-                new Respawn.Graph.Table("__EFMigrationsHistory"),
+                new Respawn.Graph.Table("auth", "Roles"),
+                new Respawn.Graph.Table("auth", "Permissions"),
+                new Respawn.Graph.Table("auth", "RolePermissions"),
+                new Respawn.Graph.Table("auth", "Users"),
+                new Respawn.Graph.Table("auth", "UserRoles"),
+                new Respawn.Graph.Table("system", "SystemSettings"),
+                new Respawn.Graph.Table("auth", "__EFMigrationsHistory"),
+                new Respawn.Graph.Table("inventory", "__EFMigrationsHistory"),
+                new Respawn.Graph.Table("sales", "__EFMigrationsHistory"),
+                new Respawn.Graph.Table("ecommerce", "__EFMigrationsHistory"),
+                new Respawn.Graph.Table("system", "__EFMigrationsHistory"),
             ]
         });
 
@@ -51,9 +60,33 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         await Factory.DisposeAsync();
     }
 
-    protected ShsDbContext CreateDbContext()
+    protected AuthDbContext CreateAuthDbContext()
     {
         var scope = Factory.Services.CreateScope();
-        return scope.ServiceProvider.GetRequiredService<ShsDbContext>();
+        return scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+    }
+
+    protected InventoryDbContext CreateInventoryDbContext()
+    {
+        var scope = Factory.Services.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<InventoryDbContext>();
+    }
+
+    protected SalesDbContext CreateSalesDbContext()
+    {
+        var scope = Factory.Services.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<SalesDbContext>();
+    }
+
+    protected EcommerceDbContext CreateEcommerceDbContext()
+    {
+        var scope = Factory.Services.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<EcommerceDbContext>();
+    }
+
+    protected SystemDbContext CreateSystemDbContext()
+    {
+        var scope = Factory.Services.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<SystemDbContext>();
     }
 }

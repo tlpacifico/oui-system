@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Inventory.Infrastructure;
+using Oui.Modules.Ecommerce.Infrastructure;
 using shs.Infrastructure.Services;
 
 namespace shs.Api.Inventory;
@@ -29,7 +30,7 @@ public static class InventoryEndpoints
 
     private static async Task<IResult> CreateItem(
         [FromBody] CreateItemRequest req,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromServices] IItemIdGeneratorService idGenerator,
         CancellationToken ct)
     {
@@ -139,7 +140,7 @@ public static class InventoryEndpoints
 
     private static async Task<IResult> CreateConsignmentItem(
         [FromBody] CreateConsignmentItemRequest req,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromServices] IItemIdGeneratorService idGenerator,
         CancellationToken ct)
     {
@@ -233,7 +234,8 @@ public static class InventoryEndpoints
     }
 
     private static async Task<IResult> GetItems(
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
+        [FromServices] EcommerceDbContext ecommerceDb,
         [FromQuery] string? search,
         [FromQuery] long? brandId,
         [FromQuery] string? status,
@@ -262,35 +264,54 @@ public static class InventoryEndpoints
 
         var totalCount = await query.CountAsync(ct);
 
-        var items = await query
+        var rawItems = await query
             .OrderByDescending(i => i.CreatedOn)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(i => new ItemListItemResponse(
+            .Select(i => new
+            {
+                i.Id,
                 i.ExternalId,
                 i.IdentificationNumber,
                 i.Name,
-                i.Brand.Name,
+                BrandName = i.Brand.Name,
                 i.Size,
                 i.Color,
                 i.EvaluatedPrice,
-                i.Status.ToString(),
-                i.Photos.OrderBy(p => p.DisplayOrder).Select(p => p.ThumbnailPath ?? p.FilePath).FirstOrDefault(),
-                i.CreatedOn,
-                db.EcommerceProducts
-                    .Where(ep => ep.ItemId == i.Id && ep.Status != EcommerceProductStatus.Unpublished && ep.Status != EcommerceProductStatus.Sold)
-                    .Select(ep => (Guid?)ep.ExternalId)
-                    .FirstOrDefault(),
-                db.EcommerceProducts
-                    .Where(ep => ep.ItemId == i.Id && ep.Status != EcommerceProductStatus.Unpublished && ep.Status != EcommerceProductStatus.Sold)
-                    .Select(ep => ep.Slug)
-                    .FirstOrDefault(),
-                db.EcommerceProducts
-                    .Where(ep => ep.ItemId == i.Id && ep.Status != EcommerceProductStatus.Unpublished && ep.Status != EcommerceProductStatus.Sold)
-                    .Select(ep => ep.Status.ToString())
-                    .FirstOrDefault()
-            ))
+                Status = i.Status.ToString(),
+                PrimaryPhotoUrl = i.Photos.OrderBy(p => p.DisplayOrder).Select(p => p.ThumbnailPath ?? p.FilePath).FirstOrDefault(),
+                i.CreatedOn
+            })
             .ToListAsync(ct);
+
+        // Cross-module: fetch ecommerce product info from EcommerceDbContext
+        var itemIds = rawItems.Select(i => i.Id).ToList();
+        var ecommerceInfo = await ecommerceDb.EcommerceProducts
+            .Where(ep => itemIds.Contains(ep.ItemId) && ep.Status != EcommerceProductStatus.Unpublished && ep.Status != EcommerceProductStatus.Sold)
+            .Select(ep => new { ep.ItemId, ep.ExternalId, ep.Slug, Status = ep.Status.ToString() })
+            .ToListAsync(ct);
+
+        var ecommerceLookup = ecommerceInfo.ToDictionary(e => e.ItemId);
+
+        var items = rawItems.Select(i =>
+        {
+            ecommerceLookup.TryGetValue(i.Id, out var ec);
+            return new ItemListItemResponse(
+                i.ExternalId,
+                i.IdentificationNumber,
+                i.Name,
+                i.BrandName,
+                i.Size,
+                i.Color,
+                i.EvaluatedPrice,
+                i.Status,
+                i.PrimaryPhotoUrl,
+                i.CreatedOn,
+                ec != null ? (Guid?)ec.ExternalId : null,
+                ec?.Slug,
+                ec?.Status
+            );
+        }).ToList();
 
         return Results.Ok(new PagedResult<ItemListItemResponse>(
             items,
@@ -303,7 +324,7 @@ public static class InventoryEndpoints
 
     private static async Task<IResult> GetItemById(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var item = await db.Items
@@ -353,7 +374,7 @@ public static class InventoryEndpoints
     private static async Task<IResult> UpdateItem(
         Guid externalId,
         [FromBody] UpdateItemRequest req,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var item = await db.Items
@@ -468,7 +489,7 @@ public static class InventoryEndpoints
 
     private static async Task<IResult> DeleteItem(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var item = await db.Items
@@ -500,7 +521,7 @@ public static class InventoryEndpoints
     private static async Task<IResult> UploadPhotos(
         Guid externalId,
         [FromForm] IFormFileCollection files,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromServices] IWebHostEnvironment env,
         CancellationToken ct)
     {
@@ -592,7 +613,7 @@ public static class InventoryEndpoints
     private static async Task<IResult> DeletePhoto(
         Guid itemExternalId,
         Guid photoExternalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromServices] IWebHostEnvironment env,
         CancellationToken ct)
     {
@@ -639,7 +660,7 @@ public static class InventoryEndpoints
     private static async Task<IResult> ReorderPhotos(
         Guid externalId,
         [FromBody] ReorderPhotosRequest req,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var item = await db.Items

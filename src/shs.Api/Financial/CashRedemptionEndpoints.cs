@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
-using shs.Infrastructure.Database;
+using Oui.Modules.Sales.Infrastructure;
+using Oui.Modules.Inventory.Infrastructure;
 
 namespace shs.Api.Financial;
 
@@ -26,15 +27,16 @@ public static class CashRedemptionEndpoints
     /// Get supplier's available cash redemption balance (PorcInDinheiro)
     /// </summary>
     private static async Task<IResult> GetSupplierCashBalance(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         long supplierId,
         CancellationToken ct)
     {
-        var supplier = await db.Suppliers.FindAsync([supplierId], ct);
+        var supplier = await inventoryDb.Suppliers.FindAsync([supplierId], ct);
         if (supplier == null)
             return Results.NotFound(new { error = "Supplier not found." });
 
-        var balance = await db.SupplierCashBalanceTransactions
+        var balance = await salesDb.SupplierCashBalanceTransactions
             .Where(t => t.SupplierId == supplierId)
             .SumAsync(t => t.Amount, ct);
 
@@ -52,17 +54,18 @@ public static class CashRedemptionEndpoints
     /// Get supplier's cash balance transaction history
     /// </summary>
     private static async Task<IResult> GetSupplierCashRedemptionHistory(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         long supplierId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken ct = default)
     {
-        var supplier = await db.Suppliers.FindAsync([supplierId], ct);
+        var supplier = await inventoryDb.Suppliers.FindAsync([supplierId], ct);
         if (supplier == null)
             return Results.NotFound(new { error = "Supplier not found." });
 
-        var query = db.SupplierCashBalanceTransactions
+        var query = salesDb.SupplierCashBalanceTransactions
             .Include(t => t.Settlement)
             .Where(t => t.SupplierId == supplierId)
             .OrderByDescending(t => t.TransactionDate);
@@ -86,7 +89,7 @@ public static class CashRedemptionEndpoints
             })
             .ToListAsync(ct);
 
-        var balance = await db.SupplierCashBalanceTransactions
+        var balance = await salesDb.SupplierCashBalanceTransactions
             .Where(t => t.SupplierId == supplierId)
             .SumAsync(t => t.Amount, ct);
 
@@ -107,18 +110,19 @@ public static class CashRedemptionEndpoints
     /// Process cash redemption - supplier withdraws their PorcInDinheiro balance
     /// </summary>
     private static async Task<IResult> ProcessCashRedemption(
-        ShsDbContext db,
+        SalesDbContext salesDb,
+        InventoryDbContext inventoryDb,
         HttpContext httpContext,
         [FromBody] ProcessCashRedemptionRequest req,
         CancellationToken ct)
     {
         var userEmail = httpContext.User.GetUserEmail();
 
-        var supplier = await db.Suppliers.FindAsync([req.SupplierId], ct);
+        var supplier = await inventoryDb.Suppliers.FindAsync([req.SupplierId], ct);
         if (supplier == null)
             return Results.NotFound(new { error = "Supplier not found." });
 
-        var currentBalance = await db.SupplierCashBalanceTransactions
+        var currentBalance = await salesDb.SupplierCashBalanceTransactions
             .Where(t => t.SupplierId == req.SupplierId)
             .SumAsync(t => t.Amount, ct);
 
@@ -147,8 +151,8 @@ public static class CashRedemptionEndpoints
             CreatedBy = userEmail
         };
 
-        db.SupplierCashBalanceTransactions.Add(transaction);
-        await db.SaveChangesAsync(ct);
+        salesDb.SupplierCashBalanceTransactions.Add(transaction);
+        await salesDb.SaveChangesAsync(ct);
 
         var newBalance = currentBalance - req.Amount;
 

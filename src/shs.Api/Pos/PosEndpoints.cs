@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Sales.Infrastructure;
+using Oui.Modules.Inventory.Infrastructure;
 
 namespace shs.Api.Pos;
 
@@ -29,7 +30,7 @@ public static class PosEndpoints
     /// Returns minimal data: id, name, initial.
     /// </summary>
     private static async Task<IResult> GetPosSuppliers(
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromQuery] string? search,
         CancellationToken ct)
     {
@@ -76,7 +77,7 @@ public static class PosEndpoints
     private static async Task<IResult> OpenRegister(
         [FromBody] OpenRegisterRequest req,
         HttpContext httpCtx,
-        [FromServices] ShsDbContext db,
+        [FromServices] SalesDbContext db,
         CancellationToken ct)
     {
         if (req.OpeningAmount < 0)
@@ -140,7 +141,7 @@ public static class PosEndpoints
     private static async Task<IResult> CloseRegister(
         [FromBody] CloseRegisterRequest req,
         HttpContext httpCtx,
-        [FromServices] ShsDbContext db,
+        [FromServices] SalesDbContext db,
         CancellationToken ct)
     {
         if (req.ClosingAmount < 0)
@@ -221,7 +222,7 @@ public static class PosEndpoints
     /// </summary>
     private static async Task<IResult> GetCurrentRegister(
         HttpContext httpCtx,
-        [FromServices] ShsDbContext db,
+        [FromServices] SalesDbContext db,
         CancellationToken ct)
     {
         var userId = GetUserId(httpCtx);
@@ -266,7 +267,7 @@ public static class PosEndpoints
     /// </summary>
     private static async Task<IResult> GetRegisterById(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] SalesDbContext db,
         CancellationToken ct)
     {
         var register = await db.CashRegisters
@@ -333,7 +334,7 @@ public static class PosEndpoints
     /// Returns recently closed + currently open registers.
     /// </summary>
     private static async Task<IResult> GetAllRegistersStatus(
-        [FromServices] ShsDbContext db,
+        [FromServices] SalesDbContext db,
         [FromQuery] int days = 7,
         CancellationToken ct = default)
     {

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
-using shs.Infrastructure.Database;
+using Oui.Modules.System.Infrastructure;
 
 namespace shs.Api.Admin;
 
@@ -20,7 +20,7 @@ public static class SystemSettingEndpoints
             .RequirePermission("admin.settings.update");
     }
 
-    private static async Task<IResult> GetAll(ShsDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetAll(SystemDbContext db, CancellationToken ct)
     {
         var settings = await db.SystemSettings
             .OrderBy(s => s.Module)
@@ -36,7 +36,7 @@ public static class SystemSettingEndpoints
         return Results.Ok(grouped);
     }
 
-    private static async Task<IResult> GetByKey(ShsDbContext db, string key, CancellationToken ct)
+    private static async Task<IResult> GetByKey(SystemDbContext db, string key, CancellationToken ct)
     {
         var setting = await db.SystemSettings
             .Where(s => s.Key == key)
@@ -50,7 +50,7 @@ public static class SystemSettingEndpoints
     }
 
     private static async Task<IResult> Update(
-        ShsDbContext db,
+        SystemDbContext db,
         string key,
         UpdateSystemSettingRequest request,
         HttpContext httpContext,

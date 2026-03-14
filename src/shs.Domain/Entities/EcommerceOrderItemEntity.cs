@@ -8,8 +8,7 @@ public class EcommerceOrderItemEntity : EntityWithIdAuditable<long>
     public string ProductTitle { get; set; } = string.Empty;
     public decimal Price { get; set; }
 
-    // Navigation
+    // Navigation (intra-module: Ecommerce)
     public EcommerceOrderEntity Order { get; set; } = null!;
     public EcommerceProductEntity Product { get; set; } = null!;
-    public ItemEntity Item { get; set; } = null!;
 }

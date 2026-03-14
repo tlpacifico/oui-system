@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using shs.Domain.Entities;
-using shs.Infrastructure.Database;
+using Oui.Modules.Auth.Infrastructure;
 
 namespace shs.Api.Auth;
 
@@ -17,7 +17,7 @@ public static class AuthEndpoints
 
         group.MapPost("/login", async (
             [FromBody] LoginRequest request,
-            [FromServices] ShsDbContext db,
+            [FromServices] AuthDbContext db,
             [FromServices] IConfiguration config,
             CancellationToken ct) =>
         {
@@ -38,7 +38,7 @@ public static class AuthEndpoints
         });
     }
 
-    private static async Task<string> BuildJwt(UserEntity user, IConfiguration config, ShsDbContext db, CancellationToken ct)
+    private static async Task<string> BuildJwt(UserEntity user, IConfiguration config, AuthDbContext db, CancellationToken ct)
     {
         var secret = config["Jwt:Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not set.");
         var issuer = config["Jwt:Issuer"] ?? "OUI-System";

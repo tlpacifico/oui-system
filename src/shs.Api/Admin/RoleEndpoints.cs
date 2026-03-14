@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
-using shs.Infrastructure.Database;
+using Oui.Modules.Auth.Infrastructure;
 
 namespace shs.Api.Admin;
 
@@ -20,7 +20,7 @@ public static class RoleEndpoints
     }
 
     private static async Task<IResult> GetAll(
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         [FromQuery] string? search = null,
         CancellationToken ct = default)
     {
@@ -51,7 +51,7 @@ public static class RoleEndpoints
 
     private static async Task<IResult> GetById(
         [FromRoute] Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var role = await db.Roles
@@ -87,7 +87,7 @@ public static class RoleEndpoints
     private static async Task<IResult> Create(
         [FromBody] CreateRoleRequest request,
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         // Check if role name already exists
@@ -114,7 +114,7 @@ public static class RoleEndpoints
         [FromRoute] Guid externalId,
         [FromBody] UpdateRoleRequest request,
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var role = await db.Roles.FirstOrDefaultAsync(r => r.ExternalId == externalId, ct);
@@ -141,7 +141,7 @@ public static class RoleEndpoints
     private static async Task<IResult> Delete(
         [FromRoute] Guid externalId,
         HttpContext httpContext,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var role = await db.Roles

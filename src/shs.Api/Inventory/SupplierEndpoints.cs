@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Inventory.Infrastructure;
 
 namespace shs.Api.Inventory;
 
@@ -24,7 +24,7 @@ public static class SupplierEndpoints
     }
 
     private static async Task<IResult> GetAll(
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromQuery] string? search,
         CancellationToken ct)
     {
@@ -63,7 +63,7 @@ public static class SupplierEndpoints
 
     private static async Task<IResult> GetById(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var supplier = await db.Suppliers
@@ -94,7 +94,7 @@ public static class SupplierEndpoints
 
     private static async Task<IResult> GetSupplierItems(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromQuery] string? status,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -147,7 +147,7 @@ public static class SupplierEndpoints
 
     private static async Task<IResult> GetSupplierReceptions(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var supplier = await db.Suppliers
@@ -178,7 +178,7 @@ public static class SupplierEndpoints
 
     private static async Task<IResult> Create(
         [FromBody] CreateSupplierRequest req,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var errors = ValidateSupplier(req.Name, req.Email, req.PhoneNumber, req.TaxNumber, req.Initial);
@@ -255,7 +255,7 @@ public static class SupplierEndpoints
     private static async Task<IResult> Update(
         Guid externalId,
         [FromBody] UpdateSupplierRequest req,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var supplier = await db.Suppliers
@@ -331,7 +331,7 @@ public static class SupplierEndpoints
 
     private static async Task<IResult> Delete(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var supplier = await db.Suppliers

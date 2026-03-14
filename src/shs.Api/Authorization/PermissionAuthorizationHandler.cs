@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using shs.Infrastructure.Database;
+using Oui.Modules.Auth.Infrastructure;
 
 namespace shs.Api.Authorization;
 
@@ -24,7 +24,7 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
     {
         // Create a scope to resolve the DbContext
         using var scope = _serviceScopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ShsDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
 
         long userId = 0;
 

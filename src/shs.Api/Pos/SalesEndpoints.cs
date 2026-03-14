@@ -5,7 +5,9 @@ using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
 using shs.Domain.Notifications;
-using shs.Infrastructure.Database;
+using Oui.Modules.Sales.Infrastructure;
+using Oui.Modules.Inventory.Infrastructure;
+using Oui.Modules.Ecommerce.Infrastructure;
 
 namespace shs.Api.Pos;
 
@@ -38,7 +40,9 @@ public static class SalesEndpoints
     private static async Task<IResult> ProcessSale(
         [FromBody] ProcessSaleRequest req,
         HttpContext httpCtx,
-        [FromServices] ShsDbContext db,
+        [FromServices] SalesDbContext salesDb,
+        [FromServices] InventoryDbContext inventoryDb,
+        [FromServices] EcommerceDbContext ecommerceDb,
         [FromServices] ISaleNotificationDispatcher dispatcher,
         CancellationToken ct)
     {
@@ -58,7 +62,7 @@ public static class SalesEndpoints
             return Results.BadRequest(new { error = "A percentagem de desconto deve estar entre 0 e 100." });
 
         // ── Validate cash register ──
-        var register = await db.CashRegisters
+        var register = await salesDb.CashRegisters
             .FirstOrDefaultAsync(r => r.ExternalId == req.CashRegisterId
                                       && r.Status == CashRegisterStatus.Open, ct);
 
@@ -71,7 +75,7 @@ public static class SalesEndpoints
         // ── Load and validate items ──
         var itemExternalIds = req.Items.Select(i => i.ItemExternalId).ToArray();
 
-        var items = await db.Items
+        var items = await inventoryDb.Items
             .Where(i => itemExternalIds.Contains(i.ExternalId) && !i.IsDeleted)
             .Include(i => i.Brand)
             .Include(i => i.Supplier)
@@ -164,14 +168,14 @@ public static class SalesEndpoints
         {
             if (!p.SupplierId.HasValue) continue;
 
-            var creditBalance = await db.StoreCredits
+            var creditBalance = await salesDb.StoreCredits
                 .Where(sc => !sc.IsDeleted && sc.SupplierId == p.SupplierId && sc.Status == StoreCreditStatus.Active)
                 .Where(sc => sc.ExpiresOn == null || sc.ExpiresOn > DateTime.UtcNow)
                 .SumAsync(sc => sc.CurrentBalance, ct);
 
             if (creditBalance < p.Amount)
             {
-                var supplier = await db.Suppliers.FindAsync([p.SupplierId.Value], ct);
+                var supplier = await inventoryDb.Suppliers.FindAsync([p.SupplierId.Value], ct);
                 var name = supplier?.Name ?? p.SupplierId.ToString();
                 return Results.BadRequest(new
                 {
@@ -193,7 +197,7 @@ public static class SalesEndpoints
         var today = DateTime.UtcNow.Date;
         var todayPrefix = $"V{today:yyyyMMdd}-";
 
-        var lastSaleNumber = await db.Sales
+        var lastSaleNumber = await salesDb.Sales
             .IgnoreQueryFilters()
             .Where(s => s.SaleNumber.StartsWith(todayPrefix))
             .OrderByDescending(s => s.SaleNumber)
@@ -236,15 +240,15 @@ public static class SalesEndpoints
             }).ToList()
         };
 
-        db.Sales.Add(sale);
+        salesDb.Sales.Add(sale);
 
         // Persist Sale first so it gets a database-generated Id (required for Items.SaleId FK)
-        await db.SaveChangesAsync(ct);
+        await salesDb.SaveChangesAsync(ct);
 
         // ── Deduct store credits for StoreCredit payments ──
         foreach (var payment in sale.Payments.Where(p => p.PaymentMethod == PaymentMethodType.StoreCredit && p.SupplierId.HasValue))
         {
-            var credits = await db.StoreCredits
+            var credits = await salesDb.StoreCredits
                 .Where(sc => !sc.IsDeleted && sc.SupplierId == payment.SupplierId!.Value && sc.Status == StoreCreditStatus.Active)
                 .Where(sc => sc.ExpiresOn == null || sc.ExpiresOn > DateTime.UtcNow)
                 .OrderBy(sc => sc.IssuedOn)
@@ -277,13 +281,13 @@ public static class SalesEndpoints
                     CreatedOn = DateTime.UtcNow,
                     CreatedBy = userId
                 };
-                db.StoreCreditTransactions.Add(transaction);
+                salesDb.StoreCreditTransactions.Add(transaction);
                 payment.StoreCreditId = credit.Id; // Link to first credit used for audit
                 remainingToUse -= useAmount;
             }
         }
 
-        await db.SaveChangesAsync(ct);
+        await salesDb.SaveChangesAsync(ct);
 
         // ── Update item statuses to Sold ──
         foreach (var item in items)
@@ -308,7 +312,7 @@ public static class SalesEndpoints
 
         // Unpublish ecommerce products for sold items
         var soldItemDbIds = items.Select(i => i.Id).ToList();
-        var ecommerceProducts = await db.EcommerceProducts
+        var ecommerceProducts = await ecommerceDb.EcommerceProducts
             .Where(p => soldItemDbIds.Contains(p.ItemId) &&
                 (p.Status == EcommerceProductStatus.Published || p.Status == EcommerceProductStatus.Reserved))
             .ToListAsync(ct);
@@ -329,13 +333,13 @@ public static class SalesEndpoints
 
             if (reservedProductIds.Count > 0)
             {
-                var affectedOrderIds = await db.EcommerceOrderItems
+                var affectedOrderIds = await ecommerceDb.EcommerceOrderItems
                     .Where(oi => reservedProductIds.Contains(oi.ProductId))
                     .Select(oi => oi.OrderId)
                     .Distinct()
                     .ToListAsync(ct);
 
-                var ordersToCancel = await db.EcommerceOrders
+                var ordersToCancel = await ecommerceDb.EcommerceOrders
                     .Where(o => affectedOrderIds.Contains(o.Id) &&
                         (o.Status == EcommerceOrderStatus.Pending || o.Status == EcommerceOrderStatus.Confirmed))
                     .ToListAsync(ct);
@@ -349,7 +353,8 @@ public static class SalesEndpoints
             }
         }
 
-        await db.SaveChangesAsync(ct);
+        await inventoryDb.SaveChangesAsync(ct);
+        await ecommerceDb.SaveChangesAsync(ct);
 
         // Dispatch post-sale notification (auto-settlement, etc.)
         var soldItemIds = items.Select(i => i.Id).ToArray();
@@ -383,22 +388,26 @@ public static class SalesEndpoints
     /// </summary>
     private static async Task<IResult> GetSaleById(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] SalesDbContext salesDb,
+        [FromServices] InventoryDbContext inventoryDb,
         CancellationToken ct)
     {
-        var sale = await db.Sales
+        var sale = await salesDb.Sales
             .Include(s => s.CashRegister)
             .Include(s => s.Items)
-                .ThenInclude(si => si.Item)
-                    .ThenInclude(i => i.Brand)
-            .Include(s => s.Items)
-                .ThenInclude(si => si.Item)
-                    .ThenInclude(i => i.Supplier)
             .Include(s => s.Payments)
             .FirstOrDefaultAsync(s => s.ExternalId == externalId, ct);
 
         if (sale is null)
             return Results.NotFound(new { error = "Venda não encontrada." });
+
+        // Load inventory items separately (cross-module)
+        var itemIds = sale.Items.Select(si => si.ItemId).ToList();
+        var inventoryItems = await inventoryDb.Items
+            .Include(i => i.Brand)
+            .Include(i => i.Supplier)
+            .Where(i => itemIds.Contains(i.Id))
+            .ToDictionaryAsync(i => i.Id, ct);
 
         return Results.Ok(new SaleDetailResponse(
             sale.ExternalId,
@@ -413,18 +422,22 @@ public static class SalesEndpoints
             sale.Notes,
             sale.CashRegister.OperatorName,
             sale.CashRegister.RegisterNumber,
-            sale.Items.Select(si => new SaleItemDetail(
-                si.Item.ExternalId,
-                si.Item.IdentificationNumber,
-                si.Item.Name,
-                si.Item.Brand.Name,
-                si.Item.Size,
-                si.Item.Color,
-                si.Item.Supplier?.Name,
-                si.UnitPrice,
-                si.DiscountAmount,
-                si.FinalPrice
-            )).ToList(),
+            sale.Items.Select(si =>
+            {
+                var item = inventoryItems.GetValueOrDefault(si.ItemId);
+                return new SaleItemDetail(
+                    item?.ExternalId ?? Guid.Empty,
+                    item?.IdentificationNumber ?? "",
+                    item?.Name ?? "",
+                    item?.Brand?.Name ?? "",
+                    item?.Size ?? "",
+                    item?.Color ?? "",
+                    item?.Supplier?.Name,
+                    si.UnitPrice,
+                    si.DiscountAmount,
+                    si.FinalPrice
+                );
+            }).ToList(),
             sale.Payments.Select(p => new SalePaymentDetail(
                 p.PaymentMethod.ToString(),
                 p.Amount,
@@ -440,13 +453,13 @@ public static class SalesEndpoints
     /// Summary of today's sales: count, revenue, average ticket, by payment method.
     /// </summary>
     private static async Task<IResult> GetSalesToday(
-        [FromServices] ShsDbContext db,
+        [FromServices] SalesDbContext salesDb,
         CancellationToken ct)
     {
         var today = DateTime.UtcNow.Date;
         var tomorrow = today.AddDays(1);
 
-        var todaySales = await db.Sales
+        var todaySales = await salesDb.Sales
             .Where(s => s.SaleDate >= today && s.SaleDate < tomorrow && s.Status == SaleStatus.Active)
             .Include(s => s.Payments)
             .Include(s => s.Items)
@@ -495,7 +508,7 @@ public static class SalesEndpoints
     /// Search and paginate sales with optional date filters.
     /// </summary>
     private static async Task<IResult> SearchSales(
-        [FromServices] ShsDbContext db,
+        [FromServices] SalesDbContext salesDb,
         [FromQuery] DateTime? dateFrom,
         [FromQuery] DateTime? dateTo,
         [FromQuery] string? search,
@@ -503,7 +516,7 @@ public static class SalesEndpoints
         [FromQuery] int pageSize = 20,
         CancellationToken ct = default)
     {
-        var query = db.Sales
+        var query = salesDb.Sales
             .Include(s => s.CashRegister)
             .Include(s => s.Items)
             .Include(s => s.Payments)

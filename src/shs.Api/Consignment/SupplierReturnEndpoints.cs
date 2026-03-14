@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Inventory.Infrastructure;
 
 namespace shs.Api.Consignment;
 
@@ -25,7 +25,7 @@ public static class SupplierReturnEndpoints
     /// </summary>
     private static async Task<IResult> GetReturnableItems(
         [FromQuery] Guid supplierExternalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var supplier = await db.Suppliers
@@ -67,7 +67,7 @@ public static class SupplierReturnEndpoints
     /// </summary>
     private static async Task<IResult> CreateReturn(
         [FromBody] CreateSupplierReturnRequest req,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         if (req.ItemExternalIds is null || req.ItemExternalIds.Length == 0)
@@ -162,7 +162,7 @@ public static class SupplierReturnEndpoints
     /// List all supplier returns with pagination.
     /// </summary>
     private static async Task<IResult> GetReturns(
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         [FromQuery] Guid? supplierExternalId,
         [FromQuery] string? search,
         [FromQuery] int page = 1,
@@ -219,7 +219,7 @@ public static class SupplierReturnEndpoints
     /// </summary>
     private static async Task<IResult> GetReturnById(
         Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] InventoryDbContext db,
         CancellationToken ct)
     {
         var supplierReturn = await db.SupplierReturns

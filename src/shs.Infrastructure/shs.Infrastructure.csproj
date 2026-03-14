@@ -16,6 +16,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\shs.Domain\shs.Domain.csproj" />
+    <ProjectReference Include="..\Modules\Auth\Oui.Modules.Auth.Infrastructure\Oui.Modules.Auth.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Inventory\Oui.Modules.Inventory.Infrastructure\Oui.Modules.Inventory.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Sales\Oui.Modules.Sales.Infrastructure\Oui.Modules.Sales.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Ecommerce\Oui.Modules.Ecommerce.Infrastructure\Oui.Modules.Ecommerce.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\System\Oui.Modules.System.Infrastructure\Oui.Modules.System.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

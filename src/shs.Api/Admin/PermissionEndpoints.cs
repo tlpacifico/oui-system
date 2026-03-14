@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using shs.Api.Authorization;
 using shs.Domain.Entities;
-using shs.Infrastructure.Database;
+using Oui.Modules.Auth.Infrastructure;
 
 namespace shs.Api.Admin;
 
@@ -20,7 +20,7 @@ public static class PermissionEndpoints
     }
 
     private static async Task<IResult> GetAll(
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         [FromQuery] string? category = null,
         [FromQuery] string? search = null,
         CancellationToken ct = default)
@@ -49,7 +49,7 @@ public static class PermissionEndpoints
     }
 
     private static async Task<IResult> GetCategories(
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var categories = await db.Permissions
@@ -63,7 +63,7 @@ public static class PermissionEndpoints
 
     private static async Task<IResult> Create(
         [FromBody] CreatePermissionRequest request,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var name = request.Name?.Trim();
@@ -100,7 +100,7 @@ public static class PermissionEndpoints
     private static async Task<IResult> Update(
         [FromRoute] Guid externalId,
         [FromBody] UpdatePermissionRequest request,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var permission = await db.Permissions.FirstOrDefaultAsync(p => p.ExternalId == externalId, ct);
@@ -131,7 +131,7 @@ public static class PermissionEndpoints
 
     private static async Task<IResult> Delete(
         [FromRoute] Guid externalId,
-        [FromServices] ShsDbContext db,
+        [FromServices] AuthDbContext db,
         CancellationToken ct)
     {
         var permission = await db.Permissions

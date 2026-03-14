@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using shs.Domain.Entities;
 using shs.Domain.Enums;
-using shs.Infrastructure.Database;
+using Oui.Modules.Inventory.Infrastructure;
 using shs.Infrastructure.Services.Import.Models;
 
 namespace shs.Infrastructure.Services.Import;
@@ -23,7 +23,7 @@ public class ImportService
     private static readonly string[] DonationOrigins = ["Doação", "doação", "Doa", "doa"];
     private static readonly string[] StorePurchaseOrigins = ["compra em loja"];
 
-    private readonly ShsDbContext _db;
+    private readonly InventoryDbContext _db;
     private readonly ILogger<ImportService> _logger;
     private readonly ExcelEstoqueReader _estoqueReader;
     private readonly ExcelConsignadosReader _consignadosReader;
@@ -35,7 +35,7 @@ public class ImportService
     private HashSet<string> _usedSupplierInitials = new(StringComparer.OrdinalIgnoreCase);
 
     public ImportService(
-        ShsDbContext db,
+        InventoryDbContext db,
         ILogger<ImportService> logger,
         ExcelEstoqueReader estoqueReader,
         ExcelConsignadosReader consignadosReader)
