@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oui Circular | Moda com Historia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sage: #8A9A5B;
+            --sage-dark: #6b7a45;
+            --sage-light: #a8b87a;
+            --cream: #F9F7F2;
+            --cream-dark: #EDE9E0;
+            --terracotta: #C48B5C;
+            --terracotta-dark: #a87245;
+            --dark: #2B2B2B;
+            --text: #444444;
+            --text-light: #888888;
+            --white: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--cream);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4, .serif { font-family: 'Playfair Display', serif; }
+
+        /* ── Announcement Bar ── */
+        .announcement-bar {
+            background: var(--dark);
+            color: var(--white);
+            text-align: center;
+            padding: 10px 20px;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        /* ── Header ── */
+        header {
+            background: var(--white);
+            padding: 18px 6%;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+
+        nav { display: flex; gap: 32px; }
+        nav a {
+            text-decoration: none;
+            color: var(--dark);
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            position: relative;
+            padding-bottom: 2px;
+        }
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1.5px;
+            background: var(--sage);
+            transition: width 0.3s ease;
+        }
+        nav a:hover::after { width: 100%; }
+
+        .logo-img {
+            height: 42px;
+            display: block;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 24px;
+        }
+        .header-right a {
+            text-decoration: none;
+            color: var(--dark);
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .header-right svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--dark);
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        /* ── Hero ── */
+        .hero {
+            height: 85vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px 8%;
+            background: var(--cream);
+        }
+
+        .hero-content h2 {
+            font-size: 52px;
+            font-weight: 400;
+            line-height: 1.15;
+            color: var(--dark);
+            margin-bottom: 24px;
+        }
+
+        .hero-content h2 em {
+            color: var(--sage);
+            font-style: italic;
+        }
+
+        .hero-content p {
+            font-size: 16px;
+            color: var(--text-light);
+            max-width: 420px;
+            margin-bottom: 40px;
+            line-height: 1.8;
+        }
+
+        .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+
+        .hero-image {
+            background: url('https://images.unsplash.com/photo-1532453288454-ba56e462945a?auto=format&fit=crop&q=80&w=1200') center/cover;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            padding: 16px 40px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            display: inline-block;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background: var(--sage);
+            color: var(--white);
+        }
+        .btn-primary:hover {
+            background: var(--sage-dark);
+        }
+        .btn-outline-dark {
+            background: transparent;
+            color: var(--dark);
+            border: 1.5px solid var(--dark);
+        }
+        .btn-outline-dark:hover {
+            background: var(--dark);
+            color: var(--white);
+        }
+        .btn-outline-white {
+            background: transparent;
+            color: var(--white);
+            border: 1.5px solid var(--white);
+        }
+        .btn-outline-white:hover {
+            background: var(--white);
+            color: var(--sage);
+        }
+
+        /* ── Trust Strip ── */
+        .trust-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            text-align: center;
+            padding: 40px 6%;
+            background: var(--white);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .trust-item {
+            padding: 10px 20px;
+        }
+        .trust-item h4 {
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--sage);
+            margin-bottom: 6px;
+        }
+        .trust-item p {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        /* ── Sections ── */
+        .section {
+            padding: 80px 6%;
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .section-header h2 {
+            font-size: 36px;
+            font-weight: 400;
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+        .section-header p {
+            font-size: 15px;
+            color: var(--text-light);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* ── Product Grid ── */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+        }
+
+        .product-card {
+            position: relative;
+            cursor: pointer;
+            group: true;
+        }
+
+        .product-image-wrap {
+            position: relative;
+            overflow: hidden;
+            background: var(--cream-dark);
+            aspect-ratio: 3 / 4;
+            margin-bottom: 16px;
+        }
+
+        .product-image-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .product-card:hover .product-image-wrap img {
+            transform: scale(1.05);
+        }
+
+        .badge {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            background: var(--sage);
+            color: var(--white);
+            padding: 5px 12px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            z-index: 2;
+        }
+        .badge-terracotta { background: var(--terracotta); }
+
+        .quick-add {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(43, 43, 43, 0.9);
+            color: var(--white);
+            text-align: center;
+            padding: 14px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover .quick-add {
+            transform: translateY(0);
+        }
+
+        .product-info { padding: 0 4px; }
+        .product-brand {
+            font-size: 11px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
+        }
+        .product-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+        .product-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .product-price {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--sage);
+        }
+        .product-size {
+            font-size: 11px;
+            color: var(--text-light);
+            border: 1px solid var(--cream-dark);
+            padding: 2px 8px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Categories ── */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .category-card {
+            position: relative;
+            overflow: hidden;
+            aspect-ratio: 4 / 5;
+            cursor: pointer;
+        }
+        .category-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+        .category-card:hover img {
+            transform: scale(1.05);
+        }
+        .category-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(transparent 40%, rgba(0,0,0,0.5));
+            display: flex;
+            align-items: flex-end;
+            padding: 30px;
+        }
+        .category-overlay h3 {
+            color: var(--white);
+            font-size: 24px;
+            font-weight: 400;
+        }
+
+        /* ── Sell / Consignment Banner ── */
+        .sell-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 500px;
+            overflow: hidden;
+        }
+        .sell-image {
+            background: url('https://images.unsplash.com/photo-1558171813-4c088753af8f?auto=format&fit=crop&q=80&w=1000') center/cover;
+        }
+        .sell-content {
+            background: var(--terracotta);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px 8%;
+        }
+        .sell-content h2 {
+            font-size: 40px;
+            font-weight: 400;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+        .sell-content p {
+            font-size: 16px;
+            line-height: 1.8;
+            opacity: 0.9;
+            margin-bottom: 12px;
+            max-width: 420px;
+        }
+        .sell-steps {
+            list-style: none;
+            margin: 24px 0 36px;
+        }
+        .sell-steps li {
+            padding: 8px 0;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sell-steps li .step-num {
+            width: 28px;
+            height: 28px;
+            border: 1.5px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* ── Testimonials ── */
+        .testimonials {
+            background: var(--white);
+        }
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+        .testimonial {
+            text-align: center;
+            padding: 20px;
+        }
+        .testimonial-quote {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            font-style: italic;
+            color: var(--dark);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .testimonial-author {
+            font-size: 13px;
+            color: var(--text-light);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .stars {
+            color: var(--terracotta);
+            font-size: 14px;
+            margin-bottom: 16px;
+            letter-spacing: 3px;
+        }
+
+        /* ── Newsletter ── */
+        .newsletter {
+            background: var(--cream-dark);
+            text-align: center;
+            padding: 80px 6%;
+        }
+        .newsletter h2 {
+            font-size: 32px;
+            font-weight: 400;
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+        .newsletter p {
+            font-size: 15px;
+            color: var(--text-light);
+            margin-bottom: 30px;
+        }
+        .newsletter-form {
+            display: flex;
+            max-width: 480px;
+            margin: 0 auto;
+            gap: 0;
+        }
+        .newsletter-form input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 1.5px solid var(--sage);
+            border-right: none;
+            background: var(--white);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            outline: none;
+        }
+        .newsletter-form input::placeholder { color: #bbb; }
+        .newsletter-form button {
+            padding: 16px 32px;
+            background: var(--sage);
+            color: var(--white);
+            border: 1.5px solid var(--sage);
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .newsletter-form button:hover { background: var(--sage-dark); }
+
+        /* ── Footer ── */
+        footer {
+            background: var(--dark);
+            color: rgba(255,255,255,0.7);
+            padding: 60px 6% 30px;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        .footer-brand .logo-img-footer {
+            height: 36px;
+            filter: brightness(0) invert(1);
+            margin-bottom: 16px;
+        }
+        .footer-brand p {
+            font-size: 14px;
+            line-height: 1.8;
+            max-width: 280px;
+        }
+        .footer-col h4 {
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--white);
+            margin-bottom: 20px;
+        }
+        .footer-col a {
+            display: block;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 10px;
+            transition: color 0.3s;
+        }
+        .footer-col a:hover { color: var(--white); }
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+        .footer-social {
+            display: flex;
+            gap: 16px;
+        }
+        .footer-social a {
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        .footer-social a:hover { color: var(--white); }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .product-grid { grid-template-columns: repeat(2, 1fr); }
+            .hero { grid-template-columns: 1fr; height: auto; }
+            .hero-image { height: 50vh; }
+            .hero-content h2 { font-size: 40px; }
+            .sell-section { grid-template-columns: 1fr; }
+            .sell-image { height: 400px; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            nav { display: none; }
+            header { grid-template-columns: 1fr 1fr; }
+            .hero-content { padding: 40px 6%; }
+            .hero-content h2 { font-size: 32px; }
+            .trust-strip { grid-template-columns: 1fr; gap: 20px; }
+            .categories-grid { grid-template-columns: 1fr; }
+            .testimonials-grid { grid-template-columns: 1fr; }
+            .newsletter-form { flex-direction: column; }
+            .newsletter-form input { border-right: 1.5px solid var(--sage); }
+            .footer-grid { grid-template-columns: 1fr; }
+            .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Announcement Bar -->
+    <div class="announcement-bar">
+        Envio gratuito em encomendas acima de 50&euro; &middot; Moda sustentavel feita em Porto
+    </div>
+
+    <!-- Header -->
+    <header>
+        <nav>
+            <a href="#">Comprar</a>
+            <a href="#">Marcas</a>
+            <a href="#">Novidades</a>
+            <a href="#">Vender</a>
+        </nav>
+
+        <a href="#" style="justify-self: center;">
+            <img src="../logos/IMG_7406.png" alt="Oui Circular" class="logo-img">
+        </a>
+
+        <div class="header-right">
+            <a href="#">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </a>
+            <a href="#">
+                <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </a>
+            <a href="#">
+                <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span>(0)</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-content">
+            <h2>A moda e <em>circular.</em></h2>
+            <p>Curadoria exclusiva de pecas em segunda mao com a elegancia que o seu guarda-roupa merece.</p>
+            <div class="hero-actions">
+                <a href="#" class="btn btn-primary">Ver Novidades</a>
+                <a href="#" class="btn btn-outline-dark">Como Funciona</a>
+            </div>
+        </div>
+        <div class="hero-image"></div>
+    </section>
+
+    <!-- Trust Strip -->
+    <div class="trust-strip">
+        <div class="trust-item">
+            <h4>Curadoria Propria</h4>
+            <p>Cada peca e cuidadosamente selecionada pela nossa equipa</p>
+        </div>
+        <div class="trust-item">
+            <h4>Consignacao Justa</h4>
+            <p>Ganhe dinheiro com as pecas que ja nao usa</p>
+        </div>
+        <div class="trust-item">
+            <h4>Moda Sustentavel</h4>
+            <p>Menos desperdicio, mais estilo e consciencia</p>
+        </div>
+    </div>
+
+    <!-- New Arrivals -->
+    <section class="section">
+        <div class="section-header">
+            <h2>O Novo Drop</h2>
+            <p>Pecas selecionadas esta semana, prontas para um novo capitulo</p>
+        </div>
+        <div class="product-grid">
+            <div class="product-card">
+                <div class="product-image-wrap">
+                    <span class="badge">Novo</span>
+                    <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=600" alt="Casaco">
+                    <div class="quick-add">Adicionar ao Cesto</div>
+                </div>
+                <div class="product-info">
+                    <p class="product-brand">Zara</p>
+                    <p class="product-name">Trench Coat Minimal</p>
+                    <div class="product-details">
+                        <span class="product-price">45,00&euro;</span>
+                        <span class="product-size">M</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-wrap">
+                    <img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&q=80&w=600" alt="Vestido">
+                    <div class="quick-add">Adicionar ao Cesto</div>
+                </div>
+                <div class="product-info">
+                    <p class="product-brand">Massimo Dutti</p>
+                    <p class="product-name">Vestido Linho Salvia</p>
+                    <div class="product-details">
+                        <span class="product-price">38,00&euro;</span>
+                        <span class="product-size">S</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-wrap">
+                    <span class="badge badge-terracotta">Vintage</span>
+                    <img src="https://images.unsplash.com/photo-1584917469897-5a94e5e3a44a?auto=format&fit=crop&q=80&w=600" alt="Mala">
+                    <div class="quick-add">Adicionar ao Cesto</div>
+                </div>
+                <div class="product-info">
+                    <p class="product-brand">Peca Unica</p>
+                    <p class="product-name">Mala de Pele Vintage</p>
+                    <div class="product-details">
+                        <span class="product-price">62,00&euro;</span>
+                        <span class="product-size">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-wrap">
+                    <img src="https://images.unsplash.com/photo-1515347619252-60a4bdad358a?auto=format&fit=crop&q=80&w=600" alt="Jeans">
+                    <div class="quick-add">Adicionar ao Cesto</div>
+                </div>
+                <div class="product-info">
+                    <p class="product-brand">Levi's</p>
+                    <p class="product-name">Jeans High Waist</p>
+                    <div class="product-details">
+                        <span class="product-price">29,00&euro;</span>
+                        <span class="product-size">38</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="section" style="background: var(--white);">
+        <div class="section-header">
+            <h2>Explorar por Categoria</h2>
+        </div>
+        <div class="categories-grid">
+            <div class="category-card">
+                <img src="https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?auto=format&fit=crop&q=80&w=800" alt="Casacos">
+                <div class="category-overlay">
+                    <h3>Casacos &amp; Blazers</h3>
+                </div>
+            </div>
+            <div class="category-card">
+                <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&q=80&w=800" alt="Vestidos">
+                <div class="category-overlay">
+                    <h3>Vestidos</h3>
+                </div>
+            </div>
+            <div class="category-card">
+                <img src="https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?auto=format&fit=crop&q=80&w=800" alt="Acessorios">
+                <div class="category-overlay">
+                    <h3>Malas &amp; Acessorios</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sell / Consignment CTA -->
+    <section class="sell-section">
+        <div class="sell-image"></div>
+        <div class="sell-content">
+            <h2>De uma nova vida as suas pecas.</h2>
+            <p>O seu armario merece espaco. As suas pecas merecem uma nova historia.</p>
+            <ul class="sell-steps">
+                <li><span class="step-num">1</span> Traga as suas pecas a nossa loja</li>
+                <li><span class="step-num">2</span> Nos fotografamos e colocamos a venda</li>
+                <li><span class="step-num">3</span> Receba quando a peca for vendida</li>
+            </ul>
+            <div>
+                <a href="#" class="btn btn-outline-white">Quero Vender Agora</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="section testimonials">
+        <div class="section-header">
+            <h2>O Que Dizem de Nos</h2>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial">
+                <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <p class="testimonial-quote">&ldquo;Encontrei um casaco Burberry em perfeito estado por uma fracao do preco. Adorei a experiencia!&rdquo;</p>
+                <p class="testimonial-author">Maria S. &mdash; Porto</p>
+            </div>
+            <div class="testimonial">
+                <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <p class="testimonial-quote">&ldquo;Vendi 15 pecas que estavam paradas no armario. Processo facil e transparente.&rdquo;</p>
+                <p class="testimonial-author">Ana P. &mdash; Matosinhos</p>
+            </div>
+            <div class="testimonial">
+                <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <p class="testimonial-quote">&ldquo;A curadoria e fantastica. Cada visita a loja e uma surpresa.&rdquo;</p>
+                <p class="testimonial-author">Joana R. &mdash; Gaia</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="newsletter">
+        <h2>Fique a Par das Novidades</h2>
+        <p>Receba em primeira mao os novos drops e ofertas exclusivas.</p>
+        <form class="newsletter-form" onsubmit="return false;">
+            <input type="email" placeholder="O seu email">
+            <button type="submit">Subscrever</button>
+        </form>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <img src="../logos/IMG_7406.png" alt="Oui Circular" class="logo-img-footer">
+                <p>Consignacao de moda consciente no coracao do Porto. Cada peca conta uma historia.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Loja</h4>
+                <a href="#">Novidades</a>
+                <a href="#">Marcas</a>
+                <a href="#">Categorias</a>
+                <a href="#">Sobre Nos</a>
+            </div>
+            <div class="footer-col">
+                <h4>Vender</h4>
+                <a href="#">Como Funciona</a>
+                <a href="#">Agendar Entrega</a>
+                <a href="#">FAQ</a>
+            </div>
+            <div class="footer-col">
+                <h4>Contacto</h4>
+                <a href="#">Porto, Portugal</a>
+                <a href="#">info@ouicircular.com</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>&copy; 2025 Oui Circular. Todos os direitos reservados.</span>
+            <div class="footer-social">
+                <a href="#">Instagram</a>
+                <a href="#">Facebook</a>
+                <a href="#">Pinterest</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
