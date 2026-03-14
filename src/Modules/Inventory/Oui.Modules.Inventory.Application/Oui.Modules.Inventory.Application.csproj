@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\shs.Application\shs.Application.csproj" />
+    <ProjectReference Include="..\..\..\shs.Domain\shs.Domain.csproj" />
+    <ProjectReference Include="..\..\..\shs.Infrastructure\shs.Infrastructure.csproj" />
+    <ProjectReference Include="..\Oui.Modules.Inventory.Infrastructure\Oui.Modules.Inventory.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Ecommerce\Oui.Modules.Ecommerce.Infrastructure\Oui.Modules.Ecommerce.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

@@ -26,6 +26,11 @@
     <ProjectReference Include="..\Modules\Sales\Oui.Modules.Sales.Infrastructure\Oui.Modules.Sales.Infrastructure.csproj" />
     <ProjectReference Include="..\Modules\Ecommerce\Oui.Modules.Ecommerce.Infrastructure\Oui.Modules.Ecommerce.Infrastructure.csproj" />
     <ProjectReference Include="..\Modules\System\Oui.Modules.System.Infrastructure\Oui.Modules.System.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\System\Oui.Modules.System.Presentation\Oui.Modules.System.Presentation.csproj" />
+    <ProjectReference Include="..\Modules\Inventory\Oui.Modules.Inventory.Presentation\Oui.Modules.Inventory.Presentation.csproj" />
+    <ProjectReference Include="..\Modules\Auth\Oui.Modules.Auth.Presentation\Oui.Modules.Auth.Presentation.csproj" />
+    <ProjectReference Include="..\Modules\Sales\Oui.Modules.Sales.Presentation\Oui.Modules.Sales.Presentation.csproj" />
+    <ProjectReference Include="..\Modules\Ecommerce\Oui.Modules.Ecommerce.Presentation\Oui.Modules.Ecommerce.Presentation.csproj" />
   </ItemGroup>
 
   <Target Name="BuildAngularClient" BeforeTargets="Build"

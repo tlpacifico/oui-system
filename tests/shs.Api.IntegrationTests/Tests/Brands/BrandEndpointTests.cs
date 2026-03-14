@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using shs.Api.IntegrationTests.Infrastructure;
-using shs.Api.Inventory;
+using Oui.Modules.Inventory.Application.Brands;
 using Xunit;
 
 namespace shs.Api.IntegrationTests.Tests.Brands;
@@ -27,7 +27,7 @@ public class BrandEndpointTests : IntegrationTestBase
     public async Task Create_ReturnsCreated_WithValidData()
     {
         var client = Factory.CreateAuthenticatedClient();
-        var request = new CreateBrandRequest("Nike", "Sportswear brand", null);
+        var request = new { Name = "Nike", Description = "Sportswear brand", LogoUrl = (string?)null };
 
         var response = await client.PostAsJsonAsync("/api/brands", request);
 
@@ -44,7 +44,7 @@ public class BrandEndpointTests : IntegrationTestBase
     public async Task Create_ReturnsConflict_WhenDuplicateName()
     {
         var client = Factory.CreateAuthenticatedClient();
-        var request = new CreateBrandRequest("Adidas", null, null);
+        var request = new { Name = "Adidas", Description = (string?)null, LogoUrl = (string?)null };
 
         await client.PostAsJsonAsync("/api/brands", request);
         var response = await client.PostAsJsonAsync("/api/brands", request);
@@ -56,7 +56,7 @@ public class BrandEndpointTests : IntegrationTestBase
     public async Task Create_ReturnsBadRequest_WhenNameIsEmpty()
     {
         var client = Factory.CreateAuthenticatedClient();
-        var request = new CreateBrandRequest("", null, null);
+        var request = new { Name = "", Description = (string?)null, LogoUrl = (string?)null };
 
         var response = await client.PostAsJsonAsync("/api/brands", request);
 
@@ -68,7 +68,7 @@ public class BrandEndpointTests : IntegrationTestBase
     {
         var client = Factory.CreateAuthenticatedClient();
         var createResponse = await client.PostAsJsonAsync("/api/brands",
-            new CreateBrandRequest("Zara", "Fashion brand", null));
+            new { Name = "Zara", Description = "Fashion brand", LogoUrl = (string?)null });
         var created = await createResponse.Content.ReadFromJsonAsync<BrandDetailResponse>();
 
         var response = await client.GetAsync($"/api/brands/{created!.ExternalId}");
@@ -93,10 +93,10 @@ public class BrandEndpointTests : IntegrationTestBase
     {
         var client = Factory.CreateAuthenticatedClient();
         var createResponse = await client.PostAsJsonAsync("/api/brands",
-            new CreateBrandRequest("OldName", null, null));
+            new { Name = "OldName", Description = (string?)null, LogoUrl = (string?)null });
         var created = await createResponse.Content.ReadFromJsonAsync<BrandDetailResponse>();
 
-        var updateRequest = new UpdateBrandRequest("NewName", "Updated description", null);
+        var updateRequest = new { Name = "NewName", Description = "Updated description", LogoUrl = (string?)null };
         var response = await client.PutAsJsonAsync($"/api/brands/{created!.ExternalId}", updateRequest);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -111,7 +111,7 @@ public class BrandEndpointTests : IntegrationTestBase
     {
         var client = Factory.CreateAuthenticatedClient();
         var createResponse = await client.PostAsJsonAsync("/api/brands",
-            new CreateBrandRequest("ToDelete", null, null));
+            new { Name = "ToDelete", Description = (string?)null, LogoUrl = (string?)null });
         var created = await createResponse.Content.ReadFromJsonAsync<BrandDetailResponse>();
 
         var deleteResponse = await client.DeleteAsync($"/api/brands/{created!.ExternalId}");
@@ -128,7 +128,7 @@ public class BrandEndpointTests : IntegrationTestBase
         var client = Factory.CreateClient(); // no auth headers
 
         var response = await client.PostAsJsonAsync("/api/brands",
-            new CreateBrandRequest("Test", null, null));
+            new { Name = "Test", Description = (string?)null, LogoUrl = (string?)null });
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

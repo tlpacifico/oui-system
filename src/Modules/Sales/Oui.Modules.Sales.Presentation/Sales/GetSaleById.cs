@@ -1,0 +1,22 @@
+using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using Oui.Modules.Sales.Application.Sales.Queries.GetSaleById;
+using shs.Application.Presentation;
+
+namespace Oui.Modules.Sales.Presentation.Sales;
+
+internal sealed class GetSaleById : IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapGet("api/pos/sales/{externalId:guid}", async (Guid externalId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetSaleByIdQuery(externalId), ct);
+            return result.Match(Results.Ok, ApiResults.Problem);
+        })
+        .RequireAuthorization("Permission:pos.sales.view")
+        .WithTags("POS - Sales");
+    }
+}

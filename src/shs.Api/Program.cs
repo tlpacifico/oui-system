@@ -5,15 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using shs.Api;
 using shs.Api.Admin;
-using shs.Api.Auth;
 using shs.Api.Authorization;
-using shs.Api.Consignment;
-using shs.Api.Dashboard;
-using shs.Api.Ecommerce;
-using shs.Api.Reports;
-using shs.Api.Financial;
-using shs.Api.Inventory;
-using shs.Api.Pos;
+using shs.Api.Infrastructure;
+using shs.Application;
 using shs.Infrastructure;
 using shs.Infrastructure.Services;
 using Oui.Modules.Auth.Infrastructure;
@@ -45,6 +39,24 @@ builder.Services.AddSalesModule(builder.Configuration);
 builder.Services.AddEcommerceModule(builder.Configuration);
 builder.Services.AddSystemModule(builder.Configuration);
 builder.Services.AddSharedInfrastructure(builder.Configuration);
+
+// Register CQRS (MediatR + FluentValidation) from module Application assemblies
+builder.Services.AddApplication([
+    Oui.Modules.System.Application.AssemblyReference.Assembly,
+    Oui.Modules.Inventory.Application.AssemblyReference.Assembly,
+    Oui.Modules.Auth.Application.AssemblyReference.Assembly,
+    Oui.Modules.Sales.Application.AssemblyReference.Assembly,
+    Oui.Modules.Ecommerce.Application.AssemblyReference.Assembly,
+]);
+
+// Register IEndpoint implementations from module Presentation assemblies
+builder.Services.AddEndpoints(
+    Oui.Modules.System.Presentation.AssemblyReference.Assembly,
+    Oui.Modules.Inventory.Presentation.AssemblyReference.Assembly,
+    Oui.Modules.Auth.Presentation.AssemblyReference.Assembly,
+    Oui.Modules.Sales.Presentation.AssemblyReference.Assembly,
+    Oui.Modules.Ecommerce.Presentation.AssemblyReference.Assembly
+);
 
 var firebaseConfig = builder.Configuration.GetSection("Firebase");
 var projectId = firebaseConfig["ProjectId"];
@@ -120,32 +132,11 @@ app.UseStaticFiles(); // Serve wwwroot/uploads (item photos)
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapAuthEndpoints();
-app.MapInventoryEndpoints();
-app.MapBrandEndpoints();
-app.MapCategoryEndpoints();
-app.MapTagEndpoints();
-app.MapSupplierEndpoints();
-app.MapConsignmentEndpoints();
-app.MapApprovalEndpoints();
-app.MapSupplierReturnEndpoints();
-app.MapPosEndpoints();
-app.MapSalesEndpoints();
-app.MapRoleEndpoints();
-app.MapPermissionEndpoints();
-app.MapRolePermissionEndpoints();
-app.MapUserRoleEndpoints();
-app.MapUserEndpoints();
-app.MapMeEndpoints();
-app.MapDashboardEndpoints();
-app.MapReportsEndpoints();
-app.MapSettlementEndpoints();
-app.MapStoreCreditEndpoints();
-app.MapCashRedemptionEndpoints();
-app.MapSystemSettingEndpoints();
+// Auto-discovered IEndpoint implementations (migrated modules)
+app.MapEndpoints();
+
+// Legacy endpoint mappings (to be migrated to IEndpoint pattern)
 app.MapImportEndpoints();
-app.MapEcommerceAdminEndpoints();
-app.MapEcommercePublicEndpoints();
 app.MapFallbackToFile("index.html");
 
 app.Run();
