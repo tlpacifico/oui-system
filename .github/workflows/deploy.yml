@@ -78,11 +78,30 @@ jobs:
             FIREBASE_MEASUREMENT_ID=${{ secrets.FIREBASE_MEASUREMENT_ID }}
 
   # ─────────────────────────────────────────────
-  # Job 2 — Deploy na VPS
+  # Job 2 — Testes de integração
+  # ─────────────────────────────────────────────
+  test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Run integration tests
+        run: dotnet test tests/shs.Api.IntegrationTests
+
+  # ─────────────────────────────────────────────
+  # Job 3 — Deploy na VPS
   # ─────────────────────────────────────────────
   deploy:
     name: Deploy VPS
-    needs: build
+    needs: [build, test]
     runs-on: ubuntu-latest
 
     steps:
