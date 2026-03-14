@@ -8,6 +8,10 @@ on:
         description: 'Aplicar migrations EF Core antes do deploy?'
         type: boolean
         default: false
+      skip_tests:
+        description: 'Pular testes de integração? (para hotfixes urgentes)'
+        type: boolean
+        default: false
       image_tag:
         description: 'Tag da imagem (default: latest)'
         type: string
@@ -82,6 +86,7 @@ jobs:
   # ─────────────────────────────────────────────
   test:
     name: Integration Tests
+    if: ${{ inputs.skip_tests != true }}
     runs-on: ubuntu-latest
 
     steps:
@@ -102,6 +107,7 @@ jobs:
   deploy:
     name: Deploy VPS
     needs: [build, test]
+    if: always() && needs.build.result == 'success' && (needs.test.result == 'success' || needs.test.result == 'skipped')
     runs-on: ubuntu-latest
 
     steps:
@@ -114,7 +120,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "deploy/Caddyfile"
+          source: "deploy/Caddyfile,deploy/docker-compose.yml"
           target: "/opt/oui-system"
           strip_components: 1
 
