@@ -22,6 +22,8 @@ public static class EcommerceAdminEndpoints
         group.MapGet("/products/{externalId:guid}", GetProductById).RequirePermission("ecommerce.products.view");
         group.MapPut("/products/{externalId:guid}", UpdateProduct).RequirePermission("ecommerce.products.update");
         group.MapDelete("/products/{externalId:guid}", UnpublishProduct).RequirePermission("ecommerce.products.unpublish");
+        group.MapPost("/products/{externalId:guid}/photos", UploadProductPhotos).RequirePermission("ecommerce.products.update").DisableAntiforgery();
+        group.MapDelete("/products/{externalId:guid}/photos/{photoExternalId:guid}", DeleteProductPhoto).RequirePermission("ecommerce.products.update");
         group.MapGet("/orders", GetOrders).RequirePermission("ecommerce.orders.view");
         group.MapGet("/orders/{externalId:guid}", GetOrderById).RequirePermission("ecommerce.orders.view");
         group.MapPut("/orders/{externalId:guid}/confirm", ConfirmOrder).RequirePermission("ecommerce.orders.manage");
@@ -218,6 +220,24 @@ public static class EcommerceAdminEndpoints
         if (request.Price.HasValue && request.Price.Value > 0)
             product.Price = request.Price.Value;
 
+        if (request.BrandName is not null)
+            product.BrandName = request.BrandName;
+
+        if (request.CategoryName is not null)
+            product.CategoryName = request.CategoryName;
+
+        if (request.Size is not null)
+            product.Size = request.Size;
+
+        if (request.Color is not null)
+            product.Color = request.Color;
+
+        if (!string.IsNullOrWhiteSpace(request.Condition) && Enum.TryParse<ItemCondition>(request.Condition, true, out var condition))
+            product.Condition = condition;
+
+        if (request.Composition is not null)
+            product.Composition = request.Composition;
+
         await db.SaveChangesAsync(ct);
         return Results.Ok(new { product.ExternalId, product.Title, product.Price });
     }
@@ -373,6 +393,132 @@ public static class EcommerceAdminEndpoints
         return Results.Ok(new { order.ExternalId, order.OrderNumber, message = "Encomenda cancelada." });
     }
 
+    private static async Task<IResult> UploadProductPhotos(
+        Guid externalId,
+        [FromForm] IFormFileCollection files,
+        [FromServices] ShsDbContext db,
+        [FromServices] IWebHostEnvironment env,
+        CancellationToken ct)
+    {
+        var product = await db.EcommerceProducts
+            .Include(p => p.Photos)
+            .FirstOrDefaultAsync(p => p.ExternalId == externalId, ct);
+
+        if (product is null)
+            return Results.NotFound(new { error = "Produto não encontrado." });
+
+        if (files.Count == 0)
+            return Results.BadRequest(new { error = "Nenhum ficheiro enviado." });
+
+        var currentPhotoCount = product.Photos.Count;
+        if (currentPhotoCount + files.Count > 10)
+            return Results.BadRequest(new { error = $"Máximo de 10 fotos por produto. Atualmente tem {currentPhotoCount}." });
+
+        var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+        const long maxSize = 10 * 1024 * 1024;
+
+        foreach (var file in files)
+        {
+            if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                return Results.BadRequest(new { error = $"Tipo de ficheiro não suportado: {file.ContentType}. Use JPEG, PNG ou WebP." });
+
+            if (file.Length > maxSize)
+                return Results.BadRequest(new { error = $"Ficheiro demasiado grande: {file.FileName}. Máximo 10 MB." });
+        }
+
+        var uploadDir = Path.Combine(env.WebRootPath, "uploads", "ecommerce", externalId.ToString());
+        Directory.CreateDirectory(uploadDir);
+
+        var nextOrder = currentPhotoCount > 0
+            ? product.Photos.Max(p => p.DisplayOrder) + 1
+            : 1;
+
+        var uploadedPhotos = new List<object>();
+
+        foreach (var file in files)
+        {
+            var photoId = Guid.NewGuid();
+            var extension = Path.GetExtension(file.FileName).ToLower();
+            if (string.IsNullOrEmpty(extension)) extension = ".jpg";
+
+            var fileName = $"{photoId}{extension}";
+            var filePath = Path.Combine(uploadDir, fileName);
+
+            await using var stream = new FileStream(filePath, FileMode.Create);
+            await file.CopyToAsync(stream, ct);
+
+            var relativePath = $"/uploads/ecommerce/{externalId}/{fileName}";
+
+            var photo = new EcommerceProductPhotoEntity
+            {
+                ExternalId = photoId,
+                ProductId = product.Id,
+                FilePath = relativePath,
+                ThumbnailPath = relativePath,
+                DisplayOrder = nextOrder++,
+                IsPrimary = currentPhotoCount == 0 && uploadedPhotos.Count == 0,
+                CreatedOn = DateTime.UtcNow,
+                CreatedBy = "system"
+            };
+
+            db.Set<EcommerceProductPhotoEntity>().Add(photo);
+
+            uploadedPhotos.Add(new
+            {
+                photo.ExternalId,
+                photo.FilePath,
+                photo.ThumbnailPath,
+                photo.DisplayOrder,
+                photo.IsPrimary
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        return Results.Ok(uploadedPhotos);
+    }
+
+    private static async Task<IResult> DeleteProductPhoto(
+        Guid externalId,
+        Guid photoExternalId,
+        [FromServices] ShsDbContext db,
+        [FromServices] IWebHostEnvironment env,
+        CancellationToken ct)
+    {
+        var product = await db.EcommerceProducts
+            .Include(p => p.Photos)
+            .FirstOrDefaultAsync(p => p.ExternalId == externalId, ct);
+
+        if (product is null)
+            return Results.NotFound(new { error = "Produto não encontrado." });
+
+        var photo = product.Photos.FirstOrDefault(p => p.ExternalId == photoExternalId);
+        if (photo is null)
+            return Results.NotFound(new { error = "Foto não encontrada." });
+
+        var absolutePath = Path.Combine(env.WebRootPath, photo.FilePath.TrimStart('/'));
+        if (File.Exists(absolutePath))
+            File.Delete(absolutePath);
+
+        var wasPrimary = photo.IsPrimary;
+        db.Set<EcommerceProductPhotoEntity>().Remove(photo);
+
+        if (wasPrimary)
+        {
+            var nextPrimary = product.Photos
+                .Where(p => p.ExternalId != photoExternalId)
+                .OrderBy(p => p.DisplayOrder)
+                .FirstOrDefault();
+
+            if (nextPrimary is not null)
+                nextPrimary.IsPrimary = true;
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        return Results.NoContent();
+    }
+
     // Helper methods
 
     private static EcommerceProductEntity CreateProductFromItem(ItemEntity item)
@@ -446,6 +592,15 @@ public static class EcommerceAdminEndpoints
     // Request/Response DTOs
     public record PublishItemRequest(Guid ItemExternalId);
     public record PublishBatchRequest(List<Guid> ItemExternalIds);
-    public record UpdateProductRequest(string? Title, string? Description, decimal? Price);
+    public record UpdateProductRequest(
+        string? Title,
+        string? Description,
+        decimal? Price,
+        string? BrandName,
+        string? CategoryName,
+        string? Size,
+        string? Color,
+        string? Condition,
+        string? Composition);
     public record CancelOrderRequest(string? Reason);
 }

@@ -27,6 +27,8 @@ import { UserListPageComponent } from './features/admin/pages/user-list-page.com
 import { UserDetailPageComponent } from './features/admin/pages/user-detail-page.component';
 import { SystemSettingsPageComponent } from './features/admin/pages/system-settings-page.component';
 import { ImportPageComponent } from './features/admin/pages/import-page.component';
+import { EcommerceProductsPageComponent } from './features/admin/pages/ecommerce-products-page.component';
+import { EcommerceOrdersPageComponent } from './features/admin/pages/ecommerce-orders-page.component';
 import { SettlementListPageComponent } from './features/finance/pages/settlement-list-page.component';
 import { SettlementNewPageComponent } from './features/finance/pages/settlement-new-page.component';
 import { SettlementDetailPageComponent } from './features/finance/pages/settlement-detail-page.component';
@@ -191,6 +193,16 @@ export const routes: Routes = [
   {
     path: 'admin/import',
     component: ImportPageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'ecommerce/products',
+    component: EcommerceProductsPageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'ecommerce/orders',
+    component: EcommerceOrdersPageComponent,
     canMatch: [authGuard],
   },
   {
