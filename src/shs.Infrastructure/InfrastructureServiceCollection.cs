@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using shs.Domain.Notifications;
+using shs.Infrastructure.Interceptors;
 using shs.Infrastructure.Notifications;
 using shs.Infrastructure.Services;
 using shs.Infrastructure.Services.Import;
@@ -15,6 +16,9 @@ public static class InfrastructureServiceCollection
     /// </summary>
     public static IServiceCollection AddSharedInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        // Audit interceptor (shared across all module DbContexts)
+        services.AddScoped<AuditInterceptor>();
+
         // Email service
         services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
         services.AddScoped<IEmailService, EmailService>();

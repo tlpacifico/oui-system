@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Oui.Modules.System.Infrastructure;
@@ -11,9 +12,11 @@ using Oui.Modules.System.Infrastructure;
 namespace Oui.Modules.System.Infrastructure.Migrations
 {
     [DbContext(typeof(SystemDbContext))]
-    partial class SystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260314215616_AddAuditLog")]
+    partial class AddAuditLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
