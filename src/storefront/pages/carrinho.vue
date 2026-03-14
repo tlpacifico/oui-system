@@ -15,13 +15,13 @@ useHead({ title: 'Carrinho - Oui Circular' })
 
 <template>
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Carrinho</h1>
+    <h1 class="text-2xl font-normal text-gray-900 mb-6">Carrinho</h1>
 
     <div v-if="cart.isEmpty" class="text-center py-20">
       <p class="text-lg text-gray-500 mb-4">O seu carrinho está vazio.</p>
       <NuxtLink
         to="/produtos"
-        class="inline-block bg-olive-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-olive-600 transition"
+        class="inline-block bg-sage text-white px-6 py-3 rounded-lg font-semibold hover:bg-sage-dark transition"
       >
         Ver Produtos
       </NuxtLink>
@@ -33,9 +33,9 @@ useHead({ title: 'Carrinho - Oui Circular' })
         <div
           v-for="item in cart.items"
           :key="item.slug"
-          class="bg-white border border-cream-300 rounded-lg p-4 flex items-center gap-4"
+          class="bg-white border border-cream-dark rounded-lg p-4 flex items-center gap-4"
         >
-          <div class="w-20 h-20 bg-cream-100 rounded-md overflow-hidden flex-shrink-0">
+          <div class="w-20 h-20 bg-cream-dark rounded-md overflow-hidden flex-shrink-0">
             <img
               v-if="item.primaryPhotoUrl"
               :src="photoUrl(item.primaryPhotoUrl)"
@@ -45,7 +45,7 @@ useHead({ title: 'Carrinho - Oui Circular' })
           </div>
 
           <div class="flex-1 min-w-0">
-            <NuxtLink :to="`/produtos/${item.slug}`" class="text-sm font-medium text-gray-900 hover:text-olive-600 truncate block">
+            <NuxtLink :to="`/produtos/${item.slug}`" class="text-sm font-medium text-gray-900 hover:text-sage-dark truncate block">
               {{ item.title }}
             </NuxtLink>
             <p class="text-xs text-gray-500">{{ item.brandName }} <span v-if="item.size">&middot; {{ item.size }}</span></p>
@@ -64,7 +64,7 @@ useHead({ title: 'Carrinho - Oui Circular' })
       </div>
 
       <!-- Summary -->
-      <div class="bg-white border border-cream-300 rounded-lg p-6">
+      <div class="bg-white border border-cream-dark rounded-lg p-6">
         <div class="flex justify-between items-center mb-4">
           <span class="text-gray-600">{{ cart.count }} artigo{{ cart.count !== 1 ? 's' : '' }}</span>
           <span class="text-xl font-bold text-gray-900">&euro;{{ cart.total.toFixed(2) }}</span>
@@ -72,7 +72,7 @@ useHead({ title: 'Carrinho - Oui Circular' })
 
         <NuxtLink
           to="/checkout"
-          class="block w-full bg-olive-500 text-white py-3 rounded-lg font-semibold text-center hover:bg-olive-600 transition"
+          class="block w-full bg-sage text-white py-3 rounded-lg font-semibold text-center hover:bg-sage-dark transition"
         >
           Finalizar Encomenda
         </NuxtLink>

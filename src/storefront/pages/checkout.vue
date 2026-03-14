@@ -43,25 +43,25 @@ useHead({ title: 'Checkout - Oui Circular' })
 
 <template>
   <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-2xl font-bold text-gray-900 mb-2">Finalizar Encomenda</h1>
+    <h1 class="text-2xl font-normal text-gray-900 mb-2">Finalizar Encomenda</h1>
     <p class="text-sm text-gray-500 mb-8">
       Preencha os seus dados para reservar os artigos. O pagamento é feito na loja.
     </p>
 
     <div v-if="cart.isEmpty" class="text-center py-12 text-gray-500">
       O carrinho está vazio.
-      <NuxtLink to="/produtos" class="text-olive-600 hover:underline block mt-2">Ver produtos</NuxtLink>
+      <NuxtLink to="/produtos" class="text-sage-dark hover:underline block mt-2">Ver produtos</NuxtLink>
     </div>
 
     <form v-else @submit.prevent="submitOrder">
       <!-- Order summary -->
-      <div class="bg-cream-100 rounded-lg p-4 mb-6">
-        <h2 class="text-sm font-bold text-gray-900 mb-3">Resumo ({{ cart.count }} artigo{{ cart.count !== 1 ? 's' : '' }})</h2>
+      <div class="bg-cream-dark rounded-lg p-4 mb-6">
+        <h2 class="text-sm font-bold text-gray-900 mb-3 font-sans">Resumo ({{ cart.count }} artigo{{ cart.count !== 1 ? 's' : '' }})</h2>
         <div v-for="item in cart.items" :key="item.slug" class="flex justify-between text-sm py-1">
           <span class="text-gray-600 truncate mr-4">{{ item.title }}</span>
           <span class="font-medium text-gray-900 whitespace-nowrap">&euro;{{ item.price.toFixed(2) }}</span>
         </div>
-        <div class="border-t border-cream-300 mt-3 pt-3 flex justify-between">
+        <div class="border-t border-cream-dark mt-3 pt-3 flex justify-between">
           <span class="font-bold text-gray-900">Total</span>
           <span class="font-bold text-gray-900">&euro;{{ cart.total.toFixed(2) }}</span>
         </div>
@@ -75,7 +75,7 @@ useHead({ title: 'Checkout - Oui Circular' })
             v-model="name"
             type="text"
             required
-            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-olive-400"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage"
             placeholder="O seu nome completo"
           />
         </div>
@@ -86,7 +86,7 @@ useHead({ title: 'Checkout - Oui Circular' })
             v-model="email"
             type="email"
             required
-            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-olive-400"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage"
             placeholder="email@exemplo.pt"
           />
         </div>
@@ -96,7 +96,7 @@ useHead({ title: 'Checkout - Oui Circular' })
           <input
             v-model="phone"
             type="tel"
-            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-olive-400"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage"
             placeholder="+351 XXX XXX XXX"
           />
         </div>
@@ -106,16 +106,16 @@ useHead({ title: 'Checkout - Oui Circular' })
           <textarea
             v-model="notes"
             rows="3"
-            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-olive-400 resize-none"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage resize-none"
             placeholder="Alguma observação sobre a encomenda..."
           />
         </div>
       </div>
 
       <!-- Info -->
-      <div class="bg-olive-50 rounded-lg p-4 mb-6 text-sm text-olive-800">
+      <div class="bg-sage/10 rounded-lg p-4 mb-6 text-sm text-dark">
         <p class="font-medium mb-1">Como funciona?</p>
-        <ul class="space-y-1 text-olive-700">
+        <ul class="space-y-1 text-sage-dark">
           <li>1. Os artigos ficam reservados durante 48 horas.</li>
           <li>2. Receberá confirmação por email.</li>
           <li>3. Dirija-se à loja para pagamento e levantamento.</li>
@@ -131,7 +131,7 @@ useHead({ title: 'Checkout - Oui Circular' })
       <button
         type="submit"
         :disabled="submitting"
-        class="w-full bg-olive-500 text-white py-3 rounded-lg font-semibold hover:bg-olive-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        class="w-full bg-sage text-white py-3 rounded-lg font-semibold hover:bg-sage-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {{ submitting ? 'A processar...' : 'Reservar Artigos' }}
       </button>
