@@ -4,32 +4,36 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Folder Name="/Modules/">
-    <Project Path="src/Modules/Auth/Oui.Modules.Auth.Application/Oui.Modules.Auth.Application.csproj" />
-    <Project Path="src/Modules/Auth/Oui.Modules.Auth.Presentation/Oui.Modules.Auth.Presentation.csproj" />
-    <Project Path="src/Modules/Inventory/Oui.Modules.Inventory.Application/Oui.Modules.Inventory.Application.csproj" />
-    <Project Path="src/Modules/Inventory/Oui.Modules.Inventory.Presentation/Oui.Modules.Inventory.Presentation.csproj" />
-    <Project Path="src/Modules/System/Oui.Modules.System.Application/Oui.Modules.System.Application.csproj" />
-    <Project Path="src/Modules/System/Oui.Modules.System.Presentation/Oui.Modules.System.Presentation.csproj" />
-  </Folder>
   <Folder Name="/src/">
     <Project Path="src/shs.Api/shs.Api.csproj" />
     <Project Path="src/shs.Application/shs.Application.csproj" />
     <Project Path="src/shs.Domain/shs.Domain.csproj" />
     <Project Path="src/shs.Infrastructure/shs.Infrastructure.csproj" />
   </Folder>
-  <Folder Name="/src/Modules/">
+  <Folder Name="/src/Modules/Auth/">
+    <Project Path="src/Modules/Auth/Oui.Modules.Auth.Application/Oui.Modules.Auth.Application.csproj" />
     <Project Path="src/Modules/Auth/Oui.Modules.Auth.Infrastructure/Oui.Modules.Auth.Infrastructure.csproj" />
+    <Project Path="src/Modules/Auth/Oui.Modules.Auth.Presentation/Oui.Modules.Auth.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Ecommerce/">
+    <Project Path="src/Modules/Ecommerce/Oui.Modules.Ecommerce.Application/Oui.Modules.Ecommerce.Application.csproj" />
     <Project Path="src/Modules/Ecommerce/Oui.Modules.Ecommerce.Infrastructure/Oui.Modules.Ecommerce.Infrastructure.csproj" />
+    <Project Path="src/Modules/Ecommerce/Oui.Modules.Ecommerce.Presentation/Oui.Modules.Ecommerce.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Inventory/">
+    <Project Path="src/Modules/Inventory/Oui.Modules.Inventory.Application/Oui.Modules.Inventory.Application.csproj" />
     <Project Path="src/Modules/Inventory/Oui.Modules.Inventory.Infrastructure/Oui.Modules.Inventory.Infrastructure.csproj" />
-    <Project Path="src/Modules/Sales/Oui.Modules.Sales.Infrastructure/Oui.Modules.Sales.Infrastructure.csproj" />
-    <Project Path="src/Modules/System/Oui.Modules.System.Infrastructure/Oui.Modules.System.Infrastructure.csproj" />
+    <Project Path="src/Modules/Inventory/Oui.Modules.Inventory.Presentation/Oui.Modules.Inventory.Presentation.csproj" />
   </Folder>
   <Folder Name="/src/Modules/Sales/">
-    <Project Path="src/Modules/Ecommerce/Oui.Modules.Ecommerce.Application/Oui.Modules.Ecommerce.Application.csproj" />
-    <Project Path="src/Modules/Ecommerce/Oui.Modules.Ecommerce.Presentation/Oui.Modules.Ecommerce.Presentation.csproj" />
     <Project Path="src/Modules/Sales/Oui.Modules.Sales.Application/Oui.Modules.Sales.Application.csproj" />
+    <Project Path="src/Modules/Sales/Oui.Modules.Sales.Infrastructure/Oui.Modules.Sales.Infrastructure.csproj" />
     <Project Path="src/Modules/Sales/Oui.Modules.Sales.Presentation/Oui.Modules.Sales.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/System/">
+    <Project Path="src/Modules/System/Oui.Modules.System.Application/Oui.Modules.System.Application.csproj" />
+    <Project Path="src/Modules/System/Oui.Modules.System.Infrastructure/Oui.Modules.System.Infrastructure.csproj" />
+    <Project Path="src/Modules/System/Oui.Modules.System.Presentation/Oui.Modules.System.Presentation.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/shs.Api.IntegrationTests/shs.Api.IntegrationTests.csproj" />
