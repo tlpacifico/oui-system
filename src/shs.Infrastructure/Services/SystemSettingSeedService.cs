@@ -24,6 +24,8 @@ public class SystemSettingSeedService
             ("consignment.default_commission_percentage", "30", "decimal", "consignment", "Percentual de comissão padrão", "Percentual de comissão aplicado por padrão em novas consignações"),
             ("pos.auto_create_settlement", "false", "bool", "pos", "Criação automática de settlement após venda", "Quando ativo, cria automaticamente um acerto após cada venda"),
             ("audit.retention_days", "365", "integer", "system", "Audit log retention (days)", "Number of days to retain audit log records before cleanup"),
+            ("supplier.default_credit_percentage_in_store", "50", "decimal", "inventory", "Percentual crédito em loja padrão", "Percentual de crédito em loja aplicado por padrão a novos fornecedores"),
+            ("supplier.default_cash_redemption_percentage", "40", "decimal", "inventory", "Percentual resgate dinheiro padrão", "Percentual de resgate em dinheiro aplicado por padrão a novos fornecedores"),
         };
 
         foreach (var (key, value, valueType, module, displayName, description) in defaults)

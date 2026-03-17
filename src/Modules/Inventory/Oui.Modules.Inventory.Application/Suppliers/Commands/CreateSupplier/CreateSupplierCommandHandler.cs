@@ -3,10 +3,11 @@ using Oui.Modules.Inventory.Infrastructure;
 using shs.Application.Messaging;
 using shs.Domain.Entities;
 using shs.Domain.Results;
+using shs.Infrastructure.Services;
 
 namespace Oui.Modules.Inventory.Application.Suppliers.Commands.CreateSupplier;
 
-internal sealed class CreateSupplierCommandHandler(InventoryDbContext db)
+internal sealed class CreateSupplierCommandHandler(InventoryDbContext db, SystemSettingService settings)
     : ICommandHandler<CreateSupplierCommand, SupplierDetailResponse>
 {
     public async Task<Result<SupplierDetailResponse>> Handle(
@@ -45,8 +46,10 @@ internal sealed class CreateSupplierCommandHandler(InventoryDbContext db)
             TaxNumber = request.TaxNumber?.Trim(),
             Initial = initialUpper,
             Notes = request.Notes?.Trim(),
-            CreditPercentageInStore = request.CreditPercentageInStore ?? 50m,
-            CashRedemptionPercentage = request.CashRedemptionPercentage ?? 40m,
+            CreditPercentageInStore = request.CreditPercentageInStore
+                ?? await settings.GetDecimal("supplier.default_credit_percentage_in_store", 50m),
+            CashRedemptionPercentage = request.CashRedemptionPercentage
+                ?? await settings.GetDecimal("supplier.default_cash_redemption_percentage", 40m),
             CreatedOn = DateTime.UtcNow,
             CreatedBy = "system"
         };
