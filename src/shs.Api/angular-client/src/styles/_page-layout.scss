@@ -1,3 +1,5 @@
+@use 'variables' as *;
+
 // ── Page Layout ──
 
 .page-header {
@@ -8,15 +10,16 @@
 }
 
 .page-title {
-  font-size: 22px;
-  font-weight: 700;
+  font-family: $font-display;
+  font-size: 24px;
+  font-weight: 400;
   margin: 0 0 4px;
-  color: #1e293b;
+  color: $stone-900;
 }
 
 .page-subtitle {
   font-size: 14px;
-  color: #64748b;
+  color: $stone-500;
   margin: 0;
 }
 

@@ -13,6 +13,7 @@ import { AuthService } from '../../core/auth/auth.service';
       <div class="login-card">
         <div class="logo-section">
           <h1 class="login-title">Oui Circular</h1>
+          <p class="login-tagline">Moda Circular · Portugal</p>
         </div>
 
         @if (errorMessage) {
@@ -77,17 +78,28 @@ import { AuthService } from '../../core/auth/auth.service';
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #0f172a;
+        background: linear-gradient(145deg, #1C1917 0%, #292524 50%, #1C1917 100%);
+        position: relative;
+      }
+
+      .login-wrapper::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        pointer-events: none;
       }
 
       .login-card {
         width: 420px;
         padding: 2.5rem;
-        border-radius: 1rem;
-        background: #0b1120;
-        color: #e5e7eb;
-        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.8);
-        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 16px;
+        background: #292524;
+        color: #E7E5E4;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        position: relative;
+        z-index: 1;
       }
 
       .logo-section {
@@ -97,32 +109,39 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .login-title {
         margin: 0;
-        font-size: 2rem;
-        font-weight: 700;
-        background: linear-gradient(90deg, #6366f1, #8b5cf6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        font-family: 'DM Serif Display', Georgia, serif;
+        font-size: 2.2rem;
+        font-weight: 400;
+        color: #FAF9F7;
+      }
+
+      .login-tagline {
+        margin: 6px 0 0;
+        font-size: 0.75rem;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        color: #78716C;
+        font-weight: 500;
       }
 
       .error-message {
         margin: 0 0 1rem;
         padding: 0.75rem;
-        border-radius: 0.5rem;
-        background: rgba(239, 68, 68, 0.15);
-        color: #fca5a5;
+        border-radius: 10px;
+        background: rgba(196, 91, 91, 0.15);
+        color: #F0A8A8;
         font-size: 0.9rem;
-        border: 1px solid rgba(239, 68, 68, 0.3);
+        border: 1px solid rgba(196, 91, 91, 0.25);
       }
 
       .success-message {
         margin: 0 0 1rem;
         padding: 0.75rem;
-        border-radius: 0.5rem;
-        background: rgba(34, 197, 94, 0.15);
-        color: #86efac;
+        border-radius: 10px;
+        background: rgba(91, 113, 83, 0.2);
+        color: #A8C9A0;
         font-size: 0.9rem;
-        border: 1px solid rgba(34, 197, 94, 0.3);
+        border: 1px solid rgba(91, 113, 83, 0.3);
       }
 
       .login-form {
@@ -134,7 +153,7 @@ import { AuthService } from '../../core/auth/auth.service';
       .forgot-password-text {
         margin: 0 0 1rem;
         font-size: 0.9rem;
-        color: #9ca3af;
+        color: #A8A29E;
         line-height: 1.5;
       }
 
@@ -146,42 +165,45 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .field span {
-        color: #d1d5db;
+        color: #D6D3D1;
         font-weight: 500;
       }
 
       .field input {
         padding: 0.7rem 0.9rem;
-        border-radius: 0.5rem;
-        border: 1px solid #4b5563;
-        background: #020617;
-        color: #e5e7eb;
+        border-radius: 10px;
+        border: 1px solid #44403C;
+        background: #1C1917;
+        color: #E7E5E4;
         font-size: 0.95rem;
+        font-family: 'DM Sans', sans-serif;
         transition: all 0.2s;
       }
 
       .field input:focus {
         outline: none;
-        border-color: #6366f1;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        border-color: #5B7153;
+        box-shadow: 0 0 0 3px rgba(91, 113, 83, 0.25);
       }
 
       .btn-primary {
         margin-top: 0.5rem;
         padding: 0.75rem;
-        border-radius: 0.5rem;
+        border-radius: 10px;
         border: none;
         font-weight: 600;
         font-size: 1rem;
-        background: linear-gradient(90deg, #6366f1, #8b5cf6);
-        color: #f9fafb;
+        background: linear-gradient(135deg, #5B7153, #4A5E43);
+        color: #FAF9F7;
         cursor: pointer;
         transition: all 0.2s;
+        font-family: 'DM Sans', sans-serif;
       }
 
       .btn-primary:hover:not(:disabled) {
         filter: brightness(1.1);
         transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(91, 113, 83, 0.3);
       }
 
       .btn-primary:disabled {
@@ -195,15 +217,17 @@ import { AuthService } from '../../core/auth/auth.service';
         padding: 0.5rem;
         border: none;
         background: transparent;
-        color: #8b5cf6;
+        color: #C4956A;
         font-size: 0.9rem;
         cursor: pointer;
         text-decoration: underline;
+        text-underline-offset: 2px;
         transition: color 0.2s;
+        font-family: 'DM Sans', sans-serif;
       }
 
       .btn-link:hover {
-        color: #a78bfa;
+        color: #D4A87A;
       }
     `,
   ],

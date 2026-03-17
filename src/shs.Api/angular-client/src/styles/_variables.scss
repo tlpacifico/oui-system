@@ -1,24 +1,59 @@
-// ── Design Tokens ──
+// ── Design Tokens – Boutique Atelier ──
 
-// Colors
-$color-primary: #6366f1;
-$color-primary-hover: #4f46e5;
-$color-danger: #ef4444;
-$color-danger-hover: #dc2626;
-$color-success: #16a34a;
-$color-warning: #f59e0b;
+// Primary palette
+$color-primary: #5B7153;
+$color-primary-hover: #4A5E43;
+$color-accent: #C4956A;
+$color-danger: #C45B5B;
+$color-danger-hover: #A84848;
+$color-success: #5B7153;
+$color-warning: #D4A843;
 
-// Grays
-$gray-900: #1e293b;
-$gray-700: #374151;
-$gray-600: #475569;
-$gray-500: #64748b;
-$gray-400: #94a3b8;
-$gray-200: #e2e8f0;
-$gray-100: #f1f5f9;
-$gray-50: #f8fafc;
+// Stone neutrals
+$stone-900: #1C1917;
+$stone-800: #292524;
+$stone-700: #44403C;
+$stone-600: #57534E;
+$stone-500: #78716C;
+$stone-400: #A8A29E;
+$stone-300: #D6D3D1;
+$stone-200: #E7E5E4;
+$stone-100: #F5F5F4;
+$stone-50: #FAF9F7;
+
+// Semantic aliases
+$gray-900: $stone-900;
+$gray-700: $stone-700;
+$gray-600: $stone-600;
+$gray-500: $stone-500;
+$gray-400: $stone-400;
+$gray-200: $stone-200;
+$gray-100: $stone-100;
+$gray-50: $stone-50;
+
+// Sidebar
+$sidebar-bg: $stone-900;
+$sidebar-text: $stone-300;
+$sidebar-active-bg: rgba(91, 113, 83, 0.2);
+$sidebar-active-border: $color-primary;
+
+// Surfaces
+$body-bg: $stone-50;
+$card-bg: #FFFFFF;
+$border-color: $stone-200;
+$text-primary: $stone-900;
+$text-muted: $stone-500;
 
 // Border radius
-$radius-input: 8px;
-$radius-card: 12px;
+$radius-input: 10px;
+$radius-card: 14px;
 $radius-badge: 20px;
+
+// Typography
+$font-display: 'DM Serif Display', Georgia, serif;
+$font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+// Shadows
+$shadow-card: 0 1px 3px rgba(28, 25, 23, 0.06);
+$shadow-card-hover: 0 4px 12px rgba(28, 25, 23, 0.08);
+$shadow-modal: 0 20px 60px rgba(28, 25, 23, 0.18);

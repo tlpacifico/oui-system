@@ -1,9 +1,12 @@
+@use 'variables' as *;
+
 // ── Cards ──
 
 .card {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  background: $card-bg;
+  border-radius: $radius-card;
+  border: 1px solid $border-color;
+  box-shadow: $shadow-card;
 }
 
 .filters-card {

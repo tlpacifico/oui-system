@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, effect } from '@angular/core';
+import { Component, computed, inject, OnInit, effect, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './core/auth/auth.service';
@@ -13,6 +13,7 @@ import { HasPermissionDirective } from './core/auth/directives/has-permission.di
 export class App implements OnInit {
   protected readonly auth = inject(AuthService);
   protected readonly showShell = computed(() => this.auth.isAuthenticated());
+  protected readonly sidebarOpen = signal(false);
 
   constructor() {
     // Load permissions when authentication state changes
@@ -40,6 +41,10 @@ export class App implements OnInit {
     const parts = u.displayName.trim().split(/\s+/);
     if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     return u.displayName.slice(0, 2).toUpperCase();
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen.set(false);
   }
 
   logout(): void {

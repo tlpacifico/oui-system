@@ -1,3 +1,5 @@
+@use 'variables' as *;
+
 // ── Forms ──
 
 .form-group {
@@ -8,36 +10,36 @@
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: $stone-700;
   margin-bottom: 6px;
 }
 
 .form-input {
   width: 100%;
   padding: 9px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid $stone-300;
+  border-radius: $radius-input;
   font-size: 14px;
   outline: none;
-  color: #1e293b;
-  transition: border-color 0.15s;
+  color: $stone-900;
+  transition: border-color 0.15s, box-shadow 0.15s;
   font-family: inherit;
 }
 
 .form-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: $color-primary;
+  box-shadow: 0 0 0 3px rgba($color-primary, 0.12);
 }
 
 .form-input.error,
 .form-input.input-error {
-  border-color: #ef4444;
+  border-color: $color-danger;
 }
 
 .form-error,
 .field-error {
   display: block;
-  color: #ef4444;
+  color: $color-danger;
   font-size: 12px;
   margin-top: 4px;
 }
@@ -48,16 +50,16 @@ textarea.form-input {
 }
 
 .alert-danger {
-  background: #fef2f2;
-  color: #991b1b;
+  background: rgba($color-danger, 0.06);
+  color: #8B3A3A;
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: $radius-input;
   font-size: 13px;
-  border: 1px solid #fecaca;
+  border: 1px solid rgba($color-danger, 0.2);
   margin-top: 8px;
 }
 
 .text-muted {
-  color: #9ca3af;
+  color: $stone-400;
   font-size: 13px;
 }

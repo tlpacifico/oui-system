@@ -110,7 +110,7 @@ import { DashboardService, DashboardData } from './dashboard.service';
             </div>
             @if (data()!.topSellingItems.length === 0) {
               <div class="empty-state">
-                <span class="empty-icon">🛒</span>
+                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                 <span>Sem vendas esta semana</span>
               </div>
             } @else {
@@ -136,31 +136,31 @@ import { DashboardService, DashboardData } from './dashboard.service';
               <div class="alerts-grid">
                 @if (data()!.alerts.expiringConsignments > 0) {
                   <a class="alert-item alert-warning" routerLink="/consignments/returns">
-                    <span class="alert-icon">⚠️</span>
+                    <svg class="alert-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     {{ data()!.alerts.expiringConsignments }} consignação(ões) a expirar (7 dias)
                   </a>
                 }
                 @if (data()!.alerts.stagnantItems30 > 0) {
                   <a class="alert-item alert-yellow" routerLink="/inventory/items">
-                    <span class="alert-icon">📦</span>
+                    <svg class="alert-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
                     {{ data()!.alerts.stagnantItems30 }} itens parados 30+ dias
                   </a>
                 }
                 @if (data()!.alerts.stagnantItems45 > 0) {
                   <a class="alert-item alert-orange" routerLink="/inventory/items">
-                    <span class="alert-icon">📦</span>
+                    <svg class="alert-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
                     {{ data()!.alerts.stagnantItems45 }} itens parados 45+ dias
                   </a>
                 }
                 @if (data()!.alerts.stagnantItems60 > 0) {
                   <a class="alert-item alert-red" routerLink="/inventory/items">
-                    <span class="alert-icon">📦</span>
+                    <svg class="alert-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
                     {{ data()!.alerts.stagnantItems60 }} itens parados 60+ dias
                   </a>
                 }
                 @if (data()!.alerts.openRegisters.length > 0) {
                   <div class="alert-item alert-info">
-                    <span class="alert-icon">💰</span>
+                    <svg class="alert-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 4v16"/><path d="M2 12h20"/></svg>
                     {{ data()!.alerts.openRegisters.length }} caixa(s) aberto(s):
                     @for (r of data()!.alerts.openRegisters; track r.operatorName) {
                       <span>{{ r.operatorName }}{{ $last ? '' : ', ' }}</span>
@@ -200,20 +200,27 @@ import { DashboardService, DashboardData } from './dashboard.service';
       flex-wrap: wrap;
       gap: 16px;
     }
-    .dashboard-header h1 { font-size: 22px; font-weight: 700; margin: 0; }
-    .subtitle { color: #64748b; margin: 4px 0 0; font-size: 14px; }
+    .dashboard-header h1 {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 24px;
+      font-weight: 400;
+      margin: 0;
+      color: #1C1917;
+    }
+    .subtitle { color: #78716C; margin: 4px 0 0; font-size: 14px; }
     .header-actions { display: flex; gap: 12px; align-items: center; }
     .form-control {
       padding: 10px 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
+      border: 1px solid #D6D3D1;
+      border-radius: 10px;
       font-size: 14px;
-      font-family: inherit;
+      font-family: 'DM Sans', sans-serif;
       background: #fff;
       min-width: 140px;
+      color: #1C1917;
     }
-    .form-control:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
-    .loading { text-align: center; padding: 48px; color: #64748b; font-size: 14px; }
+    .form-control:focus { outline: none; border-color: #5B7153; box-shadow: 0 0 0 3px rgba(91,113,83,0.12); }
+    .loading { text-align: center; padding: 48px; color: #78716C; font-size: 14px; }
 
     .dashboard-content {
       display: flex;
@@ -241,37 +248,39 @@ import { DashboardService, DashboardData } from './dashboard.service';
     }
     .stat-card {
       padding: 16px;
-      border-radius: 10px;
+      border-radius: 14px;
       background: #fff;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #E7E5E4;
       text-align: center;
       transition: all 0.15s;
+      box-shadow: 0 1px 3px rgba(28,25,23,0.06);
     }
-    .stat-card:hover { border-color: #cbd5e1; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-    .stat-card.stat-revenue { border-color: #6366f1; background: #eef2ff; }
-    .stat-card.stat-revenue:hover { box-shadow: 0 2px 8px rgba(99,102,241,0.15); }
-    .stat-value { font-size: 20px; font-weight: 700; color: #1e293b; }
-    .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
-    .stat-meta { font-size: 11px; color: #94a3b8; display: block; margin-top: 2px; }
+    .stat-card:hover { border-color: #D6D3D1; box-shadow: 0 4px 12px rgba(28,25,23,0.08); }
+    .stat-card.stat-revenue { border-color: #5B7153; background: #F0F5EE; }
+    .stat-card.stat-revenue:hover { box-shadow: 0 4px 12px rgba(91,113,83,0.15); }
+    .stat-value { font-size: 20px; font-weight: 700; color: #1C1917; }
+    .stat-label { font-size: 12px; color: #78716C; margin-top: 4px; }
+    .stat-meta { font-size: 11px; color: #A8A29E; display: block; margin-top: 2px; }
     .growth { font-size: 12px; font-weight: 500; margin-top: 4px; display: block; }
-    .growth.positive { color: #059669; }
-    .growth.negative { color: #dc2626; }
+    .growth.positive { color: #5B7153; }
+    .growth.negative { color: #C45B5B; }
 
     .card {
       background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
+      border: 1px solid #E7E5E4;
+      border-radius: 14px;
       overflow: hidden;
+      box-shadow: 0 1px 3px rgba(28,25,23,0.06);
     }
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 16px 20px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #E7E5E4;
     }
-    .card-title { font-size: 16px; font-weight: 600; margin: 0; }
-    .card-badge { font-size: 11px; color: #6366f1; font-weight: 600; background: #eef2ff; padding: 2px 10px; border-radius: 12px; }
+    .card-title { font-size: 16px; font-weight: 600; margin: 0; color: #1C1917; }
+    .card-badge { font-size: 11px; color: #5B7153; font-weight: 600; background: #E8EFE6; padding: 2px 10px; border-radius: 12px; }
 
     .chart-card { margin-bottom: 20px; }
     .chart-container { padding: 20px; min-height: 180px; }
@@ -281,27 +290,27 @@ import { DashboardService, DashboardData } from './dashboard.service';
       width: 100%;
       max-width: 28px;
       min-height: 2px;
-      background: #6366f1;
+      background: #5B7153;
       border-radius: 6px 6px 0 0;
       transition: all 0.2s;
     }
-    .chart-bar:hover { background: #4f46e5; }
+    .chart-bar:hover { background: #4A5E43; }
     .chart-labels { display: flex; gap: 4px; margin-top: 12px; }
-    .chart-label { flex: 1; font-size: 11px; color: #64748b; text-align: center; overflow: hidden; text-overflow: ellipsis; }
-    .chart-empty { text-align: center; color: #94a3b8; padding: 48px; font-size: 14px; }
+    .chart-label { flex: 1; font-size: 11px; color: #78716C; text-align: center; overflow: hidden; text-overflow: ellipsis; }
+    .chart-empty { text-align: center; color: #A8A29E; padding: 48px; font-size: 14px; }
 
     .sidebar-card { min-height: 0; }
     .top-sales-list { list-style: none; margin: 0; padding: 0; }
     .top-sales-item {
       padding: 12px 20px;
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 1px solid #F5F5F4;
       display: flex;
       flex-direction: column;
       gap: 2px;
     }
     .top-sales-item:last-child { border-bottom: none; }
-    .item-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .item-meta { font-size: 11px; color: #64748b; }
+    .item-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #1C1917; }
+    .item-meta { font-size: 11px; color: #78716C; }
     .empty-state {
       display: flex;
       flex-direction: column;
@@ -309,30 +318,36 @@ import { DashboardService, DashboardData } from './dashboard.service';
       justify-content: center;
       gap: 8px;
       padding: 32px 20px;
-      color: #94a3b8;
+      color: #A8A29E;
       font-size: 13px;
     }
-    .empty-icon { font-size: 32px; }
+    .empty-icon {
+      width: 32px;
+      height: 32px;
+      color: #A8A29E;
+    }
 
-    .alerts-grid { display: flex; flex-direction: column; gap: 8px; padding: 0 20px 20px; }
+    .alerts-grid { display: flex; flex-direction: column; gap: 8px; padding: 16px 20px; }
     .alert-item {
       display: flex;
       align-items: center;
       gap: 8px;
       padding: 12px 16px;
-      border-radius: 8px;
+      border-radius: 10px;
       text-decoration: none;
       color: inherit;
+      font-size: 13px;
       transition: opacity 0.15s;
     }
     .alert-item:hover { opacity: 0.9; }
-    .alert-warning { background: #fef3c7; color: #92400e; }
-    .alert-yellow { background: #fef9c3; color: #854d0e; }
-    .alert-orange { background: #ffedd5; color: #c2410c; }
-    .alert-red { background: #fee2e2; color: #991b1b; }
-    .alert-info { background: #e0f2fe; color: #0369a1; }
+    .alert-icon-svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .alert-warning { background: #FDF3E3; color: #8B6914; }
+    .alert-yellow { background: #FEF9E3; color: #7A5B0E; }
+    .alert-orange { background: #FDE8D5; color: #9A4A0C; }
+    .alert-red { background: #FCEAEA; color: #8B3A3A; }
+    .alert-info { background: #E8EFE6; color: #3D5436; }
 
-    .quick-actions-card .card-header { border-bottom: 1px solid #e2e8f0; }
+    .quick-actions-card .card-header { border-bottom: 1px solid #E7E5E4; }
     .quick-actions { display: flex; flex-direction: column; gap: 8px; padding: 16px 20px; }
     .btn-block { width: 100%; justify-content: center; }
     .btn {
@@ -340,19 +355,20 @@ import { DashboardService, DashboardData } from './dashboard.service';
       align-items: center;
       gap: 6px;
       padding: 8px 16px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
+      border: 1px solid #D6D3D1;
+      border-radius: 10px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       background: #fff;
-      color: #374151;
+      color: #44403C;
       text-decoration: none;
       transition: all 0.15s;
+      font-family: 'DM Sans', sans-serif;
     }
-    .btn:hover { background: #f8fafc; }
-    .btn-primary { background: #6366f1; color: #fff; border-color: #6366f1; }
-    .btn-primary:hover { background: #4f46e5; }
+    .btn:hover { background: #FAF9F7; border-color: #A8A29E; }
+    .btn-primary { background: #5B7153; color: #fff; border-color: #5B7153; }
+    .btn-primary:hover { background: #4A5E43; }
     .btn-outline { background: transparent; }
   `],
 })

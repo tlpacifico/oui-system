@@ -194,15 +194,16 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
     }
 
     .page-title {
-      font-size: 22px;
-      font-weight: 700;
+      font-size: 24px;
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-weight: 400;
       margin: 0 0 4px;
-      color: #1e293b;
+      color: #1C1917;
     }
 
     .page-subtitle {
       font-size: 14px;
-      color: #64748b;
+      color: #78716C;
       margin: 0;
     }
 
@@ -214,8 +215,8 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
     /* ── Cards ── */
     .card {
       background: #ffffff;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      border: 1px solid #E7E5E4;
       padding: 20px;
     }
 
@@ -234,7 +235,7 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
       align-items: center;
       gap: 6px;
       padding: 8px 16px;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
@@ -248,22 +249,22 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
     }
 
     .btn-primary {
-      background: #6366f1;
+      background: #5B7153;
       color: white;
     }
 
     .btn-primary:hover:not(:disabled) {
-      background: #4f46e5;
+      background: #4A5E43;
     }
 
     .btn-outline {
       background: white;
-      color: #1e293b;
-      border-color: #e2e8f0;
+      color: #1C1917;
+      border-color: #E7E5E4;
     }
 
     .btn-outline:hover:not(:disabled) {
-      background: #f8fafc;
+      background: #FAF9F7;
     }
 
     .btn-sm {
@@ -272,21 +273,21 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
     }
 
     .btn-danger {
-      background: #ef4444;
+      background: #C45B5B;
       color: white;
     }
 
     .btn-danger:hover:not(:disabled) {
-      background: #dc2626;
+      background: #A84848;
     }
 
     .btn-danger-outline {
-      color: #ef4444;
-      border-color: #fecaca;
+      color: #C45B5B;
+      border-color: rgba(196, 91, 91, 0.3);
     }
 
     .btn-danger-outline:hover:not(:disabled) {
-      background: #fef2f2;
+      background: rgba(196, 91, 91, 0.06);
     }
 
     /* ── Filters ── */
@@ -299,16 +300,16 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
 
     .filter-input {
       padding: 8px 12px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      border: 1px solid #E7E5E4;
+      border-radius: 10px;
       font-size: 13px;
       background: white;
       outline: none;
-      color: #1e293b;
+      color: #1C1917;
     }
 
     .filter-input:focus {
-      border-color: #6366f1;
+      border-color: #5B7153;
     }
 
     .filter-search {
@@ -327,25 +328,25 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
     }
 
     th {
-      background: #f8fafc;
+      background: #FAF9F7;
       padding: 10px 14px;
       text-align: left;
       font-weight: 600;
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: #64748b;
-      border-bottom: 1px solid #e2e8f0;
+      color: #78716C;
+      border-bottom: 1px solid #E7E5E4;
     }
 
     td {
       padding: 12px 14px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #E7E5E4;
       vertical-align: middle;
     }
 
     tr:hover td {
-      background: #f1f5f9;
+      background: #F5F5F4;
     }
 
     .brand-name-cell {
@@ -359,14 +360,14 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
       height: 32px;
       border-radius: 6px;
       object-fit: contain;
-      background: #f1f5f9;
+      background: #F5F5F4;
     }
 
     .brand-logo-placeholder {
       width: 32px;
       height: 32px;
       border-radius: 6px;
-      background: #6366f1;
+      background: #5B7153;
       color: white;
       display: flex;
       align-items: center;
@@ -377,7 +378,7 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
     }
 
     .cell-description {
-      color: #64748b;
+      color: #78716C;
       max-width: 300px;
       white-space: nowrap;
       overflow: hidden;
@@ -406,13 +407,13 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
       white-space: nowrap;
     }
 
-    .badge-gray { background: #f1f5f9; color: #475569; }
+    .badge-gray { background: #F5F5F4; color: #57534E; }
 
     /* ── Modal ── */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(28, 25, 23, 0.45);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -425,7 +426,7 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
       border-radius: 16px;
       width: 100%;
       max-width: 520px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 20px 60px rgba(28, 25, 23, 0.18);
       animation: modalIn 0.2s ease-out;
     }
 
@@ -449,13 +450,13 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
       justify-content: space-between;
       align-items: center;
       padding: 20px 24px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #E7E5E4;
     }
 
     .modal-title {
       font-size: 18px;
       font-weight: 700;
-      color: #1e293b;
+      color: #1C1917;
       margin: 0;
     }
 
@@ -463,14 +464,14 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
       background: none;
       border: none;
       font-size: 24px;
-      color: #94a3b8;
+      color: #A8A29E;
       cursor: pointer;
       padding: 0;
       line-height: 1;
     }
 
     .modal-close:hover {
-      color: #1e293b;
+      color: #1C1917;
     }
 
     .modal-body {
@@ -479,7 +480,7 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
 
     .modal-footer {
       padding: 16px 24px;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid #E7E5E4;
       display: flex;
       justify-content: flex-end;
       gap: 8px;
@@ -498,29 +499,29 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
       display: block;
       font-size: 13px;
       font-weight: 600;
-      color: #374151;
+      color: #44403C;
       margin-bottom: 6px;
     }
 
     .form-input {
       width: 100%;
       padding: 10px 12px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      border: 1px solid #E7E5E4;
+      border-radius: 10px;
       font-size: 14px;
       outline: none;
-      color: #1e293b;
+      color: #1C1917;
       font-family: inherit;
       transition: border-color 0.15s;
     }
 
     .form-input:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      border-color: #5B7153;
+      box-shadow: 0 0 0 3px rgba(91, 113, 83, 0.12);
     }
 
     .form-input.input-error {
-      border-color: #ef4444;
+      border-color: #C45B5B;
     }
 
     .form-textarea {
@@ -531,27 +532,27 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
     .field-error {
       display: block;
       font-size: 12px;
-      color: #ef4444;
+      color: #C45B5B;
       margin-top: 4px;
     }
 
     /* ── Alert ── */
     .alert {
       padding: 10px 14px;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 13px;
       margin-bottom: 16px;
     }
 
     .alert-error {
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
+      background: rgba(196, 91, 91, 0.06);
+      color: #8B3A3A;
+      border: 1px solid rgba(196, 91, 91, 0.3);
     }
 
     .text-muted {
       font-size: 13px;
-      color: #64748b;
+      color: #78716C;
       margin-top: 8px;
     }
 
@@ -559,11 +560,11 @@ import { BrandListItem, CreateBrandRequest, UpdateBrandRequest } from '../../../
     .state-message {
       text-align: center;
       padding: 4rem 2rem;
-      color: #64748b;
+      color: #78716C;
       font-size: 15px;
       background: white;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      border: 1px solid #E7E5E4;
     }
 
     /* ── Responsive ── */

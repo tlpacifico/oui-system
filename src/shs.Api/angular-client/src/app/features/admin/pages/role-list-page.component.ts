@@ -173,7 +173,7 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
     :host { display: block; }
 
     .cell-description {
-      color: #64748b;
+      color: #78716C;
       max-width: 280px;
     }
   `]

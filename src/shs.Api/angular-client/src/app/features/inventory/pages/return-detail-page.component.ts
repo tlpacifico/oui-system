@@ -140,61 +140,61 @@ import { SupplierReturnDetail } from '../../../core/models/supplier-return.model
   `,
   styles: [`
     .page { max-width: 1100px; margin: 0 auto; }
-    .loading { text-align: center; padding: 48px; color: #64748b; }
+    .loading { text-align: center; padding: 48px; color: #78716C; }
     .error-card { text-align: center; padding: 48px; }
     .topbar { display: flex; justify-content: space-between; margin-bottom: 20px; }
 
     .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-    .ref-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+    .ref-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #78716C; }
     .ref-title { font-size: 26px; font-weight: 800; margin: 4px 0 8px; letter-spacing: 1px; font-family: monospace; }
-    .header-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b; }
-    .initial-badge { width: 28px; height: 28px; border-radius: 50%; background: #eef2ff; color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
-    .supplier-link { color: #6366f1; text-decoration: none; font-weight: 600; }
+    .header-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #78716C; }
+    .initial-badge { width: 28px; height: 28px; border-radius: 50%; background: #E8EFE6; color: #5B7153; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+    .supplier-link { color: #5B7153; text-decoration: none; font-weight: 600; }
     .supplier-link:hover { text-decoration: underline; }
-    .meta-sep { color: #cbd5e1; }
+    .meta-sep { color: #D6D3D1; }
 
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 14px; font-size: 11px; font-weight: 600; }
     .badge-lg { padding: 6px 14px; font-size: 13px; }
     .badge-returned { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
-    .badge-red { background: #fef2f2; color: #dc2626; }
+    .badge-red { background: rgba(196, 91, 91, 0.06); color: #C45B5B; }
     .badge-amber { background: #fffbeb; color: #d97706; }
 
     .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center; }
-    .stat-value { font-size: 24px; font-weight: 700; color: #1e293b; }
-    .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+    .stat-card { background: #fff; border: 1px solid #E7E5E4; border-radius: 14px; padding: 20px; text-align: center; }
+    .stat-value { font-size: 24px; font-weight: 700; color: #1C1917; }
+    .stat-label { font-size: 12px; color: #78716C; margin-top: 4px; }
 
-    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
-    .card-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
+    .card { background: #fff; border: 1px solid #E7E5E4; border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+    .card-title { font-size: 15px; font-weight: 700; color: #1C1917; margin-bottom: 12px; }
     .card-title-bar { padding: 16px 16px 8px; }
     .table-card { padding: 0; overflow: hidden; }
-    .notes-text { font-size: 14px; color: #475569; margin: 0; line-height: 1.6; }
+    .notes-text { font-size: 14px; color: #57534E; margin: 0; line-height: 1.6; }
 
     .table-wrapper { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { text-align: left; padding: 8px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
-    td { padding: 10px 16px; border-bottom: 1px solid #f1f5f9; }
-    .cell-num { color: #94a3b8; width: 36px; }
-    .cell-mono { font-family: monospace; font-size: 12px; color: #64748b; }
+    th { text-align: left; padding: 8px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #78716C; border-bottom: 2px solid #E7E5E4; white-space: nowrap; }
+    td { padding: 10px 16px; border-bottom: 1px solid #F5F5F4; }
+    .cell-num { color: #A8A29E; width: 36px; }
+    .cell-mono { font-family: monospace; font-size: 12px; color: #78716C; }
     .cell-right { text-align: right; }
-    .link { color: #6366f1; text-decoration: none; font-weight: 600; }
+    .link { color: #5B7153; text-decoration: none; font-weight: 600; }
     .link:hover { text-decoration: underline; }
-    tfoot td { border-top: 2px solid #e2e8f0; border-bottom: none; }
-    .foot-label { text-align: right; font-weight: 600; color: #374151; }
-    .foot-value { font-weight: 700; color: #1e293b; }
+    tfoot td { border-top: 2px solid #E7E5E4; border-bottom: none; }
+    .foot-label { text-align: right; font-weight: 600; color: #44403C; }
+    .foot-value { font-weight: 700; color: #1C1917; }
 
-    .timeline { padding-left: 20px; border-left: 2px solid #e2e8f0; }
+    .timeline { padding-left: 20px; border-left: 2px solid #E7E5E4; }
     .timeline-item { position: relative; padding: 0 0 0 20px; margin-bottom: 16px; }
     .timeline-item:last-child { margin-bottom: 0; }
     .timeline-dot { position: absolute; left: -27px; top: 2px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; }
     .dot-orange { background: #f97316; }
     .timeline-content { display: flex; flex-direction: column; gap: 2px; }
-    .timeline-label { font-size: 13px; font-weight: 600; color: #1e293b; }
-    .timeline-date { font-size: 12px; color: #94a3b8; }
-    .timeline-detail { font-size: 12px; color: #64748b; }
+    .timeline-label { font-size: 13px; font-weight: 600; color: #1C1917; }
+    .timeline-date { font-size: 12px; color: #A8A29E; }
+    .timeline-detail { font-size: 12px; color: #78716C; }
 
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; background: #fff; color: #374151; text-decoration: none; transition: all 0.15s; }
-    .btn:hover { background: #f8fafc; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px solid #D6D3D1; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; background: #fff; color: #44403C; text-decoration: none; transition: all 0.15s; }
+    .btn:hover { background: #FAF9F7; }
     .btn-outline { background: transparent; }
 
     @media (max-width: 768px) {

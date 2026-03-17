@@ -1,9 +1,11 @@
+@use 'variables' as *;
+
 // ── Modals ──
 
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(28, 25, 23, 0.45);
   z-index: 100;
 }
 
@@ -13,8 +15,8 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border-radius: $radius-card;
+  box-shadow: $shadow-modal;
   z-index: 101;
   width: 480px;
   max-width: 90vw;
@@ -31,13 +33,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid $border-color;
 }
 
 .modal-header h2 {
   font-size: 17px;
   font-weight: 700;
-  color: #1e293b;
+  color: $stone-900;
   margin: 0;
 }
 
@@ -45,14 +47,14 @@
   background: none;
   border: none;
   font-size: 22px;
-  color: #94a3b8;
+  color: $stone-400;
   cursor: pointer;
   padding: 4px;
   line-height: 1;
 }
 
 .modal-close:hover {
-  color: #1e293b;
+  color: $stone-900;
 }
 
 .modal-body {
@@ -64,5 +66,5 @@
   justify-content: flex-end;
   gap: 8px;
   padding: 16px 24px 20px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid $border-color;
 }

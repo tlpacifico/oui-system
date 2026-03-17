@@ -1,5 +1,19 @@
 // ── Responsive ──
 
+@media (max-width: 1024px) {
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(28, 25, 23, 0.5);
+    z-index: 90;
+  }
+
+  .sidebar-backdrop.visible {
+    display: block;
+  }
+}
+
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;

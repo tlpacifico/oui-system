@@ -1,8 +1,8 @@
 /* ================================================================
-   Global styles
+   Global styles – Boutique Atelier
    ================================================================ */
 
-@use 'styles/variables';
+@use 'styles/variables' as *;
 @use 'styles/page-layout';
 @use 'styles/buttons';
 @use 'styles/cards';
@@ -23,9 +23,9 @@
 
 html, body {
   min-height: 100vh;
-  background: #f8fafc;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #1e293b;
+  background: $body-bg;
+  font-family: $font-body;
+  color: $text-primary;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -42,23 +42,23 @@ app-root {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: $stone-100;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: $stone-300;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: $stone-400;
 }
 
 /* Sidebar scrollbar (dark) */
 .sidebar::-webkit-scrollbar-track {
-  background: #1e1b4b;
+  background: $stone-800;
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-  background: #4338ca;
+  background: $stone-700;
 }

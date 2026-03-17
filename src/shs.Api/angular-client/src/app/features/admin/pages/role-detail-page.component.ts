@@ -166,10 +166,11 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
     }
 
     .page-title {
-      font-size: 22px;
-      font-weight: 700;
+      font-size: 24px;
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-weight: 400;
       margin: 0 0 4px;
-      color: #1e293b;
+      color: #1C1917;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -177,7 +178,7 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
 
     .page-subtitle {
       font-size: 14px;
-      color: #64748b;
+      color: #78716C;
       margin: 0;
     }
 
@@ -187,12 +188,12 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
       align-items: center;
       gap: 8px;
       font-size: 13px;
-      color: #64748b;
+      color: #78716C;
       margin-bottom: 8px;
     }
 
     .breadcrumb-link {
-      color: #6366f1;
+      color: #5B7153;
       cursor: pointer;
       text-decoration: none;
       font-weight: 500;
@@ -203,7 +204,7 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
     }
 
     .breadcrumb-separator {
-      color: #94a3b8;
+      color: #A8A29E;
     }
 
     /* ── Stats ── */
@@ -216,28 +217,28 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
 
     .stat-card {
       background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
+      border: 1px solid #E7E5E4;
+      border-radius: 14px;
       padding: 20px;
     }
 
     .stat-value {
       font-size: 28px;
       font-weight: 700;
-      color: #1e293b;
+      color: #1C1917;
     }
 
     .stat-label {
       font-size: 13px;
-      color: #64748b;
+      color: #78716C;
       margin-top: 4px;
     }
 
     /* ── Cards ── */
     .card {
       background: #ffffff;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      border: 1px solid #E7E5E4;
     }
 
     .card-header {
@@ -245,13 +246,13 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
       justify-content: space-between;
       align-items: center;
       padding: 16px 20px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #E7E5E4;
     }
 
     .card-title {
       font-size: 15px;
       font-weight: 700;
-      color: #1e293b;
+      color: #1C1917;
       margin: 0;
     }
 
@@ -265,7 +266,7 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
       align-items: center;
       gap: 6px;
       padding: 8px 16px;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
@@ -274,12 +275,12 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
     }
 
     .btn-primary {
-      background: #6366f1;
+      background: #5B7153;
       color: white;
     }
 
     .btn-primary:hover {
-      background: #4f46e5;
+      background: #4A5E43;
     }
 
     .btn-primary:disabled {
@@ -289,12 +290,12 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
 
     .btn-outline {
       background: white;
-      color: #1e293b;
-      border-color: #e2e8f0;
+      color: #1C1917;
+      border-color: #E7E5E4;
     }
 
     .btn-outline:hover {
-      background: #f8fafc;
+      background: #FAF9F7;
     }
 
     .btn-sm {
@@ -303,23 +304,23 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
     }
 
     .btn-danger {
-      background: #ef4444;
+      background: #C45B5B;
       color: white;
-      border-color: #ef4444;
+      border-color: #C45B5B;
     }
 
     .btn-danger:hover {
-      background: #dc2626;
+      background: #A84848;
     }
 
     .btn-danger-outline {
-      color: #ef4444;
-      border-color: #fecaca;
+      color: #C45B5B;
+      border-color: rgba(196, 91, 91, 0.3);
     }
 
     .btn-danger-outline:hover {
-      background: #fef2f2;
-      border-color: #ef4444;
+      background: rgba(196, 91, 91, 0.06);
+      border-color: #C45B5B;
     }
 
     /* ── Badges ── */
@@ -332,8 +333,8 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
       white-space: nowrap;
     }
 
-    .badge-blue { background: #eef2ff; color: #4f46e5; }
-    .badge-gray { background: #f1f5f9; color: #475569; }
+    .badge-blue { background: #E8EFE6; color: #5B7153; }
+    .badge-gray { background: #F5F5F4; color: #57534E; }
 
     /* ── Permission categories ── */
     .permission-category {
@@ -347,7 +348,7 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
     .permission-category-title {
       font-size: 14px;
       font-weight: 700;
-      color: #1e293b;
+      color: #1C1917;
       margin: 0 0 12px;
       display: flex;
       align-items: center;
@@ -366,7 +367,7 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
     .permission-category-checkbox input[type="checkbox"] {
       width: 16px;
       height: 16px;
-      accent-color: #6366f1;
+      accent-color: #5B7153;
     }
 
     .permission-list {
@@ -380,34 +381,34 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
       justify-content: space-between;
       align-items: center;
       padding: 10px 14px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border: 1px solid #f1f5f9;
+      background: #FAF9F7;
+      border-radius: 10px;
+      border: 1px solid #F5F5F4;
     }
 
     .permission-item:hover {
-      background: #f1f5f9;
+      background: #F5F5F4;
     }
 
     .permission-checkbox {
       display: flex;
       gap: 10px;
       padding: 10px 14px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border: 1px solid #f1f5f9;
+      background: #FAF9F7;
+      border-radius: 10px;
+      border: 1px solid #F5F5F4;
       cursor: pointer;
       align-items: center;
     }
 
     .permission-checkbox:hover {
-      background: #f1f5f9;
+      background: #F5F5F4;
     }
 
     .permission-checkbox input[type="checkbox"] {
       width: 16px;
       height: 16px;
-      accent-color: #6366f1;
+      accent-color: #5B7153;
       flex-shrink: 0;
     }
 
@@ -415,8 +416,8 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
       font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
       font-size: 12.5px;
       font-weight: 500;
-      color: #6366f1;
-      background: #eef2ff;
+      color: #5B7153;
+      background: #E8EFE6;
       padding: 3px 8px;
       border-radius: 4px;
       white-space: nowrap;
@@ -424,7 +425,7 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
 
     .permission-description {
       font-size: 12px;
-      color: #64748b;
+      color: #78716C;
       margin-top: 4px;
     }
 
@@ -432,18 +433,18 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
     .state-message {
       text-align: center;
       padding: 4rem 2rem;
-      color: #64748b;
+      color: #78716C;
       font-size: 15px;
       background: white;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      border: 1px solid #E7E5E4;
     }
 
     /* ── Modal ── */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(28, 25, 23, 0.45);
       z-index: 100;
     }
 
@@ -453,8 +454,8 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
       left: 50%;
       transform: translate(-50%, -50%);
       background: white;
-      border-radius: 12px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(28, 25, 23, 0.18);
       z-index: 101;
       width: 480px;
       max-width: 90vw;
@@ -472,13 +473,13 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
       justify-content: space-between;
       align-items: center;
       padding: 20px 24px 16px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #E7E5E4;
     }
 
     .modal-header h2 {
       font-size: 17px;
       font-weight: 700;
-      color: #1e293b;
+      color: #1C1917;
       margin: 0;
     }
 
@@ -486,14 +487,14 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
       background: none;
       border: none;
       font-size: 22px;
-      color: #94a3b8;
+      color: #A8A29E;
       cursor: pointer;
       padding: 4px;
       line-height: 1;
     }
 
     .modal-close:hover {
-      color: #1e293b;
+      color: #1C1917;
     }
 
     .modal-body {
@@ -505,7 +506,7 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
       justify-content: flex-end;
       gap: 8px;
       padding: 16px 24px 20px;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid #E7E5E4;
     }
 
     /* ── Responsive ── */
