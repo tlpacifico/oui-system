@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Oui.Modules.Auth.Infrastructure.Abstractions;
 using shs.Infrastructure.Services;
 
 namespace shs.Api.IntegrationTests.Infrastructure;
@@ -32,6 +33,13 @@ public class OuiWebApplicationFactory : WebApplicationFactory<Program>
                 opts.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
                 opts.DefaultChallengeScheme = TestAuthHandler.SchemeName;
             });
+
+            // Replace Firebase Auth Service with fake for tests
+            var firebaseDescriptor = services
+                .FirstOrDefault(d => d.ServiceType == typeof(IFirebaseAuthService));
+            if (firebaseDescriptor != null)
+                services.Remove(firebaseDescriptor);
+            services.AddScoped<IFirebaseAuthService, FakeFirebaseAuthService>();
 
             // Remove background hosted service that isn't needed in tests
             var hostedServiceDescriptor = services

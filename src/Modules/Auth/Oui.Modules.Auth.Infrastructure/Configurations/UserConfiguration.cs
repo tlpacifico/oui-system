@@ -16,6 +16,8 @@ internal class UserConfiguration : IEntityTypeConfiguration<UserEntity>
         b.HasIndex(x => x.Email).IsUnique();
         b.Property(x => x.PasswordHash).HasMaxLength(500);
         b.Property(x => x.DisplayName).HasMaxLength(256);
+        b.Property(x => x.FirebaseUid).HasMaxLength(128);
+        b.HasIndex(x => x.FirebaseUid).IsUnique().HasFilter("\"FirebaseUid\" IS NOT NULL");
 
         b.HasMany(x => x.UserRoles)
             .WithOne(x => x.User)

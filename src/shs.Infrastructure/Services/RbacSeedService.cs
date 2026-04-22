@@ -216,7 +216,10 @@ public class RbacSeedService
             ["ecommerce.products.unpublish"] = "Unpublish ecommerce products",
             ["ecommerce.orders.view"] = "View ecommerce orders",
             ["ecommerce.orders.manage"] = "Manage ecommerce orders",
-            ["admin.audit.view"] = "View audit logs"
+            ["admin.audit.view"] = "View audit logs",
+            ["admin.users.create"] = "Create users",
+            ["admin.users.update"] = "Update users",
+            ["admin.users.delete"] = "Delete users"
         };
 
         var existingNames = await _db.Permissions.Select(p => p.Name).ToListAsync();

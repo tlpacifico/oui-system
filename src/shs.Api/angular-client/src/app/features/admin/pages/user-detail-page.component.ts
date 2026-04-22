@@ -25,6 +25,14 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
           <h1 class="page-title" style="margin-top: 0.5rem">{{ user()!.displayName || user()!.email }}</h1>
           <p class="page-subtitle">{{ user()!.email }}</p>
         </div>
+        <div class="page-header-actions">
+          <button class="btn btn-outline btn-sm" (click)="openEditModal()" *hasPermission="'admin.users.update'">
+            Editar
+          </button>
+          <button class="btn btn-outline btn-sm btn-danger-outline" (click)="confirmDelete()" *hasPermission="'admin.users.delete'">
+            Eliminar
+          </button>
+        </div>
       </div>
 
       <!-- User Info -->
@@ -96,6 +104,59 @@ import { HasPermissionDirective } from '../../../core/auth/directives/has-permis
               </table>
             </div>
           }
+        </div>
+      </div>
+    }
+
+    <!-- Edit Modal -->
+    @if (showEditModal()) {
+      <div class="modal-overlay" (click)="closeEditModal()"></div>
+      <div class="modal">
+        <div class="modal-header">
+          <h2>Editar Utilizador</h2>
+          <button class="modal-close" (click)="closeEditModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nome</label>
+            <input
+              type="text"
+              class="form-input"
+              [ngModel]="editDisplayName()"
+              (ngModelChange)="editDisplayName.set($event)"
+              placeholder="Nome do utilizador"
+            />
+          </div>
+          @if (editError()) {
+            <div class="alert alert-danger">{{ editError() }}</div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" (click)="closeEditModal()">Cancelar</button>
+          <button class="btn btn-primary" (click)="saveEdit()" [disabled]="saving()">
+            {{ saving() ? 'A guardar...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Delete Confirmation -->
+    @if (showDeleteConfirm()) {
+      <div class="modal-overlay" (click)="cancelDelete()"></div>
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <h2>Confirmar Eliminação</h2>
+          <button class="modal-close" (click)="cancelDelete()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Tem a certeza que deseja eliminar o utilizador <strong>{{ user()!.email }}</strong>?</p>
+          <p style="color: #dc2626; font-size: 0.875rem; margin-top: 0.5rem">Esta ação é irreversível e removerá o utilizador do Firebase e do sistema.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" (click)="cancelDelete()">Cancelar</button>
+          <button class="btn btn-danger" (click)="deleteUser()" [disabled]="deleting()">
+            {{ deleting() ? 'A eliminar...' : 'Eliminar' }}
+          </button>
         </div>
       </div>
     }
@@ -236,6 +297,16 @@ export class UserDetailPageComponent implements OnInit {
   readonly user = signal<UserDetail | null>(null);
   readonly loading = signal(false);
 
+  // Edit modal state
+  readonly showEditModal = signal(false);
+  readonly saving = signal(false);
+  readonly editDisplayName = signal('');
+  readonly editError = signal('');
+
+  // Delete state
+  readonly showDeleteConfirm = signal(false);
+  readonly deleting = signal(false);
+
   // Assign modal state
   readonly showAssignModal = signal(false);
   readonly loadingRoles = signal(false);
@@ -274,6 +345,66 @@ export class UserDetailPageComponent implements OnInit {
     this.router.navigate(['/admin/users']);
   }
 
+  // Edit
+  openEditModal() {
+    this.editDisplayName.set(this.user()?.displayName || '');
+    this.editError.set('');
+    this.showEditModal.set(true);
+  }
+
+  closeEditModal() {
+    this.showEditModal.set(false);
+  }
+
+  saveEdit() {
+    const user = this.user();
+    if (!user) return;
+
+    this.saving.set(true);
+    this.editError.set('');
+
+    this.userService.update(user.externalId, {
+      displayName: this.editDisplayName() || null
+    }).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.closeEditModal();
+        this.loadUser();
+      },
+      error: (error: { error?: { message?: string } }) => {
+        this.saving.set(false);
+        this.editError.set(error.error?.message || 'Erro ao atualizar utilizador');
+      }
+    });
+  }
+
+  // Delete
+  confirmDelete() {
+    this.showDeleteConfirm.set(true);
+  }
+
+  cancelDelete() {
+    this.showDeleteConfirm.set(false);
+  }
+
+  deleteUser() {
+    const user = this.user();
+    if (!user) return;
+
+    this.deleting.set(true);
+    this.userService.delete(user.externalId).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.router.navigate(['/admin/users']);
+      },
+      error: (error: { error?: { message?: string } }) => {
+        this.deleting.set(false);
+        alert(error.error?.message || 'Erro ao eliminar utilizador');
+      }
+    });
+  }
+
+  // Assign roles
   openAssignModal() {
     this.showAssignModal.set(true);
     this.selectedRoleIds.set([]);

@@ -21,7 +21,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\shs.Api\shs.Api.csproj" />
     <ProjectReference Include="..\..\src\shs.Infrastructure\shs.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Auth\Oui.Modules.Auth.Application\Oui.Modules.Auth.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Auth\Oui.Modules.Auth.Infrastructure\Oui.Modules.Auth.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Auth\Oui.Modules.Auth.Presentation\Oui.Modules.Auth.Presentation.csproj" />
     <ProjectReference Include="..\..\src\Modules\Inventory\Oui.Modules.Inventory.Infrastructure\Oui.Modules.Inventory.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Inventory\Oui.Modules.Inventory.Application\Oui.Modules.Inventory.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Sales\Oui.Modules.Sales.Application\Oui.Modules.Sales.Application.csproj" />

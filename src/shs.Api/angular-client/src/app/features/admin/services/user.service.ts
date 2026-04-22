@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { User, UserDetail } from '../../../core/models/user.model';
+import { User, UserDetail, CreateUserRequest, UpdateUserRequest } from '../../../core/models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -19,5 +19,17 @@ export class UserService {
 
   getById(externalId: string): Observable<UserDetail> {
     return this.http.get<UserDetail>(`${this.apiUrl}/${externalId}`);
+  }
+
+  create(request: CreateUserRequest): Observable<{ externalId: string }> {
+    return this.http.post<{ externalId: string }>(this.apiUrl, request);
+  }
+
+  update(externalId: string, request: UpdateUserRequest): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${externalId}`, request);
+  }
+
+  delete(externalId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${externalId}`);
   }
 }
