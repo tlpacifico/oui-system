@@ -24,6 +24,7 @@ services:
 
       # Firebase
       Firebase__ProjectId: "${FIREBASE_PROJECT_ID}"
+      Firebase__ServiceAccountPath: "/app/secrets/firebase-admin.json"
 
       # CORS — storefront domain(s), comma-separated
       Cors__AllowedOrigins: "https://ouicircular.com,https://www.ouicircular.com"
@@ -38,6 +39,8 @@ services:
     volumes:
       # Fotos dos items — persistir fora do container
       - oui-uploads:/app/wwwroot/uploads
+      # Service account do Firebase Admin — escrito pelo workflow de deploy
+      - ./secrets/firebase-admin.json:/app/secrets/firebase-admin.json:ro
 
     # Healthcheck básico
     healthcheck:
