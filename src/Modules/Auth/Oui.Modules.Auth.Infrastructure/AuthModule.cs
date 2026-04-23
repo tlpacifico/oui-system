@@ -34,27 +34,34 @@ public static class AuthModule
 
         try
         {
-            var serviceAccountPath = config["Firebase:ServiceAccountPath"];
-            if (!string.IsNullOrEmpty(serviceAccountPath) && File.Exists(serviceAccountPath))
-            {
-                FirebaseApp.Create(new AppOptions
-                {
-                    Credential = GoogleCredential.FromFile(serviceAccountPath)
-                });
-            }
-            else
-            {
-                // Use Application Default Credentials (e.g., GOOGLE_APPLICATION_CREDENTIALS env var)
-                FirebaseApp.Create(new AppOptions
-                {
-                    Credential = GoogleCredential.GetApplicationDefault()
-                });
-            }
+            var credential = ResolveCredential(config)
+                ?? throw new InvalidOperationException(
+                    "No Firebase credentials found. Set Firebase:ServiceAccountJson (JSON content), " +
+                    "Firebase:ServiceAccountPath (file path), or GOOGLE_APPLICATION_CREDENTIALS.");
+
+            FirebaseApp.Create(new AppOptions { Credential = credential });
         }
-        catch
+        catch (Exception ex)
         {
-            // Firebase Admin SDK initialization may fail at design-time (e.g., EF migrations)
-            // or in test environments. The service will throw at runtime if used without initialization.
+            // Tolerated so EF design-time and tests can boot without Firebase credentials,
+            // but surface the cause so runtime misconfiguration is diagnosable.
+            Console.Error.WriteLine($"[AuthModule] Firebase Admin SDK init skipped: {ex.GetType().Name}: {ex.Message}");
         }
+    }
+
+    private static GoogleCredential? ResolveCredential(IConfiguration config)
+    {
+        var json = config["Firebase:ServiceAccountJson"];
+        if (!string.IsNullOrWhiteSpace(json))
+            return GoogleCredential.FromJson(json);
+
+        var path = config["Firebase:ServiceAccountPath"];
+        if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+            return GoogleCredential.FromFile(path);
+
+        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS")))
+            return GoogleCredential.GetApplicationDefault();
+
+        return null;
     }
 }

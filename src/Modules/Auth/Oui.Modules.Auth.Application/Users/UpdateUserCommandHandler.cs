@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Oui.Modules.Auth.Infrastructure.Abstractions;
 using Oui.Modules.Auth.Infrastructure;
 using shs.Application.Messaging;
@@ -6,7 +7,10 @@ using shs.Domain.Results;
 
 namespace Oui.Modules.Auth.Application.Users;
 
-internal sealed class UpdateUserCommandHandler(AuthDbContext db, IFirebaseAuthService firebaseAuth)
+internal sealed class UpdateUserCommandHandler(
+    AuthDbContext db,
+    IFirebaseAuthService firebaseAuth,
+    ILogger<UpdateUserCommandHandler> logger)
     : ICommandHandler<UpdateUserCommand>
 {
     public async Task<Result> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
@@ -21,8 +25,9 @@ internal sealed class UpdateUserCommandHandler(AuthDbContext db, IFirebaseAuthSe
             {
                 await firebaseAuth.UpdateUserAsync(user.FirebaseUid, request.DisplayName, cancellationToken);
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogError(ex, "Firebase UpdateUser failed for uid {FirebaseUid}", user.FirebaseUid);
                 return Result.Failure(UserErrors.FirebaseError);
             }
         }

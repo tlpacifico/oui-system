@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Oui.Modules.Auth.Infrastructure.Abstractions;
 using Oui.Modules.Auth.Infrastructure;
 using shs.Application.Messaging;
@@ -6,7 +7,10 @@ using shs.Domain.Results;
 
 namespace Oui.Modules.Auth.Application.Users;
 
-internal sealed class DeleteUserCommandHandler(AuthDbContext db, IFirebaseAuthService firebaseAuth)
+internal sealed class DeleteUserCommandHandler(
+    AuthDbContext db,
+    IFirebaseAuthService firebaseAuth,
+    ILogger<DeleteUserCommandHandler> logger)
     : ICommandHandler<DeleteUserCommand>
 {
     public async Task<Result> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
@@ -18,22 +22,20 @@ internal sealed class DeleteUserCommandHandler(AuthDbContext db, IFirebaseAuthSe
         if (user is null)
             return Result.Failure(UserErrors.NotFound);
 
-        // Prevent self-deletion
         if (string.Equals(user.Email, request.RequestedBy, StringComparison.OrdinalIgnoreCase))
             return Result.Failure(UserErrors.CannotDeleteSelf);
 
-        // Remove user roles
         db.UserRoles.RemoveRange(user.UserRoles);
 
-        // Delete from Firebase
         if (!string.IsNullOrEmpty(user.FirebaseUid))
         {
             try
             {
                 await firebaseAuth.DeleteUserAsync(user.FirebaseUid, cancellationToken);
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogError(ex, "Firebase DeleteUser failed for uid {FirebaseUid}", user.FirebaseUid);
                 return Result.Failure(UserErrors.FirebaseError);
             }
         }
