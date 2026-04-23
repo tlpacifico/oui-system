@@ -118,6 +118,13 @@ using (var scope = app.Services.CreateScope())
     );
 }
 
+// Migrate-and-exit mode: used by the deploy pipeline to apply migrations in a
+// dedicated container before the web host container is started.
+if (args.Contains("--ef-migrate"))
+{
+    return;
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
