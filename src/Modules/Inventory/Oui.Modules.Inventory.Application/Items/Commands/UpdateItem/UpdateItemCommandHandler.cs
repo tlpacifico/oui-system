@@ -45,6 +45,9 @@ internal sealed class UpdateItemCommandHandler(InventoryDbContext db)
         if (!Enum.TryParse<ItemOrigin>(request.Origin, out var origin))
             return Result.Failure<ItemDetailResponse>(ItemErrors.InvalidOrigin);
 
+        if (!Enum.TryParse<ItemStatus>(request.Status, out var status))
+            return Result.Failure<ItemDetailResponse>(ItemErrors.InvalidStatus);
+
         long? supplierId = null;
         if (acquisitionType == AcquisitionType.Consignment)
         {
@@ -69,6 +72,25 @@ internal sealed class UpdateItemCommandHandler(InventoryDbContext db)
         item.CostPrice = request.CostPrice;
         item.AcquisitionType = acquisitionType;
         item.Origin = origin;
+
+        // Status transition: keep sold/returned timestamps consistent with the chosen status
+        if (status != item.Status)
+        {
+            if (status == ItemStatus.Sold)
+                item.SoldAt ??= DateTime.UtcNow;
+            else if (item.Status == ItemStatus.Sold)
+                item.SoldAt = null;
+
+            if (status == ItemStatus.Returned)
+                item.ReturnedAt ??= DateTime.UtcNow;
+            else if (item.Status == ItemStatus.Returned)
+                item.ReturnedAt = null;
+
+            item.IsRejected = status == ItemStatus.Rejected;
+
+            item.Status = status;
+        }
+
         item.SupplierId = supplierId;
         item.CommissionPercentage = request.CommissionPercentage ?? item.CommissionPercentage;
         item.UpdatedOn = DateTime.UtcNow;

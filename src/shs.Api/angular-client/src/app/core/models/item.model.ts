@@ -131,6 +131,7 @@ export interface UpdateItemRequest {
   costPrice?: number;
   acquisitionType: string;
   origin: string;
+  status: string;
   supplierExternalId?: string;
   commissionPercentage?: number;
   tagExternalIds?: string[];

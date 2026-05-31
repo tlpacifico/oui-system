@@ -16,6 +16,7 @@ public sealed record UpdateItemCommand(
     decimal? CostPrice,
     string AcquisitionType,
     string Origin,
+    string Status,
     Guid? SupplierExternalId,
     decimal? CommissionPercentage,
     Guid[]? TagExternalIds,

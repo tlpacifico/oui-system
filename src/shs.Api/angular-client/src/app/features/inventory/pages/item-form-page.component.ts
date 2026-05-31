@@ -101,6 +101,35 @@ interface SelectOption {
           </div>
         </div>
 
+        <!-- Section: Status (edit only) -->
+        @if (isEditing()) {
+          <div class="card">
+            <div class="card-title">Estado</div>
+            <div class="form-group">
+              <label for="itemStatus">Estado do Item *</label>
+              <select
+                id="itemStatus"
+                [(ngModel)]="form.status"
+                name="status"
+                class="form-input"
+                [class.input-error]="submitted && !form.status"
+              >
+                <option value="Received">Recebido</option>
+                <option value="Evaluated">Avaliado</option>
+                <option value="AwaitingAcceptance">Aguarda Aceitação</option>
+                <option value="ToSell">À Venda</option>
+                <option value="Sold">Vendido</option>
+                <option value="Returned">Devolvido</option>
+                <option value="Paid">Pago</option>
+                <option value="Rejected">Rejeitado</option>
+              </select>
+              @if (submitted && !form.status) {
+                <span class="field-error">O estado é obrigatório.</span>
+              }
+            </div>
+          </div>
+        }
+
         <!-- Section: Details -->
         <div class="card">
           <div class="card-title">Detalhes do Item</div>
@@ -740,6 +769,7 @@ export class ItemFormPageComponent implements OnInit {
     costPrice: null as number | null,
     acquisitionType: '',
     origin: '',
+    status: '',
     supplierExternalId: '',
     commissionPercentage: 50 as number | null,
   };
@@ -809,6 +839,7 @@ export class ItemFormPageComponent implements OnInit {
     this.form.costPrice = item.costPrice || null;
     this.form.acquisitionType = item.acquisitionType;
     this.form.origin = item.origin;
+    this.form.status = item.status;
     this.form.commissionPercentage = item.commissionPercentage;
 
     // Set supplier
@@ -925,6 +956,8 @@ export class ItemFormPageComponent implements OnInit {
     if (!this.form.condition) return false;
     if (!this.form.evaluatedPrice || this.form.evaluatedPrice <= 0) return false;
 
+    if (this.isEditing() && !this.form.status) return false;
+
     if (!this.form.acquisitionType) return false;
     if (this.form.acquisitionType === 'Consignment' && !this.form.supplierExternalId) return false;
     if (this.form.acquisitionType === 'OwnPurchase' && !this.form.origin) return false;
@@ -976,6 +1009,7 @@ export class ItemFormPageComponent implements OnInit {
       costPrice: this.form.costPrice || undefined,
       acquisitionType: this.form.acquisitionType,
       origin: this.form.acquisitionType === 'Consignment' ? 'Consignment' : this.form.origin,
+      status: this.form.status,
       supplierExternalId: this.form.supplierExternalId || undefined,
       commissionPercentage: this.form.commissionPercentage || undefined,
       tagExternalIds: Array.from(this.selectedTagIds),

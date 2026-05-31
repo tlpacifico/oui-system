@@ -25,6 +25,9 @@ public static class ItemErrors
     public static readonly Error InvalidOrigin = Error.Problem(
         "Item.InvalidOrigin", "Origem inválida.");
 
+    public static readonly Error InvalidStatus = Error.Problem(
+        "Item.InvalidStatus", "Estado inválido.");
+
     public static readonly Error SupplierRequiredForConsignment = Error.Problem(
         "Item.SupplierRequiredForConsignment", "Fornecedor é obrigatório para itens de consignação.");
 
