@@ -5,12 +5,13 @@ import { FormsModule } from '@angular/forms';
 import { ItemService } from '../services/item.service';
 import { EcommerceService } from '../services/ecommerce.service';
 import { ItemListItem, ItemStatus } from '../../../core/models/item.model';
+import { HasPermissionDirective } from '../../../core/auth/directives/has-permission.directive';
 import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'oui-item-list-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, HasPermissionDirective],
   template: `
     <div class="page-header">
       <div>
@@ -111,6 +112,14 @@ import { environment } from '../../../../environments/environment';
                     } @else if (item.status === 'ToSell') {
                       <button class="btn btn-ecommerce btn-sm" (click)="publishToEcommerce(item)" [disabled]="publishing()">Publicar</button>
                     }
+                    @if (item.status !== 'Sold') {
+                      <button
+                        *hasPermission="'inventory.items.delete'"
+                        class="btn btn-danger btn-sm"
+                        (click)="deleteItem(item)"
+                        [disabled]="deleting()"
+                      >Eliminar</button>
+                    }
                   </td>
                 </tr>
               }
@@ -180,6 +189,17 @@ import { environment } from '../../../../environments/environment';
 
     .btn-ecommerce-remove:hover:not(:disabled) { background: rgba(196, 91, 91, 0.06); }
 
+    .btn-danger {
+      background: white;
+      color: #dc2626;
+      border-color: #fecaca;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: #fef2f2;
+      border-color: #f87171;
+    }
+
     .item-thumb {
       width: 40px;
       height: 40px;
@@ -211,6 +231,7 @@ export class ItemListPageComponent implements OnInit {
   items = signal<ItemListItem[]>([]);
   loading = signal(false);
   publishing = signal(false);
+  deleting = signal(false);
   currentPage = signal(1);
   totalPages = signal(1);
   totalCount = signal(0);
@@ -327,6 +348,24 @@ export class ItemListPageComponent implements OnInit {
       error: (err) => {
         this.publishing.set(false);
         const msg = err.error?.error || 'Erro ao remover do e-commerce.';
+        alert(msg);
+      }
+    });
+  }
+
+  deleteItem(item: ItemListItem): void {
+    if (item.status === 'Sold') return;
+    if (!confirm(`Eliminar "${item.name}"? Esta ação não pode ser anulada.`)) return;
+
+    this.deleting.set(true);
+    this.itemService.deleteItem(item.externalId).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.loadItems();
+      },
+      error: (err) => {
+        this.deleting.set(false);
+        const msg = err.error?.error || 'Erro ao eliminar item.';
         alert(msg);
       }
     });

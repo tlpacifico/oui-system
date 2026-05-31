@@ -14,5 +14,8 @@ public sealed record UpdateItemCommand(
     string Condition,
     decimal EvaluatedPrice,
     decimal? CostPrice,
+    string AcquisitionType,
+    string Origin,
+    Guid? SupplierExternalId,
     decimal? CommissionPercentage,
     Guid[]? TagExternalIds) : ICommand<ItemDetailResponse>;

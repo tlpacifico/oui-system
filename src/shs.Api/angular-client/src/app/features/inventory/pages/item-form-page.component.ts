@@ -10,6 +10,8 @@ import { SupplierService } from '../services/supplier.service';
 import { Item, CreateItemRequest, UpdateItemRequest } from '../../../core/models/item.model';
 import { BrandListItem } from '../../../core/models/brand.model';
 import { SupplierListItem } from '../../../core/models/supplier.model';
+import { SearchableSelectComponent, SearchableOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import { HasPermissionDirective } from '../../../core/auth/directives/has-permission.directive';
 import { forkJoin } from 'rxjs';
 
 interface SelectOption {
@@ -21,7 +23,7 @@ interface SelectOption {
 @Component({
   selector: 'oui-item-form-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SearchableSelectComponent, HasPermissionDirective],
   template: `
     <div class="detail-topbar">
       <button class="btn btn-outline" (click)="goBack()">← Voltar</button>
@@ -74,18 +76,12 @@ interface SelectOption {
           <div class="form-row">
             <div class="form-group form-group-grow">
               <label for="itemBrand">Marca *</label>
-              <select
-                id="itemBrand"
-                [(ngModel)]="form.brandExternalId"
-                name="brandExternalId"
-                class="form-input"
-                [class.input-error]="submitted && !form.brandExternalId"
-              >
-                <option value="">Selecionar marca...</option>
-                @for (brand of brands(); track brand.externalId) {
-                  <option [value]="brand.externalId">{{ brand.name }}</option>
-                }
-              </select>
+              <oui-searchable-select
+                [options]="brandOptions()"
+                [(value)]="form.brandExternalId"
+                placeholder="Pesquisar marca..."
+                [invalid]="submitted && !form.brandExternalId"
+              />
               @if (submitted && !form.brandExternalId) {
                 <span class="field-error">A marca é obrigatória.</span>
               }
@@ -93,17 +89,12 @@ interface SelectOption {
 
             <div class="form-group form-group-grow">
               <label for="itemCategory">Categoria</label>
-              <select
-                id="itemCategory"
-                [(ngModel)]="form.categoryExternalId"
-                name="categoryExternalId"
-                class="form-input"
-              >
-                <option value="">Sem categoria</option>
-                @for (cat of categories(); track cat.externalId) {
-                  <option [value]="cat.externalId">{{ cat.name }}</option>
-                }
-              </select>
+              <oui-searchable-select
+                [options]="categoryOptions()"
+                [(value)]="form.categoryExternalId"
+                placeholder="Pesquisar categoria..."
+                [clearable]="true"
+              />
             </div>
           </div>
         </div>
@@ -202,8 +193,7 @@ interface SelectOption {
         <div class="card">
           <div class="card-title">Preço e Origem</div>
 
-          @if (!isEditing()) {
-            <div class="form-row">
+          <div class="form-row">
               <div class="form-group form-group-grow">
                 <label for="itemAcquisition">Tipo de Aquisição *</label>
                 <select
@@ -246,24 +236,17 @@ interface SelectOption {
                 </div>
               }
             </div>
-          }
 
-          @if (form.acquisitionType === 'Consignment' && !isEditing()) {
+          @if (form.acquisitionType === 'Consignment') {
             <div class="form-row">
               <div class="form-group form-group-grow">
                 <label for="itemSupplier">Fornecedor *</label>
-                <select
-                  id="itemSupplier"
-                  [(ngModel)]="form.supplierExternalId"
-                  name="supplierExternalId"
-                  class="form-input"
-                  [class.input-error]="submitted && form.acquisitionType === 'Consignment' && !form.supplierExternalId"
-                >
-                  <option value="">Selecionar fornecedor...</option>
-                  @for (sup of suppliers(); track sup.externalId) {
-                    <option [value]="sup.externalId">{{ sup.initial }} - {{ sup.name }}</option>
-                  }
-                </select>
+                <oui-searchable-select
+                  [options]="supplierOptions()"
+                  [(value)]="form.supplierExternalId"
+                  placeholder="Pesquisar fornecedor..."
+                  [invalid]="submitted && form.acquisitionType === 'Consignment' && !form.supplierExternalId"
+                />
                 @if (submitted && form.acquisitionType === 'Consignment' && !form.supplierExternalId) {
                   <span class="field-error">O fornecedor é obrigatório.</span>
                 }
@@ -305,7 +288,7 @@ interface SelectOption {
               }
             </div>
 
-            @if (form.acquisitionType === 'OwnPurchase' || (isEditing() && editingItem()?.acquisitionType === 'OwnPurchase')) {
+            @if (form.acquisitionType === 'OwnPurchase') {
               <div class="form-group form-group-grow">
                 <label for="itemCost">Preço de Custo (€)</label>
                 <input
@@ -349,10 +332,23 @@ interface SelectOption {
 
         <!-- Actions -->
         <div class="form-actions">
-          <button type="button" class="btn btn-outline" (click)="goBack()" [disabled]="saving()">Cancelar</button>
-          <button type="submit" class="btn btn-primary" [disabled]="saving()">
-            {{ saving() ? 'A guardar...' : (isEditing() ? 'Guardar Alterações' : 'Criar Item') }}
-          </button>
+          @if (isEditing()) {
+            <button
+              *hasPermission="'inventory.items.delete'"
+              type="button"
+              class="btn btn-danger"
+              (click)="deleteItem()"
+              [disabled]="saving() || deleting()"
+            >
+              {{ deleting() ? 'A eliminar...' : 'Eliminar' }}
+            </button>
+          }
+          <div class="form-actions-right">
+            <button type="button" class="btn btn-outline" (click)="goBack()" [disabled]="saving() || deleting()">Cancelar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="saving() || deleting()">
+              {{ saving() ? 'A guardar...' : (isEditing() ? 'Guardar Alterações' : 'Criar Item') }}
+            </button>
+          </div>
         </div>
       </form>
     }
@@ -543,11 +539,29 @@ interface SelectOption {
       background: #f8fafc;
     }
 
+    .btn-danger {
+      background: white;
+      color: #dc2626;
+      border-color: #fecaca;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: #fef2f2;
+      border-color: #f87171;
+    }
+
     .form-actions {
       display: flex;
-      justify-content: flex-end;
+      align-items: center;
+      justify-content: space-between;
       gap: 12px;
       padding-top: 8px;
+    }
+
+    .form-actions-right {
+      display: flex;
+      gap: 12px;
+      margin-left: auto;
     }
 
     /* ── Alert ── */
@@ -609,6 +623,7 @@ export class ItemFormPageComponent implements OnInit {
   editingItem = signal<Item | null>(null);
   loadingData = signal(true);
   saving = signal(false);
+  deleting = signal(false);
   formError = signal<string | null>(null);
   submitted = false;
 
@@ -616,6 +631,16 @@ export class ItemFormPageComponent implements OnInit {
   categories = signal<SelectOption[]>([]);
   tags = signal<SelectOption[]>([]);
   suppliers = signal<SupplierListItem[]>([]);
+
+  brandOptions = computed<SearchableOption[]>(() =>
+    this.brands().map(b => ({ value: b.externalId, label: b.name }))
+  );
+  categoryOptions = computed<SearchableOption[]>(() =>
+    this.categories().map(c => ({ value: c.externalId, label: c.name }))
+  );
+  supplierOptions = computed<SearchableOption[]>(() =>
+    this.suppliers().map(s => ({ value: s.externalId, label: s.name, sublabel: s.email, badge: s.initial }))
+  );
 
   selectedTagIds = new Set<string>();
 
@@ -730,6 +755,9 @@ export class ItemFormPageComponent implements OnInit {
   onAcquisitionTypeChange(): void {
     if (this.form.acquisitionType === 'Consignment') {
       this.form.origin = 'Consignment';
+      if (this.form.commissionPercentage == null) {
+        this.form.commissionPercentage = 50;
+      }
     } else {
       this.form.origin = '';
       this.form.supplierExternalId = '';
@@ -743,6 +771,31 @@ export class ItemFormPageComponent implements OnInit {
     } else {
       this.router.navigate(['/inventory/items']);
     }
+  }
+
+  deleteItem(): void {
+    const item = this.editingItem();
+    if (!this.isEditing() || !item) return;
+
+    if (item.status === 'Sold') {
+      this.formError.set('Não é possível eliminar um item já vendido.');
+      return;
+    }
+
+    if (!confirm(`Eliminar o item "${item.name}"? Esta ação não pode ser anulada.`)) return;
+
+    this.deleting.set(true);
+    this.formError.set(null);
+    this.itemService.deleteItem(item.externalId).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.router.navigate(['/inventory/items']);
+      },
+      error: (err) => {
+        this.deleting.set(false);
+        this.formError.set(err.error?.error || 'Erro ao eliminar item.');
+      }
+    });
   }
 
   onSubmit(): void {
@@ -768,11 +821,9 @@ export class ItemFormPageComponent implements OnInit {
     if (!this.form.condition) return false;
     if (!this.form.evaluatedPrice || this.form.evaluatedPrice <= 0) return false;
 
-    if (!this.isEditing()) {
-      if (!this.form.acquisitionType) return false;
-      if (this.form.acquisitionType === 'Consignment' && !this.form.supplierExternalId) return false;
-      if (this.form.acquisitionType === 'OwnPurchase' && !this.form.origin) return false;
-    }
+    if (!this.form.acquisitionType) return false;
+    if (this.form.acquisitionType === 'Consignment' && !this.form.supplierExternalId) return false;
+    if (this.form.acquisitionType === 'OwnPurchase' && !this.form.origin) return false;
 
     return true;
   }
@@ -820,6 +871,9 @@ export class ItemFormPageComponent implements OnInit {
       condition: this.form.condition,
       evaluatedPrice: this.form.evaluatedPrice!,
       costPrice: this.form.costPrice || undefined,
+      acquisitionType: this.form.acquisitionType,
+      origin: this.form.acquisitionType === 'Consignment' ? 'Consignment' : this.form.origin,
+      supplierExternalId: this.form.supplierExternalId || undefined,
       commissionPercentage: this.form.commissionPercentage || undefined,
       tagExternalIds: Array.from(this.selectedTagIds),
     };

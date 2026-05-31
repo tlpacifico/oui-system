@@ -20,6 +20,9 @@ internal sealed class UpdateItem : IEndpoint
         string Condition,
         decimal EvaluatedPrice,
         decimal? CostPrice,
+        string AcquisitionType,
+        string Origin,
+        Guid? SupplierExternalId,
         decimal? CommissionPercentage,
         Guid[]? TagExternalIds);
 
@@ -39,6 +42,9 @@ internal sealed class UpdateItem : IEndpoint
                 request.Condition,
                 request.EvaluatedPrice,
                 request.CostPrice,
+                request.AcquisitionType,
+                request.Origin,
+                request.SupplierExternalId,
                 request.CommissionPercentage,
                 request.TagExternalIds), ct);
 

@@ -38,6 +38,24 @@ internal sealed class UpdateItemCommandHandler(InventoryDbContext db)
         if (!Enum.TryParse<ItemCondition>(request.Condition, out var condition))
             return Result.Failure<ItemDetailResponse>(ItemErrors.InvalidCondition);
 
+        if (!Enum.TryParse<AcquisitionType>(request.AcquisitionType, out var acquisitionType))
+            return Result.Failure<ItemDetailResponse>(ItemErrors.InvalidAcquisitionType);
+
+        if (!Enum.TryParse<ItemOrigin>(request.Origin, out var origin))
+            return Result.Failure<ItemDetailResponse>(ItemErrors.InvalidOrigin);
+
+        long? supplierId = null;
+        if (acquisitionType == AcquisitionType.Consignment)
+        {
+            if (!request.SupplierExternalId.HasValue)
+                return Result.Failure<ItemDetailResponse>(ItemErrors.SupplierRequiredForConsignment);
+
+            var supplier = await db.Suppliers.FirstOrDefaultAsync(s => s.ExternalId == request.SupplierExternalId.Value, cancellationToken);
+            if (supplier is null)
+                return Result.Failure<ItemDetailResponse>(ItemErrors.SupplierNotFound);
+            supplierId = supplier.Id;
+        }
+
         item.Name = request.Name.Trim();
         item.Description = request.Description?.Trim();
         item.BrandId = brand.Id;
@@ -48,6 +66,9 @@ internal sealed class UpdateItemCommandHandler(InventoryDbContext db)
         item.Condition = condition;
         item.EvaluatedPrice = request.EvaluatedPrice;
         item.CostPrice = request.CostPrice;
+        item.AcquisitionType = acquisitionType;
+        item.Origin = origin;
+        item.SupplierId = supplierId;
         item.CommissionPercentage = request.CommissionPercentage ?? item.CommissionPercentage;
         item.UpdatedOn = DateTime.UtcNow;
         item.UpdatedBy = "system";
