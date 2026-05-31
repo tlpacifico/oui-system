@@ -20,4 +20,5 @@ public sealed record UpdateItemCommand(
     Guid? SupplierExternalId,
     decimal? CommissionPercentage,
     Guid[]? TagExternalIds,
-    Guid[]? ColorExternalIds) : ICommand<ItemDetailResponse>;
+    Guid[]? ColorExternalIds,
+    DateTime? ReceptionDate) : ICommand<ItemDetailResponse>;

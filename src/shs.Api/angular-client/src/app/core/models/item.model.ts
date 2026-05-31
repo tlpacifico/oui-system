@@ -116,6 +116,7 @@ export interface CreateItemRequest {
   commissionPercentage?: number;
   tagExternalIds?: string[];
   colorExternalIds?: string[];
+  receptionDate?: string;
 }
 
 export interface UpdateItemRequest {
@@ -136,4 +137,5 @@ export interface UpdateItemRequest {
   commissionPercentage?: number;
   tagExternalIds?: string[];
   colorExternalIds?: string[];
+  receptionDate?: string;
 }

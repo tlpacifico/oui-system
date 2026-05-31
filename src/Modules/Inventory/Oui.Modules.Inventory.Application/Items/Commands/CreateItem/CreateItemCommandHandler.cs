@@ -84,7 +84,7 @@ internal sealed class CreateItemCommandHandler(InventoryDbContext db, IItemIdGen
             SupplierId = supplierId,
             CommissionPercentage = request.CommissionPercentage ?? 50m,
             DaysInStock = 0,
-            CreatedOn = DateTime.UtcNow,
+            CreatedOn = ResolveReceptionDate(request.ReceptionDate),
             CreatedBy = "system"
         };
 
@@ -108,5 +108,17 @@ internal sealed class CreateItemCommandHandler(InventoryDbContext db, IItemIdGen
             item.Name,
             item.Status.ToString(),
             item.CreatedOn);
+    }
+
+    // A back-dated reception is stored at midnight UTC; "today" (or any future date) keeps the precise current timestamp.
+    private static DateTime ResolveReceptionDate(DateTime? receptionDate)
+    {
+        if (!receptionDate.HasValue)
+            return DateTime.UtcNow;
+
+        var date = receptionDate.Value.Date;
+        return date >= DateTime.UtcNow.Date
+            ? DateTime.UtcNow
+            : DateTime.SpecifyKind(date, DateTimeKind.Utc);
     }
 }

@@ -22,7 +22,8 @@ internal sealed class AddEvaluationItem : IEndpoint
         decimal? CommissionPercentage,
         bool IsRejected,
         string? RejectionReason,
-        Guid[]? TagExternalIds);
+        Guid[]? TagExternalIds,
+        DateTime? ReceptionDate);
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -46,7 +47,8 @@ internal sealed class AddEvaluationItem : IEndpoint
                 request.CommissionPercentage,
                 request.IsRejected,
                 request.RejectionReason,
-                request.TagExternalIds), ct);
+                request.TagExternalIds,
+                request.ReceptionDate), ct);
 
             return result.Match(
                 value => Results.Created($"api/consignments/receptions/{externalId}/items/{value.ExternalId}", value),

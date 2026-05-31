@@ -93,6 +93,17 @@ internal sealed class UpdateItemCommandHandler(InventoryDbContext db)
 
         item.SupplierId = supplierId;
         item.CommissionPercentage = request.CommissionPercentage ?? item.CommissionPercentage;
+
+        // Reception date maps to CreatedOn; only touch it when the chosen day actually changes,
+        // so a regular edit never clobbers the original timestamp.
+        if (request.ReceptionDate.HasValue && request.ReceptionDate.Value.Date != item.CreatedOn.Date)
+        {
+            var newDate = request.ReceptionDate.Value.Date;
+            item.CreatedOn = newDate >= DateTime.UtcNow.Date
+                ? DateTime.UtcNow
+                : DateTime.SpecifyKind(newDate, DateTimeKind.Utc);
+        }
+
         item.UpdatedOn = DateTime.UtcNow;
         item.UpdatedBy = "system";
 

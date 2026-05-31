@@ -237,6 +237,21 @@ interface SelectOption {
           <div class="card-title">Preço e Origem</div>
 
           <div class="form-row">
+            <div class="form-group form-group-grow">
+              <label for="itemReceptionDate">Data de Recepção</label>
+              <input
+                id="itemReceptionDate"
+                type="date"
+                [(ngModel)]="form.receptionDate"
+                name="receptionDate"
+                class="form-input"
+                [max]="today"
+              />
+              <span class="field-hint">Data em que a peça foi recebida (pode ser anterior à atual).</span>
+            </div>
+          </div>
+
+          <div class="form-row">
               <div class="form-group form-group-grow">
                 <label for="itemAcquisition">Tipo de Aquisição *</label>
                 <select
@@ -502,6 +517,13 @@ interface SelectOption {
       display: block;
       font-size: 12px;
       color: #ef4444;
+      margin-top: 4px;
+    }
+
+    .field-hint {
+      display: block;
+      font-size: 12px;
+      color: #94a3b8;
       margin-top: 4px;
     }
 
@@ -772,7 +794,18 @@ export class ItemFormPageComponent implements OnInit {
     status: '',
     supplierExternalId: '',
     commissionPercentage: 50 as number | null,
+    receptionDate: '',
   };
+
+  // Max selectable reception date — today, in yyyy-MM-dd for the native date input.
+  readonly today = this.toDateInput(new Date());
+
+  private toDateInput(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
 
   ngOnInit(): void {
     const paramId = this.route.snapshot.paramMap.get('id');
@@ -796,6 +829,7 @@ export class ItemFormPageComponent implements OnInit {
         if (this.isEditing()) {
           this.loadItem(paramId!);
         } else {
+          this.form.receptionDate = this.today;
           this.loadingData.set(false);
         }
       },
@@ -841,6 +875,7 @@ export class ItemFormPageComponent implements OnInit {
     this.form.origin = item.origin;
     this.form.status = item.status;
     this.form.commissionPercentage = item.commissionPercentage;
+    this.form.receptionDate = item.createdOn ? this.toDateInput(new Date(item.createdOn)) : '';
 
     // Set supplier
     if (item.supplier) {
@@ -982,6 +1017,7 @@ export class ItemFormPageComponent implements OnInit {
       commissionPercentage: this.form.commissionPercentage || undefined,
       tagExternalIds: this.selectedTagIds.size > 0 ? Array.from(this.selectedTagIds) : undefined,
       colorExternalIds: Array.from(this.selectedColorIds),
+      receptionDate: this.form.receptionDate || undefined,
     };
 
     this.itemService.createItem(data).subscribe({
@@ -1014,6 +1050,7 @@ export class ItemFormPageComponent implements OnInit {
       commissionPercentage: this.form.commissionPercentage || undefined,
       tagExternalIds: Array.from(this.selectedTagIds),
       colorExternalIds: Array.from(this.selectedColorIds),
+      receptionDate: this.form.receptionDate || undefined,
     };
 
     this.itemService.updateItem(this.editingItem()!.externalId, data).subscribe({

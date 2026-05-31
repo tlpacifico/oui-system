@@ -69,6 +69,7 @@ export interface AddEvaluationItemRequest {
   isRejected: boolean;
   rejectionReason?: string;
   tagExternalIds?: string[];
+  receptionDate?: string;
 }
 
 export interface EvaluationItemResponse {

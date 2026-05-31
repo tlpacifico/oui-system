@@ -25,7 +25,8 @@ internal sealed class CreateItem : IEndpoint
         Guid? SupplierExternalId,
         decimal? CommissionPercentage,
         Guid[]? TagExternalIds,
-        Guid[]? ColorExternalIds);
+        Guid[]? ColorExternalIds,
+        DateTime? ReceptionDate);
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -47,7 +48,8 @@ internal sealed class CreateItem : IEndpoint
                 request.SupplierExternalId,
                 request.CommissionPercentage,
                 request.TagExternalIds,
-                request.ColorExternalIds), ct);
+                request.ColorExternalIds,
+                request.ReceptionDate), ct);
 
             return result.Match(
                 value => Results.Created($"api/inventory/items/{value.ExternalId}", value),

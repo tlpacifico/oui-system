@@ -69,7 +69,7 @@ internal sealed class AddEvaluationItemCommandHandler(InventoryDbContext db, IIt
             IsRejected = request.IsRejected,
             RejectionReason = request.IsRejected ? request.RejectionReason?.Trim() : null,
             DaysInStock = 0,
-            CreatedOn = DateTime.UtcNow,
+            CreatedOn = ResolveReceptionDate(request.ReceptionDate),
             CreatedBy = "system"
         };
 
@@ -100,5 +100,17 @@ internal sealed class AddEvaluationItemCommandHandler(InventoryDbContext db, IIt
             item.IsRejected,
             item.RejectionReason,
             item.CreatedOn);
+    }
+
+    // A back-dated reception is stored at midnight UTC; "today" (or any future date) keeps the precise current timestamp.
+    private static DateTime ResolveReceptionDate(DateTime? receptionDate)
+    {
+        if (!receptionDate.HasValue)
+            return DateTime.UtcNow;
+
+        var date = receptionDate.Value.Date;
+        return date >= DateTime.UtcNow.Date
+            ? DateTime.UtcNow
+            : DateTime.SpecifyKind(date, DateTimeKind.Utc);
     }
 }

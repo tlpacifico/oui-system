@@ -18,4 +18,5 @@ public sealed record CreateItemCommand(
     Guid? SupplierExternalId,
     decimal? CommissionPercentage,
     Guid[]? TagExternalIds,
-    Guid[]? ColorExternalIds) : ICommand<CreateConsignmentItemResponse>;
+    Guid[]? ColorExternalIds,
+    DateTime? ReceptionDate) : ICommand<CreateConsignmentItemResponse>;

@@ -303,16 +303,30 @@ interface SelectOption {
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="itemComposition">Composição</label>
-              <input
-                id="itemComposition"
-                type="text"
-                [(ngModel)]="form.composition"
-                class="form-input"
-                placeholder="Ex: 100% algodão"
-                maxlength="500"
-              />
+            <div class="form-row">
+              <div class="form-group form-group-grow">
+                <label for="itemComposition">Composição</label>
+                <input
+                  id="itemComposition"
+                  type="text"
+                  [(ngModel)]="form.composition"
+                  class="form-input"
+                  placeholder="Ex: 100% algodão"
+                  maxlength="500"
+                />
+              </div>
+
+              <div class="form-group form-group-grow">
+                <label for="itemReceptionDate">Data de Recepção</label>
+                <input
+                  id="itemReceptionDate"
+                  type="date"
+                  [(ngModel)]="form.receptionDate"
+                  class="form-input"
+                  [max]="today"
+                />
+                <span class="field-hint">Pode ser anterior à data atual.</span>
+              </div>
             </div>
 
             <div class="form-group">
@@ -700,6 +714,13 @@ interface SelectOption {
       margin-top: 3px;
     }
 
+    .field-hint {
+      display: block;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 3px;
+    }
+
     /* ── Tags ── */
     .tags-picker {
       display: flex;
@@ -957,6 +978,7 @@ export class ReceptionEvaluatePageComponent implements OnInit {
         this.brands.set(brands.map((b: any) => ({ externalId: b.externalId, name: b.name })));
         this.categories.set(categories.map((c: any) => ({ externalId: c.externalId, name: c.name })));
         this.tags.set(tags.map((t: any) => ({ externalId: t.externalId, name: t.name, color: t.color })));
+        this.form.receptionDate = this.defaultReceptionDate();
         this.updateCounts();
         this.loading.set(false);
       },
@@ -983,6 +1005,22 @@ export class ReceptionEvaluatePageComponent implements OnInit {
     this.progressPercent.set(progress);
   }
 
+  // Max selectable reception date — today, in yyyy-MM-dd for the native date input.
+  readonly today = this.toDateInput(new Date());
+
+  private toDateInput(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  // Items default to the reception's own date; falls back to today before the reception loads.
+  private defaultReceptionDate(): string {
+    const reception = this.reception();
+    return reception?.receptionDate ? this.toDateInput(new Date(reception.receptionDate)) : this.toDateInput(new Date());
+  }
+
   private getEmptyForm() {
     return {
       name: '',
@@ -997,6 +1035,7 @@ export class ReceptionEvaluatePageComponent implements OnInit {
       commissionPercentage: 50 as number | null,
       isRejected: false,
       rejectionReason: '',
+      receptionDate: this.defaultReceptionDate(),
     };
   }
 
@@ -1058,6 +1097,7 @@ export class ReceptionEvaluatePageComponent implements OnInit {
       isRejected: this.form.isRejected,
       rejectionReason: this.form.isRejected ? (this.form.rejectionReason.trim() || undefined) : undefined,
       tagExternalIds: this.selectedTagIds.size > 0 ? Array.from(this.selectedTagIds) : undefined,
+      receptionDate: this.form.receptionDate || undefined,
     };
 
     this.receptionService.addEvaluationItem(this.reception()!.externalId, data).subscribe({

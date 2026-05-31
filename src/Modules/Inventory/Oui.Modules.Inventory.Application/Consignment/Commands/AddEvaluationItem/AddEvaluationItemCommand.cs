@@ -16,4 +16,5 @@ public sealed record AddEvaluationItemCommand(
     decimal? CommissionPercentage,
     bool IsRejected,
     string? RejectionReason,
-    Guid[]? TagExternalIds) : ICommand<EvaluationItemResponse>;
+    Guid[]? TagExternalIds,
+    DateTime? ReceptionDate) : ICommand<EvaluationItemResponse>;
