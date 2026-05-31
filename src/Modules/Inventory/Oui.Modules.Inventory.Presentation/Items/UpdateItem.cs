@@ -15,7 +15,7 @@ internal sealed class UpdateItem : IEndpoint
         Guid BrandExternalId,
         Guid? CategoryExternalId,
         string Size,
-        string Color,
+        string? Color,
         string? Composition,
         string Condition,
         decimal EvaluatedPrice,
@@ -24,7 +24,8 @@ internal sealed class UpdateItem : IEndpoint
         string Origin,
         Guid? SupplierExternalId,
         decimal? CommissionPercentage,
-        Guid[]? TagExternalIds);
+        Guid[]? TagExternalIds,
+        Guid[]? ColorExternalIds);
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -46,7 +47,8 @@ internal sealed class UpdateItem : IEndpoint
                 request.Origin,
                 request.SupplierExternalId,
                 request.CommissionPercentage,
-                request.TagExternalIds), ct);
+                request.TagExternalIds,
+                request.ColorExternalIds), ct);
 
             return result.Match(Results.Ok, ApiResults.Problem);
         })

@@ -144,7 +144,18 @@ import { environment } from '../../../../environments/environment';
             </div>
             <div class="info-row">
               <label>Cor</label>
-              <span>{{ item()!.color }}</span>
+              @if (item()!.colors.length) {
+                <span class="color-tags">
+                  @for (c of item()!.colors; track c.id) {
+                    <span class="color-tag">
+                      <span class="color-tag-dot" [style.background-color]="c.hexCode || '#94a3b8'"></span>
+                      {{ c.name }}
+                    </span>
+                  }
+                </span>
+              } @else {
+                <span>{{ item()!.color }}</span>
+              }
             </div>
             @if (item()!.composition) {
               <div class="info-row full-width">
@@ -506,6 +517,31 @@ import { environment } from '../../../../environments/environment';
       font-size: 14px;
       color: #1e293b;
       font-weight: 500;
+    }
+
+    .color-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .color-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px 3px 6px;
+      border-radius: 16px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .color-tag-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid rgba(28, 25, 23, 0.15);
     }
 
     /* ── Tags ── */

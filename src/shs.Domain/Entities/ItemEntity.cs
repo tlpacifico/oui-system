@@ -14,7 +14,7 @@ public class ItemEntity : EntityWithIdAuditable<long>, IHaveSoftDelete
     public long BrandId { get; set; }
     public long? CategoryId { get; set; }
     public string Size { get; set; } = string.Empty; // XS, S, M, L, XL, XXL
-    public string Color { get; set; } = string.Empty;
+    public string Color { get; set; } = string.Empty; // Denormalized display string of Colors (e.g. "Azul, Branco")
     public string? Composition { get; set; } // Fabric composition
     public ItemCondition Condition { get; set; }
 
@@ -60,5 +60,6 @@ public class ItemEntity : EntityWithIdAuditable<long>, IHaveSoftDelete
     public ReceptionEntity? Reception { get; set; }
     public SupplierReturnEntity? SupplierReturn { get; set; }
     public ICollection<TagEntity> Tags { get; set; } = new List<TagEntity>();
+    public ICollection<ColorEntity> Colors { get; set; } = new List<ColorEntity>();
     public ICollection<ItemPhotoEntity> Photos { get; set; } = new List<ItemPhotoEntity>();
 }

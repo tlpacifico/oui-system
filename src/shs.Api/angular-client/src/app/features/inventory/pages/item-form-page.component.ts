@@ -1,11 +1,12 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ItemService } from '../services/item.service';
 import { BrandService } from '../services/brand.service';
 import { CategoryService } from '../services/category.service';
 import { TagService } from '../services/tag.service';
+import { ColorService } from '../services/color.service';
 import { SupplierService } from '../services/supplier.service';
 import { Item, CreateItemRequest, UpdateItemRequest } from '../../../core/models/item.model';
 import { BrandListItem } from '../../../core/models/brand.model';
@@ -18,12 +19,13 @@ interface SelectOption {
   externalId: string;
   name: string;
   color?: string;
+  hexCode?: string;
 }
 
 @Component({
   selector: 'oui-item-form-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, SearchableSelectComponent, HasPermissionDirective],
+  imports: [CommonModule, FormsModule, RouterLink, SearchableSelectComponent, HasPermissionDirective],
   template: `
     <div class="detail-topbar">
       <button class="btn btn-outline" (click)="goBack()">← Voltar</button>
@@ -137,23 +139,6 @@ interface SelectOption {
             </div>
 
             <div class="form-group form-group-grow">
-              <label for="itemColor">Cor *</label>
-              <input
-                id="itemColor"
-                type="text"
-                [(ngModel)]="form.color"
-                name="color"
-                class="form-input"
-                placeholder="Ex: Azul marinho"
-                maxlength="100"
-                [class.input-error]="submitted && !form.color.trim()"
-              />
-              @if (submitted && !form.color.trim()) {
-                <span class="field-error">A cor é obrigatória.</span>
-              }
-            </div>
-
-            <div class="form-group form-group-grow">
               <label for="itemCondition">Condição *</label>
               <select
                 id="itemCondition"
@@ -186,6 +171,35 @@ interface SelectOption {
               placeholder="Ex: 100% algodão, 60% poliéster / 40% algodão"
               maxlength="500"
             />
+          </div>
+
+          <div class="form-group">
+            <label>Cores * <a class="manage-link" routerLink="/inventory/colors" target="_blank">gerir cores</a></label>
+            <div class="colors-picker" [class.input-error-border]="submitted && selectedColorIds.size === 0">
+              @for (color of colors(); track color.externalId) {
+                <label
+                  class="color-chip"
+                  [class.color-selected]="isColorSelected(color.externalId)"
+                >
+                  <input
+                    type="checkbox"
+                    [checked]="isColorSelected(color.externalId)"
+                    (change)="toggleColor(color.externalId)"
+                  />
+                  <span class="chip-swatch" [style.background-color]="color.hexCode || '#94a3b8'"></span>
+                  {{ color.name }}
+                </label>
+              }
+              @if (colors().length === 0) {
+                <span class="text-muted">Nenhuma cor disponível. <a routerLink="/inventory/colors" target="_blank">Criar cores</a>.</span>
+              }
+            </div>
+            @if (submitted && selectedColorIds.size === 0) {
+              <span class="field-error">Selecione pelo menos uma cor.</span>
+            }
+            @if (isEditing() && legacyColor() && selectedColorIds.size === 0) {
+              <span class="legacy-hint">Cor anterior (texto livre): <b>{{ legacyColor() }}</b> — selecione as cores equivalentes.</span>
+            }
           </div>
         </div>
 
@@ -501,6 +515,72 @@ interface SelectOption {
       font-weight: 600;
     }
 
+    /* ── Colors picker ── */
+    .colors-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 4px;
+      border-radius: 10px;
+    }
+
+    .colors-picker.input-error-border {
+      outline: 1.5px solid #ef4444;
+      outline-offset: 2px;
+    }
+
+    .color-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px 6px 8px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1.5px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .color-chip input { display: none; }
+
+    .chip-swatch {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid rgba(28, 25, 23, 0.15);
+    }
+
+    .color-chip:hover { border-color: #6366f1; background: #f5f5ff; }
+
+    .color-chip.color-selected {
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.1);
+      color: #4338ca;
+      font-weight: 600;
+    }
+
+    .manage-link {
+      font-size: 12px;
+      font-weight: 500;
+      color: #6366f1;
+      text-decoration: none;
+      margin-left: 6px;
+    }
+    .manage-link:hover { text-decoration: underline; }
+
+    .legacy-hint {
+      display: block;
+      font-size: 12px;
+      color: #b45309;
+      margin-top: 6px;
+    }
+
     /* ── Buttons ── */
     .btn {
       display: inline-flex;
@@ -618,6 +698,7 @@ export class ItemFormPageComponent implements OnInit {
   private readonly categoryService = inject(CategoryService);
   private readonly tagService = inject(TagService);
   private readonly supplierService = inject(SupplierService);
+  private readonly colorService = inject(ColorService);
 
   isEditing = signal(false);
   editingItem = signal<Item | null>(null);
@@ -630,7 +711,9 @@ export class ItemFormPageComponent implements OnInit {
   brands = signal<SelectOption[]>([]);
   categories = signal<SelectOption[]>([]);
   tags = signal<SelectOption[]>([]);
+  colors = signal<SelectOption[]>([]);
   suppliers = signal<SupplierListItem[]>([]);
+  legacyColor = signal<string>('');
 
   brandOptions = computed<SearchableOption[]>(() =>
     this.brands().map(b => ({ value: b.externalId, label: b.name }))
@@ -643,6 +726,7 @@ export class ItemFormPageComponent implements OnInit {
   );
 
   selectedTagIds = new Set<string>();
+  selectedColorIds = new Set<string>();
 
   form = {
     name: '',
@@ -650,7 +734,6 @@ export class ItemFormPageComponent implements OnInit {
     brandExternalId: '',
     categoryExternalId: '',
     size: '',
-    color: '',
     composition: '',
     condition: '',
     evaluatedPrice: null as number | null,
@@ -670,12 +753,14 @@ export class ItemFormPageComponent implements OnInit {
       brands: this.brandService.getAll(),
       categories: this.categoryService.getAll(),
       tags: this.tagService.getAll(),
+      colors: this.colorService.getAll(),
       suppliers: this.supplierService.getAll(),
     }).subscribe({
-      next: ({ brands, categories, tags, suppliers }) => {
+      next: ({ brands, categories, tags, colors, suppliers }) => {
         this.brands.set(brands.map(b => ({ externalId: b.externalId, name: b.name })));
         this.categories.set(categories.map((c: any) => ({ externalId: c.externalId, name: c.name })));
         this.tags.set(tags.map((t: any) => ({ externalId: t.externalId, name: t.name, color: t.color })));
+        this.colors.set(colors.map((c: any) => ({ externalId: c.externalId, name: c.name, hexCode: c.hexCode })));
         this.suppliers.set(suppliers);
 
         if (this.isEditing()) {
@@ -717,7 +802,7 @@ export class ItemFormPageComponent implements OnInit {
     this.form.brandExternalId = brand?.externalId || '';
     this.form.categoryExternalId = category?.externalId || '';
     this.form.size = item.size;
-    this.form.color = item.color;
+    this.legacyColor.set(item.color || '');
     this.form.composition = item.composition || '';
     this.form.condition = item.condition;
     this.form.evaluatedPrice = item.evaluatedPrice;
@@ -738,6 +823,13 @@ export class ItemFormPageComponent implements OnInit {
       const t = this.tags().find(x => x.name === tag.name);
       if (t) this.selectedTagIds.add(t.externalId);
     }
+
+    // Set colors (matched by name, mirroring tags)
+    this.selectedColorIds.clear();
+    for (const color of item.colors || []) {
+      const c = this.colors().find(x => x.name === color.name);
+      if (c) this.selectedColorIds.add(c.externalId);
+    }
   }
 
   isTagSelected(externalId: string): boolean {
@@ -749,6 +841,18 @@ export class ItemFormPageComponent implements OnInit {
       this.selectedTagIds.delete(externalId);
     } else {
       this.selectedTagIds.add(externalId);
+    }
+  }
+
+  isColorSelected(externalId: string): boolean {
+    return this.selectedColorIds.has(externalId);
+  }
+
+  toggleColor(externalId: string): void {
+    if (this.selectedColorIds.has(externalId)) {
+      this.selectedColorIds.delete(externalId);
+    } else {
+      this.selectedColorIds.add(externalId);
     }
   }
 
@@ -817,7 +921,7 @@ export class ItemFormPageComponent implements OnInit {
     if (!this.form.name.trim()) return false;
     if (!this.form.brandExternalId) return false;
     if (!this.form.size) return false;
-    if (!this.form.color.trim()) return false;
+    if (this.selectedColorIds.size === 0) return false;
     if (!this.form.condition) return false;
     if (!this.form.evaluatedPrice || this.form.evaluatedPrice <= 0) return false;
 
@@ -835,7 +939,6 @@ export class ItemFormPageComponent implements OnInit {
       brandExternalId: this.form.brandExternalId,
       categoryExternalId: this.form.categoryExternalId || undefined,
       size: this.form.size,
-      color: this.form.color.trim(),
       composition: this.form.composition.trim() || undefined,
       condition: this.form.condition,
       evaluatedPrice: this.form.evaluatedPrice!,
@@ -845,6 +948,7 @@ export class ItemFormPageComponent implements OnInit {
       supplierExternalId: this.form.supplierExternalId || undefined,
       commissionPercentage: this.form.commissionPercentage || undefined,
       tagExternalIds: this.selectedTagIds.size > 0 ? Array.from(this.selectedTagIds) : undefined,
+      colorExternalIds: Array.from(this.selectedColorIds),
     };
 
     this.itemService.createItem(data).subscribe({
@@ -866,7 +970,6 @@ export class ItemFormPageComponent implements OnInit {
       brandExternalId: this.form.brandExternalId,
       categoryExternalId: this.form.categoryExternalId || undefined,
       size: this.form.size,
-      color: this.form.color.trim(),
       composition: this.form.composition.trim() || undefined,
       condition: this.form.condition,
       evaluatedPrice: this.form.evaluatedPrice!,
@@ -876,6 +979,7 @@ export class ItemFormPageComponent implements OnInit {
       supplierExternalId: this.form.supplierExternalId || undefined,
       commissionPercentage: this.form.commissionPercentage || undefined,
       tagExternalIds: Array.from(this.selectedTagIds),
+      colorExternalIds: Array.from(this.selectedColorIds),
     };
 
     this.itemService.updateItem(this.editingItem()!.externalId, data).subscribe({

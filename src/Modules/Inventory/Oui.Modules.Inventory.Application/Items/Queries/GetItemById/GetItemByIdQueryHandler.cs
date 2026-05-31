@@ -16,6 +16,7 @@ internal sealed class GetItemByIdQueryHandler(InventoryDbContext db)
             .Include(i => i.Category)
             .Include(i => i.Supplier)
             .Include(i => i.Tags)
+            .Include(i => i.Colors)
             .Include(i => i.Photos.OrderBy(p => p.DisplayOrder))
             .FirstOrDefaultAsync(i => i.ExternalId == request.ExternalId, cancellationToken);
 
@@ -47,6 +48,7 @@ internal sealed class GetItemByIdQueryHandler(InventoryDbContext db)
             item.SoldAt,
             item.DaysInStock,
             item.Tags.Select(t => new TagInfo(t.Id, t.Name, t.Color)).ToList(),
+            item.Colors.Select(c => new ColorInfo(c.Id, c.Name, c.HexCode)).ToList(),
             item.Photos.Select(p => new PhotoInfo(p.ExternalId, p.FilePath, p.ThumbnailPath, p.DisplayOrder, p.IsPrimary)).ToList(),
             item.CreatedOn,
             item.CreatedBy,

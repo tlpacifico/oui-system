@@ -48,6 +48,19 @@ internal sealed class CreateItemCommandHandler(InventoryDbContext db, IItemIdGen
             supplierId = supplier.Id;
         }
 
+        var colors = new List<ColorEntity>();
+        if (request.ColorExternalIds is { Length: > 0 })
+        {
+            colors = await db.Colors
+                .Where(c => request.ColorExternalIds.Contains(c.ExternalId))
+                .ToListAsync(cancellationToken);
+        }
+
+        // Denormalized display string kept in sync with the Colors relation
+        var colorDisplay = colors.Count > 0
+            ? string.Join(", ", colors.OrderBy(c => c.Name).Select(c => c.Name))
+            : (request.Color?.Trim() ?? string.Empty);
+
         var itemId = await idGenerator.GenerateNextIdAsync(supplierId, cancellationToken);
         var status = acquisitionType == AcquisitionType.OwnPurchase ? ItemStatus.ToSell : ItemStatus.Evaluated;
 
@@ -60,7 +73,7 @@ internal sealed class CreateItemCommandHandler(InventoryDbContext db, IItemIdGen
             BrandId = brand.Id,
             CategoryId = categoryId,
             Size = request.Size.Trim(),
-            Color = request.Color.Trim(),
+            Color = colorDisplay,
             Composition = request.Composition?.Trim(),
             Condition = condition,
             EvaluatedPrice = request.EvaluatedPrice,
@@ -82,6 +95,9 @@ internal sealed class CreateItemCommandHandler(InventoryDbContext db, IItemIdGen
                 .ToListAsync(cancellationToken);
             item.Tags = tags;
         }
+
+        if (colors.Count > 0)
+            item.Colors = colors;
 
         db.Items.Add(item);
         await db.SaveChangesAsync(cancellationToken);

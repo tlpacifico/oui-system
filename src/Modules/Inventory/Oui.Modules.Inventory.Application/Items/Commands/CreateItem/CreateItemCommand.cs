@@ -8,7 +8,7 @@ public sealed record CreateItemCommand(
     Guid BrandExternalId,
     Guid? CategoryExternalId,
     string Size,
-    string Color,
+    string? Color,
     string? Composition,
     string Condition,
     decimal EvaluatedPrice,
@@ -17,4 +17,5 @@ public sealed record CreateItemCommand(
     string Origin,
     Guid? SupplierExternalId,
     decimal? CommissionPercentage,
-    Guid[]? TagExternalIds) : ICommand<CreateConsignmentItemResponse>;
+    Guid[]? TagExternalIds,
+    Guid[]? ColorExternalIds) : ICommand<CreateConsignmentItemResponse>;

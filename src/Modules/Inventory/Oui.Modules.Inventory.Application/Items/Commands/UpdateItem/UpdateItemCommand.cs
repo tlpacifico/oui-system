@@ -9,7 +9,7 @@ public sealed record UpdateItemCommand(
     Guid BrandExternalId,
     Guid? CategoryExternalId,
     string Size,
-    string Color,
+    string? Color,
     string? Composition,
     string Condition,
     decimal EvaluatedPrice,
@@ -18,4 +18,5 @@ public sealed record UpdateItemCommand(
     string Origin,
     Guid? SupplierExternalId,
     decimal? CommissionPercentage,
-    Guid[]? TagExternalIds) : ICommand<ItemDetailResponse>;
+    Guid[]? TagExternalIds,
+    Guid[]? ColorExternalIds) : ICommand<ItemDetailResponse>;

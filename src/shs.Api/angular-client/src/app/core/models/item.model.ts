@@ -23,6 +23,7 @@ export interface Item {
   soldAt?: Date;
   daysInStock: number;
   tags: { id: number; name: string; color?: string }[];
+  colors: { id: number; name: string; hexCode?: string }[];
   photos: ItemPhoto[];
   createdOn: Date;
   createdBy?: string;
@@ -104,7 +105,7 @@ export interface CreateItemRequest {
   brandExternalId: string;
   categoryExternalId?: string;
   size: string;
-  color: string;
+  color?: string;
   composition?: string;
   condition: string;
   evaluatedPrice: number;
@@ -114,6 +115,7 @@ export interface CreateItemRequest {
   supplierExternalId?: string;
   commissionPercentage?: number;
   tagExternalIds?: string[];
+  colorExternalIds?: string[];
 }
 
 export interface UpdateItemRequest {
@@ -122,7 +124,7 @@ export interface UpdateItemRequest {
   brandExternalId: string;
   categoryExternalId?: string;
   size: string;
-  color: string;
+  color?: string;
   composition?: string;
   condition: string;
   evaluatedPrice: number;
@@ -132,4 +134,5 @@ export interface UpdateItemRequest {
   supplierExternalId?: string;
   commissionPercentage?: number;
   tagExternalIds?: string[];
+  colorExternalIds?: string[];
 }

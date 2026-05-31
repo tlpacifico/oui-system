@@ -14,6 +14,7 @@ internal sealed class UpdateItemCommandHandler(InventoryDbContext db)
     {
         var item = await db.Items
             .Include(i => i.Tags)
+            .Include(i => i.Colors)
             .FirstOrDefaultAsync(i => i.ExternalId == request.ExternalId, cancellationToken);
 
         if (item is null)
@@ -61,7 +62,7 @@ internal sealed class UpdateItemCommandHandler(InventoryDbContext db)
         item.BrandId = brand.Id;
         item.CategoryId = categoryId;
         item.Size = request.Size.Trim();
-        item.Color = request.Color.Trim();
+        item.Color = request.Color?.Trim() ?? item.Color; // overridden below when colors are provided
         item.Composition = request.Composition?.Trim();
         item.Condition = condition;
         item.EvaluatedPrice = request.EvaluatedPrice;
@@ -85,12 +86,30 @@ internal sealed class UpdateItemCommandHandler(InventoryDbContext db)
             }
         }
 
+        if (request.ColorExternalIds is not null)
+        {
+            item.Colors.Clear();
+            if (request.ColorExternalIds.Length > 0)
+            {
+                var colors = await db.Colors
+                    .Where(c => request.ColorExternalIds.Contains(c.ExternalId))
+                    .ToListAsync(cancellationToken);
+                item.Colors = colors;
+                item.Color = string.Join(", ", colors.OrderBy(c => c.Name).Select(c => c.Name));
+            }
+            else
+            {
+                item.Color = string.Empty;
+            }
+        }
+
         await db.SaveChangesAsync(cancellationToken);
 
         await db.Entry(item).Reference(i => i.Brand).LoadAsync(cancellationToken);
         await db.Entry(item).Reference(i => i.Category).LoadAsync(cancellationToken);
         await db.Entry(item).Reference(i => i.Supplier).LoadAsync(cancellationToken);
         await db.Entry(item).Collection(i => i.Tags).LoadAsync(cancellationToken);
+        await db.Entry(item).Collection(i => i.Colors).LoadAsync(cancellationToken);
         await db.Entry(item).Collection(i => i.Photos).LoadAsync(cancellationToken);
 
         return new ItemDetailResponse(
@@ -118,6 +137,7 @@ internal sealed class UpdateItemCommandHandler(InventoryDbContext db)
             item.SoldAt,
             item.DaysInStock,
             item.Tags.Select(t => new TagInfo(t.Id, t.Name, t.Color)).ToList(),
+            item.Colors.Select(c => new ColorInfo(c.Id, c.Name, c.HexCode)).ToList(),
             item.Photos.Select(p => new PhotoInfo(p.ExternalId, p.FilePath, p.ThumbnailPath, p.DisplayOrder, p.IsPrimary)).ToList(),
             item.CreatedOn,
             item.CreatedBy,

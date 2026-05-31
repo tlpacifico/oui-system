@@ -7,6 +7,7 @@ import { ItemFormPageComponent } from './features/inventory/pages/item-form-page
 import { BrandListPageComponent } from './features/inventory/pages/brand-list-page.component';
 import { CategoryListPageComponent } from './features/inventory/pages/category-list-page.component';
 import { TagListPageComponent } from './features/inventory/pages/tag-list-page.component';
+import { ColorListPageComponent } from './features/inventory/pages/color-list-page.component';
 import { SupplierListPageComponent } from './features/inventory/pages/supplier-list-page.component';
 import { SupplierDetailPageComponent } from './features/inventory/pages/supplier-detail-page.component';
 import { ReceptionListPageComponent } from './features/inventory/pages/reception-list-page.component';
@@ -90,6 +91,11 @@ export const routes: Routes = [
   {
     path: 'inventory/tags',
     component: TagListPageComponent,
+    canMatch: [authGuard],
+  },
+  {
+    path: 'inventory/colors',
+    component: ColorListPageComponent,
     canMatch: [authGuard],
   },
   {

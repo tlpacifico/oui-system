@@ -48,6 +48,7 @@ public class RbacSeedService
             new() { ExternalId = Guid.NewGuid(), Name = "inventory.brands.manage", Category = "inventory", Description = "Manage brands", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "inventory.categories.manage", Category = "inventory", Description = "Manage categories", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "inventory.tags.manage", Category = "inventory", Description = "Manage tags", CreatedOn = now },
+            new() { ExternalId = Guid.NewGuid(), Name = "inventory.colors.manage", Category = "inventory", Description = "Manage colors", CreatedOn = now },
             new() { ExternalId = Guid.NewGuid(), Name = "inventory.suppliers.manage", Category = "inventory", Description = "Manage suppliers", CreatedOn = now },
 
             // Consignment Category
@@ -139,7 +140,7 @@ public class RbacSeedService
         var managerPermissionNames = new[]
         {
             "inventory.items.view", "inventory.items.create", "inventory.items.update", "inventory.items.delete",
-            "inventory.brands.manage", "inventory.categories.manage", "inventory.tags.manage", "inventory.suppliers.manage",
+            "inventory.brands.manage", "inventory.categories.manage", "inventory.tags.manage", "inventory.colors.manage", "inventory.suppliers.manage",
             "consignment.receptions.view", "consignment.receptions.evaluate", "consignment.receptions.approve",
             "consignment.returns.view",
             "ecommerce.products.view", "ecommerce.products.publish", "ecommerce.products.update", "ecommerce.products.unpublish",
@@ -178,7 +179,7 @@ public class RbacSeedService
         var inventoryClerkPermissionNames = new[]
         {
             "inventory.items.view", "inventory.items.create", "inventory.items.update",
-            "inventory.brands.manage", "inventory.categories.manage", "inventory.tags.manage", "inventory.suppliers.manage",
+            "inventory.brands.manage", "inventory.categories.manage", "inventory.tags.manage", "inventory.colors.manage", "inventory.suppliers.manage",
             "consignment.receptions.view", "consignment.receptions.create", "consignment.receptions.evaluate", "consignment.receptions.approve",
             "consignment.returns.view", "consignment.returns.create",
             "dashboard.view"
@@ -206,6 +207,7 @@ public class RbacSeedService
         var newPermissions = new Dictionary<string, string>
         {
             ["admin.import.execute"] = "Execute data import from Excel",
+            ["inventory.colors.manage"] = "Manage colors",
             ["admin.permissions.create"] = "Create permissions",
             ["admin.permissions.update"] = "Update permissions",
             ["admin.permissions.delete"] = "Delete permissions",

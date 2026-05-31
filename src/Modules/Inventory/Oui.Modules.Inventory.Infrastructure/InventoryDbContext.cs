@@ -9,6 +9,7 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
     public DbSet<BrandEntity> Brands => Set<BrandEntity>();
     public DbSet<CategoryEntity> Categories => Set<CategoryEntity>();
     public DbSet<TagEntity> Tags => Set<TagEntity>();
+    public DbSet<ColorEntity> Colors => Set<ColorEntity>();
     public DbSet<ReceptionEntity> Receptions => Set<ReceptionEntity>();
     public DbSet<ItemEntity> Items => Set<ItemEntity>();
     public DbSet<ItemPhotoEntity> ItemPhotos => Set<ItemPhotoEntity>();

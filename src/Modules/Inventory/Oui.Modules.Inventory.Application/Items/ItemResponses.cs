@@ -47,6 +47,7 @@ public sealed record ItemDetailResponse(
     DateTime? SoldAt,
     int DaysInStock,
     List<TagInfo> Tags,
+    List<ColorInfo> Colors,
     List<PhotoInfo> Photos,
     DateTime CreatedOn,
     string? CreatedBy,
@@ -64,4 +65,5 @@ public sealed record BrandInfo(long Id, string Name);
 public sealed record CategoryInfo(long Id, string Name);
 public sealed record SupplierInfo(long Id, string Name);
 public sealed record TagInfo(long Id, string Name, string? Color);
+public sealed record ColorInfo(long Id, string Name, string? HexCode);
 public sealed record PhotoInfo(Guid ExternalId, string FilePath, string? ThumbnailPath, int DisplayOrder, bool IsPrimary);
