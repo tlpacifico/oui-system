@@ -26,16 +26,57 @@ internal sealed class GetItemsQueryHandler(InventoryDbContext db, EcommerceDbCon
                 i.IdentificationNumber.ToLower().Contains(s));
         }
 
-        if (request.BrandId.HasValue)
-            query = query.Where(i => i.BrandId == request.BrandId.Value);
+        if (request.BrandExternalId.HasValue)
+            query = query.Where(i => i.Brand.ExternalId == request.BrandExternalId.Value);
+
+        if (request.CategoryExternalId.HasValue)
+            query = query.Where(i => i.CategoryId != null && i.Category!.ExternalId == request.CategoryExternalId.Value);
+
+        if (request.SupplierExternalId.HasValue)
+            query = query.Where(i => i.SupplierId != null && i.Supplier!.ExternalId == request.SupplierExternalId.Value);
+
+        if (request.ColorExternalId.HasValue)
+            query = query.Where(i => i.Colors.Any(c => c.ExternalId == request.ColorExternalId.Value));
+
+        if (!string.IsNullOrWhiteSpace(request.Size))
+            query = query.Where(i => i.Size == request.Size);
 
         if (!string.IsNullOrWhiteSpace(request.Status) && Enum.TryParse<ItemStatus>(request.Status, out var itemStatus))
             query = query.Where(i => i.Status == itemStatus);
 
+        if (!string.IsNullOrWhiteSpace(request.Condition) && Enum.TryParse<ItemCondition>(request.Condition, out var itemCondition))
+            query = query.Where(i => i.Condition == itemCondition);
+
+        if (!string.IsNullOrWhiteSpace(request.AcquisitionType) && Enum.TryParse<AcquisitionType>(request.AcquisitionType, out var acquisitionType))
+            query = query.Where(i => i.AcquisitionType == acquisitionType);
+
+        if (request.MinPrice.HasValue)
+            query = query.Where(i => i.EvaluatedPrice >= request.MinPrice.Value);
+
+        if (request.MaxPrice.HasValue)
+            query = query.Where(i => i.EvaluatedPrice <= request.MaxPrice.Value);
+
+        if (request.CreatedFrom.HasValue)
+            query = query.Where(i => i.CreatedOn >= request.CreatedFrom.Value.Date);
+
+        if (request.CreatedTo.HasValue)
+            query = query.Where(i => i.CreatedOn < request.CreatedTo.Value.Date.AddDays(1));
+
+        query = (request.SortBy?.ToLower(), request.SortDir?.ToLower()) switch
+        {
+            ("name", "asc") => query.OrderBy(i => i.Name),
+            ("name", _) => query.OrderByDescending(i => i.Name),
+            ("price", "asc") => query.OrderBy(i => i.EvaluatedPrice),
+            ("price", _) => query.OrderByDescending(i => i.EvaluatedPrice),
+            ("days", "asc") => query.OrderBy(i => i.DaysInStock),
+            ("days", _) => query.OrderByDescending(i => i.DaysInStock),
+            ("date", "asc") => query.OrderBy(i => i.CreatedOn),
+            _ => query.OrderByDescending(i => i.CreatedOn)
+        };
+
         var totalCount = await query.CountAsync(cancellationToken);
 
         var rawItems = await query
-            .OrderByDescending(i => i.CreatedOn)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(i => new
@@ -50,6 +91,7 @@ internal sealed class GetItemsQueryHandler(InventoryDbContext db, EcommerceDbCon
                 i.EvaluatedPrice,
                 Status = i.Status.ToString(),
                 PrimaryPhotoUrl = i.Photos.OrderBy(p => p.DisplayOrder).Select(p => p.ThumbnailPath ?? p.FilePath).FirstOrDefault(),
+                i.DaysInStock,
                 i.CreatedOn
             })
             .ToListAsync(cancellationToken);
@@ -75,6 +117,7 @@ internal sealed class GetItemsQueryHandler(InventoryDbContext db, EcommerceDbCon
                 i.EvaluatedPrice,
                 i.Status,
                 i.PrimaryPhotoUrl,
+                i.DaysInStock,
                 i.CreatedOn,
                 ec != null ? (Guid?)ec.ExternalId : null,
                 ec?.Slug,

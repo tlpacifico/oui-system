@@ -6,8 +6,20 @@ import { environment } from '../../../../environments/environment';
 
 export interface ItemFilters {
   search?: string;
-  brandId?: number;
+  brandExternalId?: string;
+  categoryExternalId?: string;
+  supplierExternalId?: string;
+  colorExternalId?: string;
+  size?: string;
   status?: string;
+  condition?: string;
+  acquisitionType?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  createdFrom?: string;
+  createdTo?: string;
+  sortBy?: string;
+  sortDir?: string;
   page?: number;
   pageSize?: number;
 }
@@ -21,8 +33,20 @@ export class ItemService {
     let params = new HttpParams();
 
     if (filters.search) params = params.set('search', filters.search);
-    if (filters.brandId) params = params.set('brandId', filters.brandId.toString());
+    if (filters.brandExternalId) params = params.set('brandExternalId', filters.brandExternalId);
+    if (filters.categoryExternalId) params = params.set('categoryExternalId', filters.categoryExternalId);
+    if (filters.supplierExternalId) params = params.set('supplierExternalId', filters.supplierExternalId);
+    if (filters.colorExternalId) params = params.set('colorExternalId', filters.colorExternalId);
+    if (filters.size) params = params.set('size', filters.size);
     if (filters.status) params = params.set('status', filters.status);
+    if (filters.condition) params = params.set('condition', filters.condition);
+    if (filters.acquisitionType) params = params.set('acquisitionType', filters.acquisitionType);
+    if (filters.minPrice != null) params = params.set('minPrice', filters.minPrice.toString());
+    if (filters.maxPrice != null) params = params.set('maxPrice', filters.maxPrice.toString());
+    if (filters.createdFrom) params = params.set('createdFrom', filters.createdFrom);
+    if (filters.createdTo) params = params.set('createdTo', filters.createdTo);
+    if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
+    if (filters.sortDir) params = params.set('sortDir', filters.sortDir);
     params = params.set('page', (filters.page || 1).toString());
     params = params.set('pageSize', (filters.pageSize || 20).toString());
 

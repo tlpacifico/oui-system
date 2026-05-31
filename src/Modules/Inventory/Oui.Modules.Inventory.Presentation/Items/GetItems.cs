@@ -13,8 +13,20 @@ internal sealed class GetItems : IEndpoint
     {
         app.MapGet("api/inventory/items", async (
             string? search,
-            long? brandId,
+            Guid? brandExternalId,
+            Guid? categoryExternalId,
+            Guid? supplierExternalId,
+            Guid? colorExternalId,
+            string? size,
             string? status,
+            string? condition,
+            string? acquisitionType,
+            decimal? minPrice,
+            decimal? maxPrice,
+            DateTime? createdFrom,
+            DateTime? createdTo,
+            string? sortBy,
+            string? sortDir,
             int page,
             int pageSize,
             ISender sender,
@@ -22,8 +34,20 @@ internal sealed class GetItems : IEndpoint
         {
             var result = await sender.Send(new GetItemsQuery(
                 search,
-                brandId,
+                brandExternalId,
+                categoryExternalId,
+                supplierExternalId,
+                colorExternalId,
+                size,
                 status,
+                condition,
+                acquisitionType,
+                minPrice,
+                maxPrice,
+                createdFrom,
+                createdTo,
+                sortBy,
+                sortDir,
                 page == 0 ? 1 : page,
                 pageSize == 0 ? 20 : pageSize), ct);
 

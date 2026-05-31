@@ -2,16 +2,61 @@ import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { ItemService } from '../services/item.service';
 import { EcommerceService } from '../services/ecommerce.service';
+import { BrandService } from '../services/brand.service';
+import { CategoryService } from '../services/category.service';
+import { SupplierService } from '../services/supplier.service';
+import { ColorService } from '../services/color.service';
 import { ItemListItem, ItemStatus } from '../../../core/models/item.model';
+import { BrandListItem } from '../../../core/models/brand.model';
+import { CategoryListItem } from '../../../core/models/category.model';
+import { SupplierListItem } from '../../../core/models/supplier.model';
+import { ColorListItem } from '../../../core/models/color.model';
 import { HasPermissionDirective } from '../../../core/auth/directives/has-permission.directive';
+import { SearchableSelectComponent, SearchableOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { environment } from '../../../../environments/environment';
+
+interface AdvancedFilters {
+  brandExternalId: string;
+  categoryExternalId: string;
+  supplierExternalId: string;
+  colorExternalId: string;
+  size: string;
+  condition: string;
+  acquisitionType: string;
+  minPrice: number | null;
+  maxPrice: number | null;
+  createdFrom: string;
+  createdTo: string;
+}
+
+interface FilterChip {
+  key: keyof AdvancedFilters | 'price' | 'created';
+  text: string;
+}
+
+function emptyFilters(): AdvancedFilters {
+  return {
+    brandExternalId: '',
+    categoryExternalId: '',
+    supplierExternalId: '',
+    colorExternalId: '',
+    size: '',
+    condition: '',
+    acquisitionType: '',
+    minPrice: null,
+    maxPrice: null,
+    createdFrom: '',
+    createdTo: '',
+  };
+}
 
 @Component({
   selector: 'oui-item-list-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, HasPermissionDirective],
+  imports: [CommonModule, RouterLink, FormsModule, HasPermissionDirective, SearchableSelectComponent],
   template: `
     <div class="page-header">
       <div>
@@ -35,7 +80,7 @@ import { environment } from '../../../../environments/environment';
           (ngModelChange)="onSearchChange()"
           class="filter-input filter-search"
         />
-        <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="filter-select">
+        <select [(ngModel)]="statusFilter" (ngModelChange)="onTopFilterChange()" class="filter-select">
           <option value="">Todos os Estados</option>
           <option value="ToSell">À Venda</option>
           <option value="Evaluated">Avaliado</option>
@@ -44,8 +89,97 @@ import { environment } from '../../../../environments/environment';
           <option value="Returned">Devolvido</option>
           <option value="Rejected">Rejeitado</option>
         </select>
-        <button class="btn btn-outline btn-sm" (click)="clearFilters()">Limpar Filtros</button>
+        <button class="btn btn-outline btn-sm filter-toggle" (click)="filtersOpen.set(!filtersOpen())">
+          ⚙ Filtros avançados
+          @if (advancedCount() > 0) {
+            <span class="filter-count">{{ advancedCount() }}</span>
+          }
+          <span class="chevron">{{ filtersOpen() ? '▴' : '▾' }}</span>
+        </button>
+        <button class="btn btn-ghost btn-sm" (click)="clearAll()">Limpar tudo</button>
       </div>
+
+      @if (filtersOpen()) {
+        <div class="advanced-panel">
+          <div class="advanced-grid">
+            <div class="adv-field">
+              <label>Marca</label>
+              <oui-searchable-select [options]="brandOptions()" [(value)]="filters.brandExternalId" placeholder="Pesquisar marca..." />
+            </div>
+            <div class="adv-field">
+              <label>Cor</label>
+              <oui-searchable-select [options]="colorOptions()" [(value)]="filters.colorExternalId" placeholder="Pesquisar cor..." />
+            </div>
+            <div class="adv-field">
+              <label>Tamanho</label>
+              <select class="filter-select adv-select" [(ngModel)]="filters.size">
+                <option value="">Todos</option>
+                @for (s of sizes; track s) {
+                  <option [value]="s">{{ s }}</option>
+                }
+              </select>
+            </div>
+            <div class="adv-field">
+              <label>Categoria</label>
+              <oui-searchable-select [options]="categoryOptions()" [(value)]="filters.categoryExternalId" placeholder="Pesquisar categoria..." />
+            </div>
+            <div class="adv-field">
+              <label>Condição</label>
+              <select class="filter-select adv-select" [(ngModel)]="filters.condition">
+                <option value="">Todas</option>
+                @for (c of conditions; track c.value) {
+                  <option [value]="c.value">{{ c.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="adv-field">
+              <label>Tipo de Aquisição</label>
+              <select class="filter-select adv-select" [(ngModel)]="filters.acquisitionType" (ngModelChange)="onAcqTypeChange()">
+                <option value="">Todos</option>
+                <option value="Consignment">Consignação</option>
+                <option value="OwnPurchase">Compra Própria</option>
+              </select>
+            </div>
+            @if (filters.acquisitionType !== 'OwnPurchase') {
+              <div class="adv-field">
+                <label>Fornecedor</label>
+                <oui-searchable-select [options]="supplierOptions()" [(value)]="filters.supplierExternalId" placeholder="Pesquisar fornecedor..." />
+              </div>
+            }
+            <div class="adv-field">
+              <label>Preço (€)</label>
+              <div class="range-row">
+                <input type="number" class="filter-input range-input" placeholder="mín" min="0" step="0.01" [(ngModel)]="filters.minPrice" />
+                <span class="range-sep">–</span>
+                <input type="number" class="filter-input range-input" placeholder="máx" min="0" step="0.01" [(ngModel)]="filters.maxPrice" />
+              </div>
+            </div>
+            <div class="adv-field">
+              <label>Entrada (data)</label>
+              <div class="range-row">
+                <input type="date" class="filter-input range-input" [(ngModel)]="filters.createdFrom" />
+                <span class="range-sep">–</span>
+                <input type="date" class="filter-input range-input" [(ngModel)]="filters.createdTo" />
+              </div>
+            </div>
+          </div>
+          <div class="advanced-actions">
+            <button class="btn btn-outline btn-sm" (click)="clearAdvanced()">Limpar</button>
+            <button class="btn btn-primary btn-sm" (click)="applyFilters()">Aplicar</button>
+          </div>
+        </div>
+      }
+
+      @if (activeChips().length > 0) {
+        <div class="chips-row">
+          @for (chip of activeChips(); track chip.key) {
+            <span class="chip">
+              {{ chip.text }}
+              <button class="chip-remove" (click)="removeChip(chip.key)" aria-label="Remover filtro">✕</button>
+            </span>
+          }
+        </div>
+      }
     </div>
 
     @if (loading()) {
@@ -60,14 +194,14 @@ import { environment } from '../../../../environments/environment';
               <tr>
                 <th>Foto</th>
                 <th>ID</th>
-                <th>Nome</th>
+                <th class="sortable" (click)="sort('name')">Nome <span class="sort-icon">{{ sortIcon('name') }}</span></th>
                 <th>Marca</th>
                 <th>Tam</th>
                 <th>Cor</th>
-                <th>Preço</th>
+                <th class="sortable" (click)="sort('price')">Preço <span class="sort-icon">{{ sortIcon('price') }}</span></th>
                 <th>Estado</th>
                 @if (hasDaysInStock()) {
-                  <th>Dias</th>
+                  <th class="sortable" (click)="sort('days')">Dias <span class="sort-icon">{{ sortIcon('days') }}</span></th>
                 }
                 <th>Ações</th>
               </tr>
@@ -151,6 +285,121 @@ import { environment } from '../../../../environments/environment';
 
     .filter-search { width: 240px; }
 
+    /* ── Filters bar ── */
+    .filters-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .filter-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .filter-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 9px;
+      background: #6366f1;
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .chevron { font-size: 11px; }
+
+    .btn-ghost {
+      background: transparent;
+      color: #64748b;
+      border-color: transparent;
+    }
+
+    .btn-ghost:hover { background: #f1f5f9; color: #1e293b; }
+
+    /* ── Advanced panel ── */
+    .advanced-panel {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .advanced-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px 16px;
+    }
+
+    .adv-field { display: flex; flex-direction: column; gap: 6px; }
+
+    .adv-field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .adv-select { width: 100%; height: 40px; }
+
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-input { width: 100%; }
+    .range-sep { color: #94a3b8; }
+
+    .advanced-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    /* ── Active filter chips ── */
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 6px 4px 12px;
+      border-radius: 16px;
+      background: #eef2ff;
+      color: #4338ca;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid #c7d2fe;
+    }
+
+    .chip-remove {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: #4338ca;
+      cursor: pointer;
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    .chip-remove:hover { background: #c7d2fe; }
+
+    /* ── Sortable headers ── */
+    th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+    th.sortable:hover { color: #6366f1; }
+    .sort-icon { font-size: 11px; opacity: 0.7; }
+
     td { border-bottom: 1px solid #E7E5E4; }
 
     tr:hover td { background: #F5F5F4; }
@@ -226,6 +475,10 @@ import { environment } from '../../../../environments/environment';
 export class ItemListPageComponent implements OnInit {
   private readonly itemService = inject(ItemService);
   private readonly ecommerceService = inject(EcommerceService);
+  private readonly brandService = inject(BrandService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly supplierService = inject(SupplierService);
+  private readonly colorService = inject(ColorService);
   private readonly baseUrl = environment.apiUrl.replace('/api', '');
 
   items = signal<ItemListItem[]>([]);
@@ -235,9 +488,109 @@ export class ItemListPageComponent implements OnInit {
   currentPage = signal(1);
   totalPages = signal(1);
   totalCount = signal(0);
+
+  // Top-bar filters (apply immediately)
   searchText = '';
   statusFilter = '';
+
+  // Sorting
+  sortBy = signal('');
+  sortDir = signal<'asc' | 'desc'>('desc');
+
+  // Advanced filters: draft (form-bound) + applied (used for query/chips)
+  filtersOpen = signal(false);
+  filters: AdvancedFilters = emptyFilters();
+  applied = signal<AdvancedFilters>(emptyFilters());
+
+  // Reference data
+  brands = signal<BrandListItem[]>([]);
+  categories = signal<CategoryListItem[]>([]);
+  suppliers = signal<SupplierListItem[]>([]);
+  colors = signal<ColorListItem[]>([]);
+
+  readonly sizes = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '34', '36', '38', '40', '42', '44', '46', 'Único'];
+  readonly conditions = [
+    { value: 'Excellent', label: 'Excelente' },
+    { value: 'VeryGood', label: 'Muito Bom' },
+    { value: 'Good', label: 'Bom' },
+    { value: 'Fair', label: 'Razoável' },
+    { value: 'Poor', label: 'Mau' },
+  ];
+
   private readonly pageSize = 20;
+
+  brandOptions = computed<SearchableOption[]>(() =>
+    this.brands().map(b => ({ value: b.externalId, label: b.name }))
+  );
+  categoryOptions = computed<SearchableOption[]>(() =>
+    this.categories().map(c => ({ value: c.externalId, label: c.name }))
+  );
+  supplierOptions = computed<SearchableOption[]>(() =>
+    this.suppliers().map(s => ({ value: s.externalId, label: s.name, sublabel: s.email, badge: s.initial }))
+  );
+  colorOptions = computed<SearchableOption[]>(() =>
+    this.colors().map(c => ({ value: c.externalId, label: c.name }))
+  );
+
+  advancedCount = computed(() => {
+    const a = this.applied();
+    let n = 0;
+    if (a.brandExternalId) n++;
+    if (a.categoryExternalId) n++;
+    if (a.supplierExternalId) n++;
+    if (a.colorExternalId) n++;
+    if (a.size) n++;
+    if (a.condition) n++;
+    if (a.acquisitionType) n++;
+    if (a.minPrice != null || a.maxPrice != null) n++;
+    if (a.createdFrom || a.createdTo) n++;
+    return n;
+  });
+
+  activeChips = computed<FilterChip[]>(() => {
+    const a = this.applied();
+    const chips: FilterChip[] = [];
+
+    if (a.brandExternalId) {
+      chips.push({ key: 'brandExternalId', text: `Marca: ${this.labelOf(this.brandOptions(), a.brandExternalId)}` });
+    }
+    if (a.colorExternalId) {
+      chips.push({ key: 'colorExternalId', text: `Cor: ${this.labelOf(this.colorOptions(), a.colorExternalId)}` });
+    }
+    if (a.size) {
+      chips.push({ key: 'size', text: `Tamanho: ${a.size}` });
+    }
+    if (a.categoryExternalId) {
+      chips.push({ key: 'categoryExternalId', text: `Categoria: ${this.labelOf(this.categoryOptions(), a.categoryExternalId)}` });
+    }
+    if (a.condition) {
+      chips.push({ key: 'condition', text: `Condição: ${this.conditions.find(c => c.value === a.condition)?.label ?? a.condition}` });
+    }
+    if (a.acquisitionType) {
+      chips.push({ key: 'acquisitionType', text: `Tipo: ${a.acquisitionType === 'Consignment' ? 'Consignação' : 'Compra Própria'}` });
+    }
+    if (a.supplierExternalId) {
+      chips.push({ key: 'supplierExternalId', text: `Fornecedor: ${this.labelOf(this.supplierOptions(), a.supplierExternalId)}` });
+    }
+    if (a.minPrice != null || a.maxPrice != null) {
+      const min = a.minPrice != null ? `€${a.minPrice}` : '';
+      const max = a.maxPrice != null ? `€${a.maxPrice}` : '';
+      const text = a.minPrice != null && a.maxPrice != null ? `${min}–${max}`
+        : a.minPrice != null ? `≥ ${min}` : `≤ ${max}`;
+      chips.push({ key: 'price', text: `Preço: ${text}` });
+    }
+    if (a.createdFrom || a.createdTo) {
+      const text = a.createdFrom && a.createdTo ? `${a.createdFrom} – ${a.createdTo}`
+        : a.createdFrom ? `desde ${a.createdFrom}` : `até ${a.createdTo}`;
+      chips.push({ key: 'created', text: `Entrada: ${text}` });
+    }
+
+    return chips;
+  });
+
+  private labelOf(options: SearchableOption[], value: string): string {
+    return options.find(o => o.value === value)?.label ?? value;
+  }
 
   paginationStart = computed(() => {
     if (this.totalCount() === 0) return 0;
@@ -273,14 +626,46 @@ export class ItemListPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.loadReferenceData();
     this.loadItems();
+  }
+
+  private loadReferenceData(): void {
+    forkJoin({
+      brands: this.brandService.getAll(),
+      categories: this.categoryService.getAll(),
+      suppliers: this.supplierService.getAll(),
+      colors: this.colorService.getAll(),
+    }).subscribe({
+      next: ({ brands, categories, suppliers, colors }) => {
+        this.brands.set(brands);
+        this.categories.set(categories);
+        this.suppliers.set(suppliers);
+        this.colors.set(colors);
+      },
+      error: () => { /* reference dropdowns simply stay empty */ }
+    });
   }
 
   loadItems(): void {
     this.loading.set(true);
+    const a = this.applied();
     this.itemService.getItems({
       search: this.searchText || undefined,
       status: this.statusFilter || undefined,
+      brandExternalId: a.brandExternalId || undefined,
+      categoryExternalId: a.categoryExternalId || undefined,
+      supplierExternalId: a.supplierExternalId || undefined,
+      colorExternalId: a.colorExternalId || undefined,
+      size: a.size || undefined,
+      condition: a.condition || undefined,
+      acquisitionType: a.acquisitionType || undefined,
+      minPrice: a.minPrice ?? undefined,
+      maxPrice: a.maxPrice ?? undefined,
+      createdFrom: a.createdFrom || undefined,
+      createdTo: a.createdTo || undefined,
+      sortBy: this.sortBy() || undefined,
+      sortDir: this.sortBy() ? this.sortDir() : undefined,
       page: this.currentPage(),
       pageSize: this.pageSize
     }).subscribe({
@@ -301,16 +686,77 @@ export class ItemListPageComponent implements OnInit {
     this.loadItems();
   }
 
-  onFilterChange(): void {
+  onTopFilterChange(): void {
     this.currentPage.set(1);
     this.loadItems();
   }
 
-  clearFilters(): void {
-    this.searchText = '';
-    this.statusFilter = '';
+  onAcqTypeChange(): void {
+    // Supplier only applies to consignment items
+    if (this.filters.acquisitionType === 'OwnPurchase') {
+      this.filters.supplierExternalId = '';
+    }
+  }
+
+  applyFilters(): void {
+    this.applied.set({ ...this.filters });
     this.currentPage.set(1);
     this.loadItems();
+  }
+
+  clearAdvanced(): void {
+    this.filters = emptyFilters();
+    this.applied.set(emptyFilters());
+    this.currentPage.set(1);
+    this.loadItems();
+  }
+
+  clearAll(): void {
+    this.searchText = '';
+    this.statusFilter = '';
+    this.sortBy.set('');
+    this.sortDir.set('desc');
+    this.clearAdvanced();
+  }
+
+  removeChip(key: FilterChip['key']): void {
+    const next = { ...this.applied() };
+    if (key === 'price') {
+      next.minPrice = null;
+      next.maxPrice = null;
+      this.filters.minPrice = null;
+      this.filters.maxPrice = null;
+    } else if (key === 'created') {
+      next.createdFrom = '';
+      next.createdTo = '';
+      this.filters.createdFrom = '';
+      this.filters.createdTo = '';
+    } else if (key === 'minPrice' || key === 'maxPrice') {
+      next[key] = null;
+      this.filters[key] = null;
+    } else {
+      next[key] = '';
+      this.filters[key] = '';
+    }
+    this.applied.set(next);
+    this.currentPage.set(1);
+    this.loadItems();
+  }
+
+  sort(column: string): void {
+    if (this.sortBy() === column) {
+      this.sortDir.set(this.sortDir() === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortBy.set(column);
+      this.sortDir.set(column === 'name' ? 'asc' : 'desc');
+    }
+    this.currentPage.set(1);
+    this.loadItems();
+  }
+
+  sortIcon(column: string): string {
+    if (this.sortBy() !== column) return '↕';
+    return this.sortDir() === 'asc' ? '▲' : '▼';
   }
 
   goToPage(page: number): void {

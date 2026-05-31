@@ -17,6 +17,7 @@ public sealed record ItemListItemResponse(
     decimal EvaluatedPrice,
     string Status,
     string? PrimaryPhotoUrl,
+    int DaysInStock,
     DateTime CreatedOn,
     Guid? EcommerceProductExternalId,
     string? EcommerceProductSlug,
