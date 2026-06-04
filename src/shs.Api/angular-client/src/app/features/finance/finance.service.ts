@@ -424,7 +424,11 @@ export interface StoreCreditCancelledResponse {
 export interface SupplierCashBalanceResponse {
   supplierId: number;
   supplierName: string;
+  /** Máximo resgatável em dinheiro = storeCreditBalance × conversionRate */
   availableBalance: number;
+  storeCreditBalance: number;
+  /** PorcInDinheiro ÷ PorcInLoja (ex.: 40/50 = 0.8) */
+  conversionRate: number;
   creditPercentageInStore: number;
   cashRedemptionPercentage: number;
 }
@@ -461,8 +465,9 @@ export interface CashRedemptionProcessedResponse {
   supplierId: number;
   supplierName: string;
   amountRedeemed: number;
-  previousBalance: number;
-  newBalance: number;
+  creditDebited: number;
+  previousCreditBalance: number;
+  newCreditBalance: number;
   transactionDate: string;
   processedBy: string;
   message: string;

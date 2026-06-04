@@ -75,11 +75,16 @@ public class AutoSettlementHandler : ISaleNotificationHandler
             var totalSalesAmount = itemsInGroup.Sum(i => i.FinalSalePrice ?? 0);
             var porcInLoja = supplier.CreditPercentageInStore / 100m;
             var porcInDinheiro = supplier.CashRedemptionPercentage / 100m;
-            var storeCreditAmount = totalSalesAmount * porcInLoja;
-            var cashRedemptionAmount = totalSalesAmount * porcInDinheiro;
-            var netAmountToSupplier = storeCreditAmount + cashRedemptionAmount;
-            var storeCommissionAmount = totalSalesAmount - netAmountToSupplier;
+            // O fornecedor recebe UM saldo único em crédito de loja (PorcInLoja).
+            // O valor em dinheiro é alternativo, não cumulativo: resgates convertem
+            // o crédito à taxa PorcInDinheiro/PorcInLoja (ex.: 40/50 = 0.8).
+            var storeCreditAmount = Math.Round(totalSalesAmount * porcInLoja, 2, MidpointRounding.AwayFromZero);
+            var cashRedemptionAmount = Math.Round(totalSalesAmount * porcInDinheiro, 2, MidpointRounding.AwayFromZero);
+            var netAmountToSupplier = storeCreditAmount;
+            var storeCommissionAmount = totalSalesAmount - storeCreditAmount;
 
+            // Acerto automático nasce já finalizado: o crédito em loja é emitido
+            // de imediato para o fornecedor poder usar na próxima compra.
             var settlement = new SettlementEntity
             {
                 ExternalId = Guid.NewGuid(),
@@ -94,7 +99,9 @@ public class AutoSettlementHandler : ISaleNotificationHandler
                 StoreCommissionAmount = storeCommissionAmount,
                 NetAmountToSupplier = netAmountToSupplier,
                 PaymentMethod = SettlementPaymentMethod.StoreCredit,
-                Status = SettlementStatus.Pending,
+                Status = SettlementStatus.Paid,
+                PaidOn = now,
+                PaidBy = "system",
                 Notes = $"Criado automaticamente a partir da venda #{notification.SaleId}",
                 CreatedOn = now,
                 CreatedBy = "system"
@@ -102,6 +109,42 @@ public class AutoSettlementHandler : ISaleNotificationHandler
 
             _salesDb.Settlements.Add(settlement);
             await _salesDb.SaveChangesAsync(ct);
+
+            if (storeCreditAmount > 0)
+            {
+                var storeCredit = new StoreCreditEntity
+                {
+                    ExternalId = Guid.NewGuid(),
+                    SupplierId = group.Key,
+                    SourceSettlementId = settlement.Id,
+                    OriginalAmount = storeCreditAmount,
+                    CurrentBalance = storeCreditAmount,
+                    IssuedOn = now,
+                    IssuedBy = "system",
+                    Status = StoreCreditStatus.Active,
+                    CreatedOn = now,
+                    CreatedBy = "system"
+                };
+
+                _salesDb.StoreCredits.Add(storeCredit);
+                await _salesDb.SaveChangesAsync(ct);
+
+                _salesDb.StoreCreditTransactions.Add(new StoreCreditTransactionEntity
+                {
+                    ExternalId = Guid.NewGuid(),
+                    StoreCreditId = storeCredit.Id,
+                    Amount = storeCredit.OriginalAmount,
+                    BalanceAfter = storeCredit.CurrentBalance,
+                    TransactionType = StoreCreditTransactionType.Issue,
+                    TransactionDate = now,
+                    ProcessedBy = "system",
+                    Notes = $"Issued from settlement {settlement.ExternalId}",
+                    CreatedOn = now,
+                    CreatedBy = "system"
+                });
+
+                settlement.StoreCreditId = storeCredit.Id;
+            }
 
             // Link sale items to this settlement
             var saleItems = await _salesDb.SaleItems
@@ -115,10 +158,20 @@ public class AutoSettlementHandler : ISaleNotificationHandler
 
             await _salesDb.SaveChangesAsync(ct);
 
+            // Itens passam diretamente a "Pago" — o acerto já está liquidado
+            foreach (var item in itemsInGroup)
+            {
+                item.Status = ItemStatus.Paid;
+                item.UpdatedOn = now;
+                item.UpdatedBy = "system";
+            }
+
+            await _inventoryDb.SaveChangesAsync(ct);
+
             _logger.LogInformation(
-                "Auto-settlement created for supplier {SupplierName} (ID: {SupplierId}), " +
-                "SaleId: {SaleId}, Items: {ItemCount}, Total: {Total:F2}€",
-                supplier.Name, supplier.Id, notification.SaleId, itemsInGroup.Count, totalSalesAmount);
+                "Auto-settlement created as Paid for supplier {SupplierName} (ID: {SupplierId}), " +
+                "SaleId: {SaleId}, Items: {ItemCount}, Total: {Total:F2}€, StoreCredit: {Credit:F2}€",
+                supplier.Name, supplier.Id, notification.SaleId, itemsInGroup.Count, totalSalesAmount, storeCreditAmount);
         }
     }
 }

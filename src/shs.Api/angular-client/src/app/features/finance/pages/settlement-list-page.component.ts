@@ -68,7 +68,7 @@ type TabId = 'pending' | 'processed' | 'all';
                     <th class="cell-center">Itens</th>
                     <th class="cell-right">Total Vendas</th>
                     <th class="cell-right">Crédito Loja</th>
-                    <th class="cell-right">Resgate Cash</th>
+                    <th class="cell-right">Dinheiro (máx.)</th>
                     <th class="cell-right">A Pagar</th>
                     <th>Ações</th>
                   </tr>
@@ -120,7 +120,7 @@ type TabId = 'pending' | 'processed' | 'all';
                     <th class="cell-center">Itens</th>
                     <th class="cell-right">Total Vendas</th>
                     <th class="cell-right">Crédito Loja</th>
-                    <th class="cell-right">Resgate Cash</th>
+                    <th class="cell-right">Dinheiro (máx.)</th>
                     <th class="cell-right">A Pagar</th>
                     <th>Estado</th>
                     <th>Ações</th>

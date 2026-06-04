@@ -65,24 +65,9 @@ internal sealed class ProcessPaymentCommandHandler(SalesDbContext salesDb, Inven
             settlement.StoreCreditId = storeCredit.Id;
         }
 
-        if (settlement.CashRedemptionAmount > 0)
-        {
-            var cashTransaction = new SupplierCashBalanceTransactionEntity
-            {
-                ExternalId = Guid.NewGuid(),
-                SupplierId = settlement.SupplierId,
-                SettlementId = settlement.Id,
-                Amount = settlement.CashRedemptionAmount,
-                TransactionType = SupplierCashBalanceTransactionType.SettlementCredit,
-                TransactionDate = now,
-                ProcessedBy = request.UserEmail,
-                Notes = $"Credit from settlement {settlement.ExternalId}",
-                CreatedOn = now,
-                CreatedBy = request.UserEmail
-            };
-
-            salesDb.SupplierCashBalanceTransactions.Add(cashTransaction);
-        }
+        // O fornecedor recebe apenas o crédito em loja (saldo único).
+        // O resgate em dinheiro converte esse crédito (PorcInDinheiro/PorcInLoja)
+        // no ecrã de Créditos em Loja — não existe saldo paralelo em dinheiro.
 
         settlement.Status = SettlementStatus.Paid;
         settlement.PaidOn = now;
@@ -111,9 +96,7 @@ internal sealed class ProcessPaymentCommandHandler(SalesDbContext salesDb, Inven
 
         var messages = new List<string>();
         if (settlement.StoreCreditAmount > 0)
-            messages.Add($"Crédito em loja: {settlement.StoreCreditAmount:C}");
-        if (settlement.CashRedemptionAmount > 0)
-            messages.Add($"Saldo para resgate em dinheiro: {settlement.CashRedemptionAmount:C}");
+            messages.Add($"Crédito em loja emitido: {settlement.StoreCreditAmount:C} (resgatável em dinheiro até {settlement.CashRedemptionAmount:C})");
 
         return new ProcessPaymentResponse(
             settlement.ExternalId,

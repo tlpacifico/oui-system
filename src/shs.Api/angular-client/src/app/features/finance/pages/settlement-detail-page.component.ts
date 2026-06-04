@@ -59,12 +59,13 @@ import { FinanceService, SettlementDetail, SettlementStatus } from '../finance.s
             <div class="stat-value stat-success">{{ settlement()!.storeCreditAmount | currency: 'EUR' }}</div>
           </div>
           <div class="card stat-card">
-            <div class="stat-label">Resgate em Dinheiro</div>
+            <div class="stat-label">Em Dinheiro (máx.)</div>
             <div class="stat-value stat-info">{{ settlement()!.cashRedemptionAmount | currency: 'EUR' }}</div>
           </div>
           <div class="card stat-card highlight">
             <div class="stat-label">Total a Pagar</div>
             <div class="stat-value">{{ settlement()!.netAmountToSupplier | currency: 'EUR' }}</div>
+            <div class="stat-note">em crédito · ou até {{ settlement()!.cashRedemptionAmount | currency: 'EUR' }} em dinheiro</div>
           </div>
         </div>
 
@@ -211,6 +212,12 @@ import { FinanceService, SettlementDetail, SettlementStatus } from '../finance.s
 
     .stat-success { color: #059669; }
     .stat-info { color: #0284c7; }
+
+    .stat-note {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+    }
 
     .card {
       background: #ffffff;

@@ -86,11 +86,12 @@
 │  ETAPA 6: ACERTO / CRÉDITO AO FORNECEDOR                            │
 │  ─────────────────────────────────────────────────────────────────  │
 │                                                                     │
-│  1. Por cada peça vendida, fornecedor acumula (PorcInLoja + PorcInDinheiro): │
-│     • Crédito em loja (ex: 50%) - para compras na própria loja      │
-│     • Valor resgatável em dinheiro (ex: 40%) - pode levantar         │
+│  1. Por cada peça vendida, fornecedor acumula UM saldo único:        │
+│     • Crédito em loja (ex: 50% do total vendido)                    │
+│     • Alternativa: resgate em dinheiro (ex: 40%) — NÃO acumula,     │
+│       converte o crédito à taxa PorcInDinheiro/PorcInLoja (0.8)     │
 │  2. Crédito em loja: usado em compras (operador identifica fornecedor) │
-│  3. Resgate em dinheiro: fornecedor solicita e loja regista         │
+│  3. Resgate em dinheiro: desconta do crédito convertido (ex: 0.8)   │
 │  4. Status da peça → "PG" (Pago) após acerto                        │
 │                                                                     │
 │  Comunicação de acertos enviada via WhatsApp                        │
@@ -134,23 +135,25 @@ Recebido ──► Avaliado ──► Aguarda Aprovação ──► Consignado/D
 
 ## 3. Sistema de Créditos do Fornecedor (Oui Circular)
 
-Quando um item de um fornecedor é vendido, o fornecedor acumula crédito na loja. Este crédito pode ser resgatado de duas formas:
+Quando um item de um fornecedor é vendido, o fornecedor acumula **um saldo único de crédito em loja** (PorcInLoja). As duas percentagens são **alternativas, não cumulativas**:
 
 | Percentagem (por fornecedor) | Destino | Exemplo (Total 40 EUR) |
 |-----------------------------|---------|------------------------|
 | **PorcInLoja** (ex: 50%) | Crédito para compras na própria loja | 40 × 0,50 = **20 EUR** |
-| **PorcInDinheiro** (ex: 40%) | Resgate em numerário | 40 × 0,40 = **16 EUR** |
-| Restante | Loja | 4 EUR (10%) |
+| **PorcInDinheiro** (ex: 40%) | Resgate em numerário (alternativa) | 40 × 0,40 = **16 EUR** |
+| Restante | Loja | 20 EUR (se tudo em crédito) a 24 EUR (se tudo em dinheiro) |
 
 ### Exemplo (Calça 20€ + Camisa 20€ = 40€ total):
-- **Crédito em loja:** 40 × 0,50 = €20,00 (para comprar itens na loja)
-- **Resgate em dinheiro:** 40 × 0,40 = €16,00 (pode levantar em numerário)
+- **Acerto emite:** 40 × 0,50 = €20,00 de crédito em loja (saldo único)
+- **Se resgatar tudo em dinheiro:** €20,00 × (40/50) = €16,00
+- **Uso misto:** gasta €8,00 em compras → sobram €12,00 de crédito → resgate em dinheiro = €12,00 × 0,8 = €9,60
 
 ### Nota:
 - PorcInLoja e PorcInDinheiro variam por fornecedor
-- O fornecedor acumula AMBOS quando os itens são vendidos
-- Numa nova venda, o operador deve identificar o fornecedor para utilizar o seu crédito em loja
+- O resgate em dinheiro **converte o crédito** à taxa PorcInDinheiro ÷ PorcInLoja (ex: 40/50 = 0,8), usando as percentagens atuais do fornecedor
+- Numa nova venda, o operador deve identificar o fornecedor para utilizar o seu crédito em loja (1:1)
 - É necessário registar tanto o **uso do crédito em compra** como o **resgate em dinheiro**
+- Com a flag `pos.auto_create_settlement` ativa, o acerto é criado **já finalizado** após a venda e o crédito fica imediatamente disponível
 
 ---
 
@@ -164,7 +167,7 @@ Quando um item de um fornecedor é vendido, o fornecedor acumula crédito na loj
 | **Avaliação** | Feita na hora com o cliente | Feita DEPOIS, sem o cliente |
 | **Receção** | Contagem + avaliação juntas | Apenas contagem → recibo assinado |
 | **Comunicação** | Não especificada | Email com valores + WhatsApp para acertos |
-| **Comissão** | Escolha: 40% cash OU 50% crédito | PorcInLoja + PorcInDinheiro (ambos acumulam) |
+| **Comissão** | Escolha: 40% cash OU 50% crédito | Saldo único em crédito (PorcInLoja); resgate em dinheiro converte à taxa PorcInDinheiro/PorcInLoja |
 | **Fiscal** | NF-e, SEFAZ, ICMS | Legislação fiscal portuguesa |
 | **Status "Recebido"** | Não existia | Novo status necessário (pré-avaliação) |
 | **Status "PG" (Pago)** | Não existia explicitamente | Status importante no fluxo real |
@@ -240,7 +243,7 @@ As peças recusadas ficam disponíveis para levantamento na loja.
 
 Caso as peças sejam vendidas, receberá (exemplo PorcInLoja=50%, PorcInDinheiro=40%):
 • Crédito em loja: €47,50 (50% do total)
-• Resgate em dinheiro: €38,00 (40% do total)
+• OU, em alternativa, resgate em dinheiro: €38,00 (40% do total)
 
 Alguma questão, não hesite em contactar-nos.
 

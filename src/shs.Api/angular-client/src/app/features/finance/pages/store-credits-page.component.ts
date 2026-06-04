@@ -184,11 +184,18 @@ import { SupplierListItem } from '../../../core/models/supplier.model';
           <button class="btn-close" (click)="closeRedemptionModal()">×</button>
         </div>
         <div class="modal-body">
-          <p class="balance-info">Saldo disponível: <strong>{{ cashBalance() | currency: 'EUR' }}</strong></p>
+          <p class="balance-info">
+            Crédito disponível: <strong>{{ storeCreditsTotal() | currency: 'EUR' }}</strong><br />
+            Máx. em dinheiro: <strong>{{ cashBalance() | currency: 'EUR' }}</strong>
+            <span class="rate-hint">(taxa {{ conversionRate() | number: '1.0-2' }})</span>
+          </p>
           <div class="form-group">
-            <label>Valor a resgatar (€) *</label>
+            <label>Valor a entregar em dinheiro (€) *</label>
             <input type="number" [(ngModel)]="redemptionAmount" step="0.01" min="0.01" [max]="cashBalance()" class="form-control" />
           </div>
+          @if (redemptionAmount && redemptionAmount > 0) {
+            <p class="balance-info">Crédito a descontar: <strong>{{ creditToDebit() | currency: 'EUR' }}</strong></p>
+          }
           <div class="form-group">
             <label>Notas</label>
             <textarea [(ngModel)]="redemptionNotes" class="form-control" rows="2"></textarea>
@@ -447,6 +454,8 @@ import { SupplierListItem } from '../../../core/models/supplier.model';
     .modal-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 16px 20px; border-top: 1px solid #e2e8f0; }
     .balance-info { margin-bottom: 16px; }
 
+    .rate-hint { font-size: 12px; color: #64748b; }
+
     /* ── Responsive ── */
     @media (max-width: 768px) {
       .page-header {
@@ -489,7 +498,15 @@ export class StoreCreditsPageComponent implements OnInit {
   storeCredits = computed(() => this.supplierData()?.credits?.credits ?? []);
   storeCreditsTotal = computed(() => this.supplierData()?.credits?.totalActiveBalance ?? 0);
   cashBalance = computed(() => this.supplierData()?.cash?.availableBalance ?? 0);
+  conversionRate = computed(() => this.supplierData()?.cash?.conversionRate ?? 0);
   cashHistory = computed(() => this.supplierData()?.history ?? []);
+
+  /** Crédito a descontar pelo valor em dinheiro introduzido (cash ÷ taxa) */
+  creditToDebit(): number {
+    const rate = this.conversionRate();
+    if (!this.redemptionAmount || rate <= 0) return 0;
+    return Math.round((this.redemptionAmount / rate) * 100) / 100;
+  }
 
   ngOnInit(): void {
     this.supplierService.getAll().subscribe({

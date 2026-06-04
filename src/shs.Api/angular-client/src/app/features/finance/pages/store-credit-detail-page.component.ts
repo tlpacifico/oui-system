@@ -482,7 +482,7 @@ export class StoreCreditDetailPageComponent implements OnInit {
   }
 
   getTransactionTypeLabel(type: number): string {
-    const map: Record<number, string> = { 1: 'Emissão', 2: 'Uso', 3: 'Ajuste', 4: 'Expiração', 5: 'Cancelamento' };
+    const map: Record<number, string> = { 1: 'Emissão', 2: 'Uso', 3: 'Ajuste', 4: 'Expiração', 5: 'Cancelamento', 6: 'Resgate em dinheiro' };
     return map[type] ?? '—';
   }
 

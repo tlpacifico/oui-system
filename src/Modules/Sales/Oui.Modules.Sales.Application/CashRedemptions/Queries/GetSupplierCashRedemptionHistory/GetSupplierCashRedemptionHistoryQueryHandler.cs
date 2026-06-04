@@ -34,9 +34,16 @@ internal sealed class GetSupplierCashRedemptionHistoryQueryHandler(SalesDbContex
                     : null))
             .ToListAsync(cancellationToken);
 
-        var balance = await salesDb.SupplierCashBalanceTransactions
-            .Where(t => t.SupplierId == request.SupplierId)
-            .SumAsync(t => t.Amount, cancellationToken);
+        // Saldo único: o valor resgatável deriva do crédito em loja ativo × taxa
+        var creditBalance = await salesDb.StoreCredits
+            .Where(sc => !sc.IsDeleted && sc.SupplierId == request.SupplierId && sc.Status == shs.Domain.Entities.StoreCreditStatus.Active)
+            .Where(sc => sc.ExpiresOn == null || sc.ExpiresOn > DateTime.UtcNow)
+            .SumAsync(sc => sc.CurrentBalance, cancellationToken);
+
+        var rate = supplier.CreditPercentageInStore > 0
+            ? supplier.CashRedemptionPercentage / supplier.CreditPercentageInStore
+            : 0m;
+        var balance = Math.Floor(creditBalance * rate * 100m) / 100m;
 
         return new SupplierCashRedemptionHistoryResponse(
             request.SupplierId, supplier.Name, balance,

@@ -7,6 +7,8 @@ public sealed record SupplierCashBalanceResponse(
     long SupplierId,
     string SupplierName,
     decimal AvailableBalance,
+    decimal StoreCreditBalance,
+    decimal ConversionRate,
     decimal CreditPercentageInStore,
     decimal CashRedemptionPercentage);
 
@@ -34,8 +36,9 @@ public sealed record ProcessCashRedemptionResponse(
     long SupplierId,
     string SupplierName,
     decimal AmountRedeemed,
-    decimal PreviousBalance,
-    decimal NewBalance,
+    decimal CreditDebited,
+    decimal PreviousCreditBalance,
+    decimal NewCreditBalance,
     DateTime TransactionDate,
     string? ProcessedBy,
     string Message);

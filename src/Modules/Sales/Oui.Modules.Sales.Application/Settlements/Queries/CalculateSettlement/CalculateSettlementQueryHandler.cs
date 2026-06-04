@@ -44,10 +44,13 @@ internal sealed class CalculateSettlementQueryHandler(SalesDbContext salesDb, In
         var totalSalesAmount = items.Sum(i => i.FinalSalePrice ?? 0);
         var porcInLoja = supplier.CreditPercentageInStore / 100m;
         var porcInDinheiro = supplier.CashRedemptionPercentage / 100m;
-        var storeCreditAmount = totalSalesAmount * porcInLoja;
-        var cashRedemptionAmount = totalSalesAmount * porcInDinheiro;
-        var netAmountToSupplier = storeCreditAmount + cashRedemptionAmount;
-        var storeCommissionAmount = totalSalesAmount - netAmountToSupplier;
+        // O fornecedor recebe UM saldo único em crédito de loja (PorcInLoja).
+        // O valor em dinheiro é alternativo, não cumulativo: resgates convertem
+        // o crédito à taxa PorcInDinheiro/PorcInLoja (ex.: 40/50 = 0.8).
+        var storeCreditAmount = Math.Round(totalSalesAmount * porcInLoja, 2, MidpointRounding.AwayFromZero);
+        var cashRedemptionAmount = Math.Round(totalSalesAmount * porcInDinheiro, 2, MidpointRounding.AwayFromZero);
+        var netAmountToSupplier = storeCreditAmount;
+        var storeCommissionAmount = totalSalesAmount - storeCreditAmount;
 
         return new CalculateSettlementResponse(
             request.SupplierId, supplier.Name,

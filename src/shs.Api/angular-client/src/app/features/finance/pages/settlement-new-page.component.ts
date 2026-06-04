@@ -122,11 +122,11 @@ type Step = 1 | 2 | 3;
                 <strong>{{ preview()!.storeCreditAmount | currency: 'EUR' }}</strong>
               </div>
               <div class="summary-row">
-                <span>Resgate em dinheiro ({{ preview()!.cashRedemptionPercentage }}%)</span>
+                <span>Em dinheiro, máx. ({{ preview()!.cashRedemptionPercentage }}%)</span>
                 <strong>{{ preview()!.cashRedemptionAmount | currency: 'EUR' }}</strong>
               </div>
               <div class="summary-row highlight">
-                <span>Total a pagar ao fornecedor</span>
+                <span>Total a pagar ao fornecedor (em crédito)</span>
                 <strong>{{ preview()!.netAmountToSupplier | currency: 'EUR' }}</strong>
               </div>
               <div class="summary-row">
@@ -149,11 +149,12 @@ type Step = 1 | 2 | 3;
               Será criado um acerto para <strong>{{ preview()!.supplierName }}</strong>
               referente ao período {{ formatPeriod(preview()!.periodStart, preview()!.periodEnd) }},
               com {{ preview()!.itemCount }} itens e total a pagar de
-              <strong>{{ preview()!.netAmountToSupplier | currency: 'EUR' }}</strong>.
+              <strong>{{ preview()!.netAmountToSupplier | currency: 'EUR' }}</strong> em crédito de loja
+              (resgatável em dinheiro até {{ preview()!.cashRedemptionAmount | currency: 'EUR' }}).
             </p>
             <p class="text-muted">
-              Após criar, poderá processar o pagamento (emitir crédito em loja e registar saldo para resgate em dinheiro)
-              na página de detalhe do acerto.
+              Após criar, poderá processar o pagamento (emitir o crédito em loja) na página de detalhe do acerto.
+              O resgate em dinheiro faz-se na página de Créditos em Loja.
             </p>
             <div class="form-actions">
               <button class="btn btn-outline" (click)="currentStep.set(2)">Voltar</button>

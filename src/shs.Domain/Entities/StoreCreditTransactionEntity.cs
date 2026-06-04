@@ -81,5 +81,11 @@ public enum StoreCreditTransactionType
     /// <summary>
     /// Credit cancelled/voided (negative amount to zero balance)
     /// </summary>
-    Cancellation = 5
+    Cancellation = 5,
+
+    /// <summary>
+    /// Credit converted to cash and handed to the supplier (negative amount).
+    /// Conversion rate = PorcInDinheiro / PorcInLoja at redemption time.
+    /// </summary>
+    CashRedemption = 6
 }
