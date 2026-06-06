@@ -409,7 +409,7 @@ public class ImportService
         DateTime? receptionDate = null;
 
         if (DateTime.TryParse(row.DataAquisicao, out var dt))
-            receptionDate = dt;
+            receptionDate = ToUtcKind(dt);
 
         if (supplierId != null && receptionDate != null)
         {
@@ -453,7 +453,7 @@ public class ImportService
 
         long? receptionId = null;
         if (DateTime.TryParse(row.DataRecepcao, out var dt))
-            receptionId = await GetOrCreateReceptionAsync(supplierId, dt, ct);
+            receptionId = await GetOrCreateReceptionAsync(supplierId, ToUtcKind(dt), ct);
 
         var item = new ItemEntity
         {
@@ -595,6 +595,9 @@ public class ImportService
             return cleanName[..2].ToUpperInvariant();
         return "C";
     }
+
+    private static DateTime ToUtcKind(DateTime dt) =>
+        dt.Kind == DateTimeKind.Utc ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
 
     private static decimal? ParseDecimal(string? value)
     {
