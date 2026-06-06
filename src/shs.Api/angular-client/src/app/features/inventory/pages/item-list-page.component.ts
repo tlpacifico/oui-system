@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, HostListener, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -80,15 +80,32 @@ function emptyFilters(): AdvancedFilters {
           (ngModelChange)="onSearchChange()"
           class="filter-input filter-search"
         />
-        <select [(ngModel)]="statusFilter" (ngModelChange)="onTopFilterChange()" class="filter-select">
-          <option value="">Todos os Estados</option>
-          <option value="ToSell">À Venda</option>
-          <option value="Evaluated">Avaliado</option>
-          <option value="AwaitingAcceptance">Aguardando</option>
-          <option value="Sold">Vendido</option>
-          <option value="Returned">Devolvido</option>
-          <option value="Rejected">Rejeitado</option>
-        </select>
+        <div class="status-multi">
+          <button type="button" class="filter-select status-toggle" (click)="statusOpen.set(!statusOpen())">
+            {{ statusLabel() }}
+            @if (statusFilter().length > 0) {
+              <span class="filter-count">{{ statusFilter().length }}</span>
+            }
+            <span class="chevron">{{ statusOpen() ? '▴' : '▾' }}</span>
+          </button>
+          @if (statusOpen()) {
+            <div class="status-dropdown">
+              @for (s of statusOptions; track s.value) {
+                <label class="status-option">
+                  <input
+                    type="checkbox"
+                    [checked]="statusFilter().includes(s.value)"
+                    (change)="toggleStatus(s.value)"
+                  />
+                  <span>{{ s.label }}</span>
+                </label>
+              }
+              @if (statusFilter().length > 0) {
+                <button type="button" class="status-clear" (click)="clearStatuses()">Limpar estados</button>
+              }
+            </div>
+          }
+        </div>
         <button class="btn btn-outline btn-sm filter-toggle" (click)="filtersOpen.set(!filtersOpen())">
           ⚙ Filtros avançados
           @if (advancedCount() > 0) {
@@ -315,6 +332,65 @@ function emptyFilters(): AdvancedFilters {
 
     .chevron { font-size: 11px; }
 
+    /* ── Status multi-select ── */
+    .status-multi { position: relative; }
+
+    .status-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .status-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      min-width: 180px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      z-index: 50;
+      margin-top: 4px;
+      padding: 6px;
+    }
+
+    .status-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #1e293b;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .status-option:hover { background: #f1f5f9; }
+
+    .status-option input {
+      accent-color: #6366f1;
+      cursor: pointer;
+    }
+
+    .status-clear {
+      width: 100%;
+      margin-top: 4px;
+      padding: 8px 10px;
+      background: none;
+      border: none;
+      border-top: 1px solid #e2e8f0;
+      font-size: 13px;
+      color: #64748b;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .status-clear:hover { color: #ef4444; }
+
     .btn-ghost {
       background: transparent;
       color: #64748b;
@@ -491,7 +567,28 @@ export class ItemListPageComponent implements OnInit {
 
   // Top-bar filters (apply immediately)
   searchText = '';
-  statusFilter = '';
+  statusFilter = signal<string[]>([]);
+  statusOpen = signal(false);
+
+  readonly statusOptions = [
+    { value: 'Received', label: 'Recebido' },
+    { value: 'Evaluated', label: 'Avaliado' },
+    { value: 'AwaitingAcceptance', label: 'Aguardando' },
+    { value: 'ToSell', label: 'À Venda' },
+    { value: 'Sold', label: 'Vendido' },
+    { value: 'Paid', label: 'Pago' },
+    { value: 'Returned', label: 'Devolvido' },
+    { value: 'Rejected', label: 'Rejeitado' },
+  ];
+
+  statusLabel = computed(() => {
+    const selected = this.statusFilter();
+    if (selected.length === 0) return 'Todos os Estados';
+    if (selected.length === 1) {
+      return this.statusOptions.find(s => s.value === selected[0])?.label ?? selected[0];
+    }
+    return `${selected.length} estados`;
+  });
 
   // Sorting
   sortBy = signal('');
@@ -652,7 +749,7 @@ export class ItemListPageComponent implements OnInit {
     const a = this.applied();
     this.itemService.getItems({
       search: this.searchText || undefined,
-      status: this.statusFilter || undefined,
+      status: this.statusFilter().join(',') || undefined,
       brandExternalId: a.brandExternalId || undefined,
       categoryExternalId: a.categoryExternalId || undefined,
       supplierExternalId: a.supplierExternalId || undefined,
@@ -686,9 +783,26 @@ export class ItemListPageComponent implements OnInit {
     this.loadItems();
   }
 
-  onTopFilterChange(): void {
+  toggleStatus(value: string): void {
+    const current = this.statusFilter();
+    this.statusFilter.set(
+      current.includes(value) ? current.filter(s => s !== value) : [...current, value]
+    );
     this.currentPage.set(1);
     this.loadItems();
+  }
+
+  clearStatuses(): void {
+    this.statusFilter.set([]);
+    this.currentPage.set(1);
+    this.loadItems();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.statusOpen() && !(event.target as HTMLElement).closest('.status-multi')) {
+      this.statusOpen.set(false);
+    }
   }
 
   onAcqTypeChange(): void {
@@ -713,7 +827,7 @@ export class ItemListPageComponent implements OnInit {
 
   clearAll(): void {
     this.searchText = '';
-    this.statusFilter = '';
+    this.statusFilter.set([]);
     this.sortBy.set('');
     this.sortDir.set('desc');
     this.clearAdvanced();

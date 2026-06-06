@@ -41,8 +41,19 @@ internal sealed class GetItemsQueryHandler(InventoryDbContext db, EcommerceDbCon
         if (!string.IsNullOrWhiteSpace(request.Size))
             query = query.Where(i => i.Size == request.Size);
 
-        if (!string.IsNullOrWhiteSpace(request.Status) && Enum.TryParse<ItemStatus>(request.Status, out var itemStatus))
-            query = query.Where(i => i.Status == itemStatus);
+        if (!string.IsNullOrWhiteSpace(request.Status))
+        {
+            var statuses = request.Status
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => Enum.TryParse<ItemStatus>(s, true, out var parsed) ? parsed : (ItemStatus?)null)
+                .OfType<ItemStatus>()
+                .ToList();
+
+            if (statuses.Count == 1)
+                query = query.Where(i => i.Status == statuses[0]);
+            else if (statuses.Count > 1)
+                query = query.Where(i => statuses.Contains(i.Status));
+        }
 
         if (!string.IsNullOrWhiteSpace(request.Condition) && Enum.TryParse<ItemCondition>(request.Condition, out var itemCondition))
             query = query.Where(i => i.Condition == itemCondition);
